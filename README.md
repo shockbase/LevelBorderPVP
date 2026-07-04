@@ -14,7 +14,7 @@ WorldBorderAPI must also be installed as a server plugin. This plugin only compi
 
 LevelBorderPvP macht aus XP-Leveln echten Spielraum.
 
-Mit `/levelborder lobby` werden alle Online-Spieler optional zum Worldspawn teleportiert und in einer kleinen Lobby-Border gesperrt. Nach `/levelborder start [seconds]` faellt diese Grenze fuer den Countdown weg. Wenn der Countdown endet, wird die aktuelle Position jedes Online-Spielers als persoenliches Border-Zentrum gespeichert.
+Mit `/levelborder lobby` werden alle Online-Spieler optional zum Worldspawn teleportiert und in einer kleinen Lobby-Border gesperrt. Bei `/levelborder start [seconds]` werden nur Spieler innerhalb dieser Lobby-Border fuer die Runde vorgemerkt. Nach dem Countdown wird ihre aktuelle Position als persoenliches Border-Zentrum gespeichert.
 
 Danach zaehlt jedes Level. XP erweitert die eigene Border, PvP kann optional Bonus-Level uebertragen, und die Runde kann automatisch ueber Zeitwertung, Ziel-Level, Ziel-Border oder Elimination enden.
 
@@ -23,10 +23,11 @@ Danach zaehlt jedes Level. XP erweitert die eigene Border, PvP kann optional Bon
 1. Admin fuehrt `/levelborder lobby` aus.
 2. Spieler werden optional zum Worldspawn teleportiert und in der Lobby-Border gehalten.
 3. Admin fuehrt `/levelborder start [seconds]` aus.
-4. Waehrend des Countdowns haben Spieler keine persoenliche Border und koennen sich verteilen.
-5. Nach Ablauf werden XP und Inventar der aktuellen Online-Spieler optional zurueckgesetzt, dann wird jeder als aktiver Border-Spieler registriert.
-6. Spaetere Joiner werden bei aktivem Zuschauermodus zu Zuschauern.
-7. Getoetete aktive Spieler werden ebenfalls Zuschauer und koennen die Runde verfolgen.
+4. Nur Spieler innerhalb der Lobby-Border werden aktive Spieler; alle anderen werden Zuschauer.
+5. Waehrend des Countdowns haben aktive Spieler keine persoenliche Border und koennen sich verteilen.
+6. Nach Ablauf werden XP und Inventar der aktiven Startspieler optional zurueckgesetzt.
+7. Spaetere Joiner werden fuer die laufende Runde Zuschauer.
+8. Getoetete aktive Spieler werden bei aktivem Zuschauermodus ebenfalls Zuschauer und koennen die Runde verfolgen.
 
 Der Zuschauerstatus ist kein echter Minecraft-Spectator. Zuschauer haben keine Border und koennen sich frei bewegen, aber das Plugin blockiert Bauen, Interaktion, Inventare, XP, Item-Handling und Kampf.
 

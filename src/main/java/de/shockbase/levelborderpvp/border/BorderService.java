@@ -13,6 +13,10 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
+
 public final class BorderService {
 
     private final Plugin plugin;
@@ -22,6 +26,7 @@ public final class BorderService {
     private final BorderRenderer borderRenderer;
     private final PlayerBorderDataService playerBorderDataService;
     private final RoundPlayerTracker roundPlayers = new RoundPlayerTracker();
+    private final Set<UUID> startCandidateIds = new HashSet<>();
     private final RoundScoreTracker roundScores;
 
     private RoundState roundState = RoundState.IDLE;
@@ -176,10 +181,16 @@ public final class BorderService {
         int boundedCountdownSeconds = Math.max(0, Math.min(countdownSeconds, settings.maxStartCountdownSeconds()));
         roundState = RoundState.COUNTDOWN;
         roundPlayers.clearRound();
+        startCandidateIds.clear();
 
         for (Player player : plugin.getServer().getOnlinePlayers()) {
             luckPermsRoleService.clear(player);
-            borderRenderer.resetToGlobal(player);
+            if (isInsideLobbyBorder(player)) {
+                startCandidateIds.add(player.getUniqueId());
+                borderRenderer.resetToGlobal(player);
+            } else {
+                enterSpectator(player, BorderNotification.SPECTATOR);
+            }
         }
 
         if (boundedCountdownSeconds <= 0) {
@@ -240,6 +251,10 @@ public final class BorderService {
         }
 
         if (roundState == RoundState.COUNTDOWN) {
+            if (!startCandidateIds.contains(player.getUniqueId())) {
+                enterSpectator(player, notification);
+                return;
+            }
             luckPermsRoleService.clear(player);
             borderRenderer.resetToGlobal(player);
             return;
@@ -251,11 +266,7 @@ public final class BorderService {
         }
 
         if (!roundPlayers.isRoundPlayer(player)) {
-            if (usesSpectatorForLateJoiners()) {
-                enterSpectator(player, notification);
-                return;
-            }
-            activatePlayerFromCurrentPosition(player, notification);
+            enterSpectator(player, notification);
             return;
         }
 
@@ -270,15 +281,7 @@ public final class BorderService {
             return;
         }
 
-        if (usesSpectatorForLateJoiners()) {
-            enterSpectator(player, BorderNotification.NONE);
-            return;
-        }
-        activatePlayerFromCurrentPosition(player, BorderNotification.NONE);
-    }
-
-    private boolean usesSpectatorForLateJoiners() {
-        return settings.spectatorModeEnabled() || settings.endCondition() == RoundEndCondition.ELIMINATION;
+        enterSpectator(player, BorderNotification.NONE);
     }
 
     private void apply(Player player, BorderNotification notification) {
@@ -326,9 +329,15 @@ public final class BorderService {
             if (roundState != RoundState.ACTIVE) {
                 break;
             }
+            if (!startCandidateIds.contains(player.getUniqueId())) {
+                enterSpectator(player, BorderNotification.SPECTATOR);
+                continue;
+            }
             preparePlayerForRoundStart(player);
             activatePlayerFromCurrentPosition(player, BorderNotification.JOIN);
         }
+
+        startCandidateIds.clear();
 
         if (roundState == RoundState.ACTIVE) {
             scheduleRoundEnd();
@@ -354,6 +363,18 @@ public final class BorderService {
         PlayerBorderData data = playerBorderDataService.createInitial(player, Math.max(0, player.getLevel()));
         playerBorderDataService.save(data);
         apply(player, data, Math.max(0, player.getLevel()), notification);
+    }
+
+    private boolean isInsideLobbyBorder(Player player) {
+        double lobbyRadius = settings.lobbyRadiusBlocks();
+        if (lobbyRadius <= 0.0D) {
+            return true;
+        }
+
+        Location playerLocation = player.getLocation();
+        Location lobbyCenter = player.getWorld().getSpawnLocation();
+        return Math.abs(playerLocation.getX() - lobbyCenter.getX()) <= lobbyRadius
+                && Math.abs(playerLocation.getZ() - lobbyCenter.getZ()) <= lobbyRadius;
     }
 
     private void scheduleRoundEnd() {
@@ -449,6 +470,7 @@ public final class BorderService {
         cancelStartCountdown();
         cancelRoundEndTask();
         roundState = RoundState.IDLE;
+        startCandidateIds.clear();
 
         for (Player player : plugin.getServer().getOnlinePlayers()) {
             luckPermsRoleService.clear(player);
@@ -462,6 +484,7 @@ public final class BorderService {
         cancelStartCountdown();
         cancelRoundEndTask();
         roundState = RoundState.LOBBY;
+        startCandidateIds.clear();
 
         for (Player player : plugin.getServer().getOnlinePlayers()) {
             luckPermsRoleService.clear(player);
