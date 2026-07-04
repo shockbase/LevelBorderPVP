@@ -30,8 +30,8 @@ public final class LevelBorderSettings {
         return Math.max(0L, config.getLong("border-transition-milliseconds", 1200L));
     }
 
-    public boolean autoStartOnJoin() {
-        return config.getBoolean("auto-start-on-join", true);
+    public double lobbyRadiusBlocks() {
+        return Math.max(0.0D, config.getDouble("lobby-radius-blocks", 8.0D));
     }
 
     public int defaultStartCountdownSeconds() {

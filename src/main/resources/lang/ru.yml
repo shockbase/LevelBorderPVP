@@ -7,6 +7,7 @@ command:
   invalid-seconds: "Укажите секунды целым числом."
   negative-countdown: "Отсчет не может быть отрицательным."
   max-countdown: "Отсчет может быть максимум {seconds} сек."
+  starting: "Обратный отсчет запущен: {seconds} сек."
   stopped: "Граница остановлена."
   reset: "Граница сброшена."
 

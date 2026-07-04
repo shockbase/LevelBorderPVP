@@ -14,7 +14,11 @@ highest-kill-bonus-enabled: false
 # When true, the victim's own stored kill bonus is inherited too.
 highest-kill-bonus-inherits-victim-bonus: false
 
-# Keeps the border centered in the middle of the block the player first spawned on.
+# Before /levelborder start is used, players are kept near their world spawn.
+# WorldBorderAPI uses diameter, so 8.0 means a 16 block wide lobby border.
+lobby-radius-blocks: 8.0
+
+# Keeps the border centered in the middle of the block used as personal start position.
 center-at-block-center: true
 
 # Keep at or below 0 to disable an upper limit.
@@ -27,10 +31,9 @@ language: de
 # Set to 0 to disable the transition.
 border-transition-milliseconds: 1200
 
-# When false, players must use /levelborder start before their personal border is applied.
-auto-start-on-join: true
-
 # /levelborder start uses this countdown when no seconds argument is given.
+# During the countdown, personal borders are removed so players can spread out.
+# When the countdown ends, each online player's current position becomes their border center.
 start-countdown-seconds: 10
 # Upper limit for /levelborder start <seconds>.
 max-start-countdown-seconds: 3600

@@ -8,5 +8,5 @@ depend:
   - WorldBorderAPI
 commands:
   levelborder:
-    description: Controls the personal border.
+    description: Controls the level border round.
     usage: /levelborder <start|stop|reset> [seconds]

@@ -29,19 +29,14 @@ public final class BorderCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!(sender instanceof Player player)) {
-            sender.sendMessage(messages.text("command.players-only"));
-            return true;
-        }
-
         if (args.length == 0) {
-            player.sendMessage(messages.text("command.usage", Messages.placeholder("label", label)));
+            sender.sendMessage(messages.text("command.usage", Messages.placeholder("label", label)));
             return true;
         }
 
         String subCommand = args[0].toLowerCase(Locale.ROOT);
         String[] subCommandArgs = Arrays.copyOfRange(args, 1, args.length);
-        return handlePlayerCommand(player, subCommand, label, subCommandArgs);
+        return handleCommand(sender, subCommand, label, subCommandArgs);
     }
 
     @Override
@@ -72,24 +67,24 @@ public final class BorderCommand implements CommandExecutor, TabCompleter {
         return matches;
     }
 
-    private boolean handlePlayerCommand(Player player, String subCommand, String label, String[] args) {
+    private boolean handleCommand(CommandSender sender, String subCommand, String label, String[] args) {
         if ("start".equals(subCommand)) {
-            return handleStart(player, label, args);
+            return handleStart(sender, label, args);
         }
         if ("stop".equals(subCommand)) {
-            return handleStop(player, label, args);
+            return handleStop(sender, label, args);
         }
         if ("reset".equals(subCommand)) {
-            return handleReset(player, label, args);
+            return handleReset(sender, label, args);
         }
 
-        player.sendMessage(messages.text("command.usage", Messages.placeholder("label", label)));
+        sender.sendMessage(messages.text("command.usage", Messages.placeholder("label", label)));
         return true;
     }
 
-    private boolean handleStart(Player player, String label, String[] args) {
+    private boolean handleStart(CommandSender sender, String label, String[] args) {
         if (args.length > 1) {
-            player.sendMessage(messages.text("command.start-usage", Messages.placeholder("label", label)));
+            sender.sendMessage(messages.text("command.start-usage", Messages.placeholder("label", label)));
             return true;
         }
 
@@ -98,28 +93,36 @@ public final class BorderCommand implements CommandExecutor, TabCompleter {
             try {
                 countdownSeconds = Integer.parseInt(args[0]);
             } catch (NumberFormatException exception) {
-                player.sendMessage(messages.text("command.invalid-seconds"));
+                sender.sendMessage(messages.text("command.invalid-seconds"));
                 return true;
             }
         }
 
         if (countdownSeconds < 0) {
-            player.sendMessage(messages.text("command.negative-countdown"));
+            sender.sendMessage(messages.text("command.negative-countdown"));
             return true;
         }
         if (countdownSeconds > settings.maxStartCountdownSeconds()) {
-            player.sendMessage(messages.text(
+            sender.sendMessage(messages.text(
                     "command.max-countdown",
                     Messages.placeholder("seconds", settings.maxStartCountdownSeconds())
             ));
             return true;
         }
 
-        borderService.start(player, countdownSeconds);
+        borderService.start(countdownSeconds);
+        sender.sendMessage(messages.text(
+                "command.starting",
+                Messages.placeholder("seconds", countdownSeconds)
+        ));
         return true;
     }
 
-    private boolean handleStop(Player player, String label, String[] args) {
+    private boolean handleStop(CommandSender sender, String label, String[] args) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(messages.text("command.players-only"));
+            return true;
+        }
         if (args.length != 0) {
             player.sendMessage(messages.text("command.stop-usage", Messages.placeholder("label", label)));
             return true;
@@ -130,7 +133,11 @@ public final class BorderCommand implements CommandExecutor, TabCompleter {
         return true;
     }
 
-    private boolean handleReset(Player player, String label, String[] args) {
+    private boolean handleReset(CommandSender sender, String label, String[] args) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(messages.text("command.players-only"));
+            return true;
+        }
         if (args.length != 0) {
             player.sendMessage(messages.text("command.reset-usage", Messages.placeholder("label", label)));
             return true;

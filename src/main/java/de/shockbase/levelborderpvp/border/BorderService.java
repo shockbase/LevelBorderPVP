@@ -6,15 +6,13 @@ import de.shockbase.levelborderpvp.data.PlayerBorderData;
 import de.shockbase.levelborderpvp.data.PlayerBorderRepository;
 import de.shockbase.levelborderpvp.i18n.Messages;
 import org.bukkit.Location;
-import org.bukkit.block.Block;
-import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
-import java.util.HashSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -23,6 +21,12 @@ public final class BorderService {
 
     private static final double BORDER_SIZE_EPSILON = 0.000001D;
     private static final double BORDER_SAFE_MARGIN_BLOCKS = 0.3D;
+
+    private enum RoundState {
+        LOBBY,
+        COUNTDOWN,
+        ACTIVE
+    }
 
     private final Plugin plugin;
     private final WorldBorderApi worldBorderApi;
@@ -33,9 +37,11 @@ public final class BorderService {
     private final Messages messages;
     private final Map<UUID, BukkitTask> borderAnimationTasks = new HashMap<>();
     private final Map<UUID, Double> animatedBorderSizes = new HashMap<>();
-    private final Map<UUID, BukkitTask> startCountdownTasks = new HashMap<>();
-    private final Set<UUID> manuallyStartedPlayers = new HashSet<>();
+    private final Set<UUID> roundPlayers = new HashSet<>();
     private final Set<UUID> manuallyStoppedPlayers = new HashSet<>();
+
+    private RoundState roundState = RoundState.LOBBY;
+    private BukkitTask startCountdownTask;
 
     public BorderService(
             Plugin plugin,
@@ -56,17 +62,18 @@ public final class BorderService {
     }
 
     public void applyNextTick(Player player, BorderNotification notification) {
-        plugin.getServer().getScheduler().runTask(plugin, () -> apply(player, notification));
+        plugin.getServer().getScheduler().runTask(plugin, () -> applyCurrentState(player, notification));
     }
 
     public void applyLater(Player player, BorderNotification notification, long delayTicks) {
-        plugin.getServer().getScheduler().runTaskLater(plugin, () -> apply(player, notification), delayTicks);
+        plugin.getServer().getScheduler().runTaskLater(plugin, () -> applyCurrentState(player, notification), delayTicks);
     }
 
     public void handleLevelChange(Player player, int newLevel) {
         if (!isActive(player)) {
             return;
         }
+        ensureRoundPlayer(player);
 
         PlayerBorderData data = getOrCreateBorderData(player);
         int normalizedLevel = Math.max(0, newLevel);
@@ -95,6 +102,9 @@ public final class BorderService {
             return;
         }
 
+        ensureRoundPlayer(killer);
+        ensureRoundPlayer(killed);
+
         PlayerBorderData killedData = updateMaxReachedLevel(killed, getOrCreateBorderData(killed));
         int bonusLevels = Math.max(0, killedData.maxReachedLevel());
         if (settings.highestKillBonusInheritsVictimBonus()) {
@@ -115,79 +125,114 @@ public final class BorderService {
         apply(killer, killerData, Math.max(0, killer.getLevel()), BorderNotification.KILL_BONUS);
     }
 
-    public void start(Player player, int countdownSeconds) {
-        cancelStartCountdown(player);
+    public void start(int countdownSeconds) {
+        cancelStartCountdown();
 
         int boundedCountdownSeconds = Math.max(0, Math.min(countdownSeconds, settings.maxStartCountdownSeconds()));
+        roundState = RoundState.COUNTDOWN;
+        roundPlayers.clear();
+        manuallyStoppedPlayers.clear();
+
+        for (Player player : plugin.getServer().getOnlinePlayers()) {
+            cancelBorderAnimation(player);
+            worldBorderApi.resetWorldBorderToGlobal(player);
+        }
+
         if (boundedCountdownSeconds <= 0) {
-            activate(player, BorderNotification.JOIN);
+            activateRound();
             return;
         }
 
-        UUID playerId = player.getUniqueId();
         BukkitRunnable countdown = new BukkitRunnable() {
             private int remainingSeconds = boundedCountdownSeconds;
 
             @Override
             public void run() {
-                if (!player.isOnline()) {
-                    startCountdownTasks.remove(playerId);
+                if (roundState != RoundState.COUNTDOWN) {
+                    startCountdownTask = null;
                     cancel();
                     return;
                 }
 
                 if (remainingSeconds <= 0) {
-                    startCountdownTasks.remove(playerId);
-                    activate(player, BorderNotification.JOIN);
+                    startCountdownTask = null;
+                    activateRound();
                     cancel();
                     return;
                 }
 
-                player.sendMessage(messages.text(
-                        "service.countdown",
-                        Messages.placeholder("seconds", remainingSeconds)
-                ));
+                broadcastCountdown(remainingSeconds);
                 remainingSeconds--;
             }
         };
 
-        startCountdownTasks.put(playerId, countdown.runTaskTimer(plugin, 0L, 20L));
+        startCountdownTask = countdown.runTaskTimer(plugin, 0L, 20L);
     }
 
     public void stop(Player player) {
         UUID playerId = player.getUniqueId();
-        cancelStartCountdown(player);
         cancelBorderAnimation(player);
-        manuallyStartedPlayers.remove(playerId);
         manuallyStoppedPlayers.add(playerId);
         worldBorderApi.resetWorldBorderToGlobal(player);
     }
 
     public void reset(Player player) {
-        cancelStartCountdown(player);
         cancelBorderAnimation(player);
 
         PlayerBorderData data = createInitialBorderData(player, Math.max(0, player.getLevel()));
         playerBorderRepository.save(data);
 
         if (isActive(player)) {
+            roundPlayers.add(player.getUniqueId());
             apply(player, data, Math.max(0, player.getLevel()), BorderNotification.JOIN);
+        } else if (roundState == RoundState.LOBBY) {
+            applyLobbyBorder(player);
         } else {
             worldBorderApi.resetWorldBorderToGlobal(player);
         }
     }
 
     public void shutdown() {
-        for (BukkitTask task : startCountdownTasks.values()) {
-            task.cancel();
-        }
-        startCountdownTasks.clear();
+        cancelStartCountdown();
 
         for (BukkitTask task : borderAnimationTasks.values()) {
             task.cancel();
         }
         borderAnimationTasks.clear();
         animatedBorderSizes.clear();
+    }
+
+    private void applyCurrentState(Player player, BorderNotification notification) {
+        if (roundState == RoundState.LOBBY) {
+            applyLobbyBorder(player);
+            return;
+        }
+
+        if (roundState == RoundState.COUNTDOWN) {
+            cancelBorderAnimation(player);
+            worldBorderApi.resetWorldBorderToGlobal(player);
+            return;
+        }
+
+        if (manuallyStoppedPlayers.contains(player.getUniqueId())) {
+            worldBorderApi.resetWorldBorderToGlobal(player);
+            return;
+        }
+
+        if (!roundPlayers.contains(player.getUniqueId())) {
+            activatePlayerFromCurrentPosition(player, notification);
+            return;
+        }
+
+        apply(player, notification);
+    }
+
+    private void ensureRoundPlayer(Player player) {
+        if (roundState == RoundState.ACTIVE
+                && !manuallyStoppedPlayers.contains(player.getUniqueId())
+                && !roundPlayers.contains(player.getUniqueId())) {
+            activatePlayerFromCurrentPosition(player, BorderNotification.NONE);
+        }
     }
 
     private void apply(Player player, BorderNotification notification) {
@@ -231,6 +276,45 @@ public final class BorderService {
 
         keepPlayerInsideShrinkingBorder(player, center, previousSize, size);
         animateBorder(player, center, previousSize, size);
+    }
+
+    private void applyLobbyBorder(Player player) {
+        cancelBorderAnimation(player);
+
+        double lobbyRadius = settings.lobbyRadiusBlocks();
+        if (lobbyRadius <= 0.0D) {
+            worldBorderApi.resetWorldBorderToGlobal(player);
+            return;
+        }
+
+        worldBorderApi.setBorder(player, lobbyRadius * 2.0D, player.getWorld().getSpawnLocation());
+    }
+
+    private void broadcastCountdown(int remainingSeconds) {
+        String message = messages.text(
+                "service.countdown",
+                Messages.placeholder("seconds", remainingSeconds)
+        );
+        for (Player player : plugin.getServer().getOnlinePlayers()) {
+            player.sendMessage(message);
+        }
+    }
+
+    private void activateRound() {
+        roundState = RoundState.ACTIVE;
+        roundPlayers.clear();
+        manuallyStoppedPlayers.clear();
+
+        for (Player player : plugin.getServer().getOnlinePlayers()) {
+            activatePlayerFromCurrentPosition(player, BorderNotification.JOIN);
+        }
+    }
+
+    private void activatePlayerFromCurrentPosition(Player player, BorderNotification notification) {
+        roundPlayers.add(player.getUniqueId());
+        PlayerBorderData data = createInitialBorderData(player, Math.max(0, player.getLevel()));
+        playerBorderRepository.save(data);
+        apply(player, data, Math.max(0, player.getLevel()), notification);
     }
 
     private double currentDisplayedBorderSize(Player player, PlayerBorderData data) {
@@ -290,26 +374,15 @@ public final class BorderService {
         animatedBorderSizes.remove(playerId);
     }
 
-    private void cancelStartCountdown(Player player) {
-        BukkitTask task = startCountdownTasks.remove(player.getUniqueId());
-        if (task != null) {
-            task.cancel();
+    private void cancelStartCountdown() {
+        if (startCountdownTask != null) {
+            startCountdownTask.cancel();
+            startCountdownTask = null;
         }
-    }
-
-    private void activate(Player player, BorderNotification notification) {
-        UUID playerId = player.getUniqueId();
-        manuallyStartedPlayers.add(playerId);
-        manuallyStoppedPlayers.remove(playerId);
-        apply(player, notification);
     }
 
     private boolean isActive(Player player) {
-        UUID playerId = player.getUniqueId();
-        if (settings.autoStartOnJoin()) {
-            return !manuallyStoppedPlayers.contains(playerId);
-        }
-        return manuallyStartedPlayers.contains(playerId);
+        return roundState == RoundState.ACTIVE && !manuallyStoppedPlayers.contains(player.getUniqueId());
     }
 
     private void keepPlayerInsideShrinkingBorder(Player player, Location center, double previousSize, double size) {
@@ -412,21 +485,21 @@ public final class BorderService {
     }
 
     private PlayerBorderData createInitialBorderData(Player player, int currentLevel) {
-        Block standingBlock = player.getLocation().getBlock().getRelative(BlockFace.DOWN);
-        double x = standingBlock.getX();
-        double y = standingBlock.getY();
-        double z = standingBlock.getZ();
+        Location location = player.getLocation();
+        double x = location.getX();
+        double y = location.getY();
+        double z = location.getZ();
 
         if (settings.centerAtBlockCenter()) {
-            x += 0.5D;
-            y += 0.5D;
-            z += 0.5D;
+            x = location.getBlockX() + 0.5D;
+            y = location.getBlockY() + 0.5D;
+            z = location.getBlockZ() + 0.5D;
         }
 
         return new PlayerBorderData(
                 player.getUniqueId(),
-                standingBlock.getWorld().getUID(),
-                standingBlock.getWorld().getName(),
+                location.getWorld().getUID(),
+                location.getWorld().getName(),
                 x,
                 y,
                 z,

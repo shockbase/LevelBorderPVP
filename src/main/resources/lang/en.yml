@@ -7,6 +7,7 @@ command:
   invalid-seconds: "Please enter seconds as a whole number."
   negative-countdown: "The countdown cannot be negative."
   max-countdown: "The countdown can be at most {seconds} seconds."
+  starting: "Start countdown started: {seconds} seconds."
   stopped: "Border stopped."
   reset: "Border reset."
 

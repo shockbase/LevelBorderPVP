@@ -1,7 +1,5 @@
 # LevelBorderPvP
 
-Paper plugin for individual per-player borders via WorldBorderAPI.
-
 ## Version target
 
 - Plugin version: `1.0.0`
@@ -12,96 +10,136 @@ Paper plugin for individual per-player borders via WorldBorderAPI.
 
 WorldBorderAPI must also be installed as a server plugin. This plugin only compiles against the API and declares `depend: [WorldBorderAPI]`.
 
-## Behavior
+## Was ist LevelBorderPvP?
 
-- On the player's first handled spawn/join, the plugin stores the block the player is standing on.
-- The border center is stored in `plugins/LevelBorderPvP/players.yml` and is never recalculated afterward.
-- The real server world border is not modified.
-- The WorldBorderAPI border size can use either the highest XP level the player has ever reached or the player's current XP level.
-- Level-based size changes are animated over `border-transition-milliseconds` by default.
-- Optionally, in `level-mode: highest`, player kills can add the victim's highest reached level as a separate bonus.
-- Players can use `/levelborder start [seconds]`, `/levelborder stop`, and `/levelborder reset` to control their personal border.
-- By default `level-mode: highest` is used and the formula is `size = 3.0 + highestLevel * 2.0`, so:
-  - level 0 = 3x3
-  - level 1 = 5x5
-  - level 2 = 7x7
+LevelBorderPvP macht aus XP-Leveln echten Spielraum.
 
-WorldBorderAPI/Paper use the border size as diameter. That is why one extra block of radius per level needs `growth-per-level-blocks: 2.0`. If you want only one extra block of total width per level, set it to `1.0`.
+Vor dem Start sitzen alle Spieler in einer kleinen Lobby-Border am Spawn. Sobald der Admin `/levelborder start [seconds]` ausführt, fällt diese Grenze weg: Alle können sich während des Countdowns frei auf der Map verteilen. Erst wenn der Countdown endet, wird für jeden Spieler die aktuelle Position als persönliches Border-Zentrum gespeichert.
 
-## Level modes
+Danach zählt jedes Level. Wer XP sammelt, erweitert sein Gebiet. Wer PvP gewinnt, kann optional zusätzlichen Raum erobern. Das Ergebnis ist ein klares Survival- oder PvP-Format mit sichtbarem Fortschritt, echten Entscheidungen und sofort verständlichem Druck.
+
+## Warum ausprobieren?
+
+- **Besserer Rundenstart:** Spieler werden erst festgesetzt, nachdem sie sich verteilt haben.
+- **Lobby ohne Extra-System:** Vor dem Start hält eine kleine WorldBorderAPI-Border alle am Spawn.
+- **Persönliche Borders statt globalem Chaos:** Jeder Spieler sieht seine eigene Grenze.
+- **Sofort verständliche Progression:** Level 0 startet klein, jedes XP-Level schafft mehr Platz.
+- **PvP mit echtem Einsatz:** Kills können die erreichten Level des Gegners als Border-Bonus übertragen.
+- **Serverfreundlich steuerbar:** Start-Countdown, Lobby-Radius, Level-Modus, Sprache und Obergrenzen sind konfigurierbar.
+
+## Rundenablauf
+
+1. Server startet: Spieler sind im Lobby-Modus am Welt-Spawn eingeschlossen.
+2. Admin führt `/levelborder start [seconds]` aus.
+3. Während des Countdowns werden die persönlichen Borders entfernt.
+4. Nach Ablauf wird die aktuelle Position jedes Online-Spielers als Center gespeichert.
+5. Ab dann wächst die persönliche Border mit XP-Leveln und optionalen PvP-Boni.
+
+Das Plugin setzt keine eigenen Permissions. Wer den Startbefehl nutzen darf, kann sauber über LuckPerms oder das vorhandene Server-Setup geregelt werden.
+
+## Gameplay
+
+Standardmäßig nutzt LevelBorderPvP den Modus `highest`: Die Border wächst mit dem höchsten XP-Level, das ein Spieler je erreicht hat, und schrumpft nicht wieder durch Tod oder XP-Verlust.
+
+Die Standardformel lautet:
+
+```text
+size = 3.0 + highestLevel * 2.0
+```
+
+Das bedeutet:
+
+```text
+level 0 = 3x3
+level 1 = 5x5
+level 2 = 7x7
+```
+
+WorldBorderAPI und Paper behandeln die Border-Größe als Durchmesser. Deshalb entspricht `growth-per-level-blocks: 2.0` einem zusätzlichen Block Radius pro Level.
+
+## Spielmodi
+
+### Highest
 
 ```yaml
 level-mode: highest
 ```
 
-Uses the highest XP level the player has ever reached. The border grows, but does not shrink when the player loses XP or dies.
+Der empfohlene Standardmodus. Spieler behalten ihren höchsten Fortschritt, auch wenn sie sterben oder XP verlieren. Das macht LevelBorderPvP planbarer und weniger frustrierend.
 
-Optional kill bonus for this mode:
+Optional kann PvP stärker belohnt werden:
 
 ```yaml
 highest-kill-bonus-enabled: true
 highest-kill-bonus-inherits-victim-bonus: false
 ```
 
-When enabled, killing a player adds the victim's highest reached level to the killer's stored kill bonus. With `highest-kill-bonus-inherits-victim-bonus: true`, the victim's stored kill bonus is added too. The killer's own `max-reached-level` stays separate, so later personal highests still increase the border normally.
+Wenn aktiviert, erhält der Killer die höchste erreichte Stufe des Opfers als separaten Bonus. Mit `highest-kill-bonus-inherits-victim-bonus: true` wird zusätzlich der bereits gespeicherte Kill-Bonus des Opfers übernommen.
+
+### Current
 
 ```yaml
 level-mode: current
 ```
 
-Uses the player's current XP level. The border grows and shrinks directly with the current level.
+Die Border folgt direkt dem aktuellen XP-Level. Sie wächst und schrumpft also mit dem momentanen Levelstand. Dieser Modus ist härter und eignet sich für Server, die mehr Druck durch XP-Verlust wollen.
 
-## Build
-
-Open the folder in IntelliJ IDEA as a Gradle project, then run:
-
-```bash
-gradle build
-```
-
-The plugin jar is created in:
+## Befehle
 
 ```text
-build/libs/LevelBorderPvP-1.0.0.jar
+/levelborder start [seconds]
+/levelborder stop
+/levelborder reset
 ```
 
-Install both jars on the server:
+- `start` startet global die Runde. Während des Countdowns sind Spieler frei, danach werden ihre aktuellen Positionen als Center gesetzt.
+- `stop` entfernt die persönliche Border für den ausführenden Spieler und stellt die globale World Border wieder her.
+- `reset` setzt Mittelpunkt, höchstes Level und Kill-Bonus des ausführenden Spielers auf den aktuellen Zustand zurück.
 
-```text
-plugins/worldborderapiplugin-26.2.0.0.jar
-plugins/LevelBorderPvP-1.0.0.jar
+## Konfiguration
+
+Beim ersten Start wird `src/main/resources/config.yml` nach `plugins/LevelBorderPvP/config.yml` kopiert.
+
+Die wichtigsten Einstellungen:
+
+```yaml
+initial-size-blocks: 3.0
+growth-per-level-blocks: 2.0
+level-mode: highest
+lobby-radius-blocks: 8.0
+max-size-blocks: 0.0
+border-transition-milliseconds: 1200
+start-countdown-seconds: 10
+max-start-countdown-seconds: 3600
 ```
 
-## Configuration
+`lobby-radius-blocks: 8.0` bedeutet: vor dem Start bleiben Spieler in einem Radius von 8 Blöcken um den Spawn.
 
-`src/main/resources/config.yml` is copied to `plugins/LevelBorderPvP/config.yml` on first start.
+`max-size-blocks: 0.0` bedeutet: keine Obergrenze. Setze hier einen Wert, wenn die Border nie größer als ein bestimmter Durchmesser werden soll.
 
-Message language defaults to German:
+## Sprachen
+
+Die Standardsprache ist Deutsch:
 
 ```yaml
 language: de
 ```
 
-Bundled language files are copied to `plugins/LevelBorderPvP/lang/`: `de.yml`, `en.yml`, and `ru.yml`.
-
-Commands:
+Mitgeliefert werden:
 
 ```text
-/levelborder start [seconds]  Starts the personal border. Without seconds, start-countdown-seconds is used.
-/levelborder stop             Stops the personal border and restores the global world border for the player.
-/levelborder reset            Resets the stored center, highest level, and kill bonus to the player's current state.
+de.yml
+en.yml
+ru.yml
 ```
 
-```yaml
-border-transition-milliseconds: 1200
-```
+Die Dateien werden beim Start nach `plugins/LevelBorderPvP/lang/` kopiert und können dort angepasst werden.
 
-Animates level-based border size changes over 1.2 seconds. Set to `0` to disable the transition. When the border shrinks, players standing outside the target size are moved just inside it.
+## Technische Notizen
 
-```yaml
-auto-start-on-join: true
-start-countdown-seconds: 10
-max-start-countdown-seconds: 3600
-```
-
-Set `auto-start-on-join: false` if players should have no personal border until they run `/levelborder start`.
+- Die echte Server-World-Border wird nicht verändert.
+- Spieler-Daten werden in `plugins/LevelBorderPvP/players.yml` gespeichert.
+- Der persönliche Border-Mittelpunkt wird beim Ende des Startcountdowns aus der aktuellen Spielerposition gesetzt.
+- Während des Startcountdowns wird die individuelle Border auf die globale World Border zurückgesetzt.
+- Bei schrumpfenden Borders werden Spieler, die außerhalb der Zielgröße stehen, knapp innerhalb der neuen Border platziert.
+- Die individuelle Border wird bei Join, Respawn und Weltwechsel erneut passend zum aktuellen Rundenstatus angewendet.
