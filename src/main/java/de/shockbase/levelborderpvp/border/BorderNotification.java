@@ -6,5 +6,6 @@ public enum BorderNotification {
     LEVEL_CHANGED,
     KILL_BONUS,
     JOIN,
-    RESPAWN
+    RESPAWN,
+    SPECTATOR
 }

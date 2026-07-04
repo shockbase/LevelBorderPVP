@@ -41,3 +41,35 @@ max-start-countdown-seconds: 3600
 # Re-sends the individual border when a player joins, respawns, or changes world.
 reapply-on-world-change: true
 reapply-on-respawn: true
+
+# Game end criteria:
+# disabled = no automatic winner.
+# timed-score = after round-duration-minutes, the largest active border wins.
+# target-level = first active player to reach win-target-level wins.
+# target-border = first active player to reach win-target-border-size-blocks wins.
+# elimination = killed active players are removed; last active player wins.
+end-condition: timed-score
+round-duration-minutes: 60
+score-tiebreakers:
+  - kills
+  - highest-level
+  - deaths-ascending
+win-target-level: 30
+win-target-border-size-blocks: 63.0
+
+# When true, players who join after the round is active become viewers.
+# Active players who die after round start also become viewers.
+# This is not Minecraft spectator mode: viewers have no border and can move,
+# but plugin events block building, interaction, inventory, XP, item handling and combat.
+spectator-mode-enabled: true
+
+# Optional LuckPerms support through console commands.
+# The plugin has no hard LuckPerms dependency; create these groups yourself.
+luckperms-integration-enabled: false
+luckperms-active-group: levelborder_active
+luckperms-spectator-group: levelborder_spectator
+luckperms-clear-groups-on-round-end: true
+luckperms-command-add-active: "lp user {player} parent add {active_group}"
+luckperms-command-remove-active: "lp user {player} parent remove {active_group}"
+luckperms-command-add-spectator: "lp user {player} parent add {spectator_group}"
+luckperms-command-remove-spectator: "lp user {player} parent remove {spectator_group}"

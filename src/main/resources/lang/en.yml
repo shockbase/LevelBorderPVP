@@ -1,32 +1,47 @@
 command:
   players-only: "Only players can use this command."
-  usage: "Usage: /{label} <start|stop|reset> [seconds]"
+  usage: "Usage: /{label} <start|stop|reset|config> [arguments]"
   start-usage: "Usage: /{label} start [seconds]"
   stop-usage: "Usage: /{label} stop"
   reset-usage: "Usage: /{label} reset"
+  config-usage: "Usage: /{label} config [list|get <key>|set <key> <value>]"
   invalid-seconds: "Please enter seconds as a whole number."
   negative-countdown: "The countdown cannot be negative."
   max-countdown: "The countdown can be at most {seconds} seconds."
   starting: "Start countdown started: {seconds} seconds."
   stopped: "Border stopped."
   reset: "Border reset."
+  config-list-header: "LevelBorderPvP settings:"
+  config-entry: "{key}: {value}"
+  config-set: "{key} was set to {value}."
+  config-unknown: "Unknown setting: {key}"
+  config-invalid: "Invalid value: {reason}"
 
 service:
   countdown: "Border starts in {seconds} seconds."
+  round-ended-winner: "Game ended: {winner} wins. Reason: {reason}"
+  round-ended-no-winner: "Game ended without a winner. Reason: {reason}"
+  end-reason-time: "time limit reached"
+  end-reason-target-level: "target level reached"
+  end-reason-target-border: "target border reached"
+  end-reason-elimination: "last active player"
 
 title:
   level-up: "LEVEL UP!"
   border-changed: "BORDER UPDATED"
   kill-bonus: "BORDER CONQUERED"
   border-active: "BORDER ACTIVE"
+  spectator: "SPECTATOR"
 
 subtitle:
   border-now: "Your border is now {size}."
   border-current: "Your border is {size}."
   border-set: "Your border was set to {size}."
+  spectator: "You are not active and have no border."
 
 log:
   world-border-api-missing: "WorldBorderAPI service not found. Is the WorldBorderAPI plugin installed and loaded?"
   command-missing: "Command /{command} is missing from plugin.yml"
   players-save-failed: "Could not save players.yml"
   language-file-missing: "Language file lang/{language}.yml not found. Falling back to {fallback}."
+  luckperms-command-failed: "LuckPerms command failed: {command}"

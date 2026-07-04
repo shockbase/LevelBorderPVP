@@ -2,9 +2,11 @@ package de.shockbase.levelborderpvp.border;
 
 import com.github.yannicklamprecht.worldborder.api.WorldBorderApi;
 import de.shockbase.levelborderpvp.config.LevelBorderSettings;
+import de.shockbase.levelborderpvp.config.RoundEndCondition;
 import de.shockbase.levelborderpvp.data.PlayerBorderData;
 import de.shockbase.levelborderpvp.data.PlayerBorderRepository;
 import de.shockbase.levelborderpvp.i18n.Messages;
+import de.shockbase.levelborderpvp.integration.LuckPermsRoleService;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
@@ -35,13 +37,18 @@ public final class BorderService {
     private final BorderSizeCalculator sizeCalculator;
     private final BorderNotifier notifier;
     private final Messages messages;
+    private final LuckPermsRoleService luckPermsRoleService;
     private final Map<UUID, BukkitTask> borderAnimationTasks = new HashMap<>();
     private final Map<UUID, Double> animatedBorderSizes = new HashMap<>();
+    private final Map<UUID, Integer> roundKills = new HashMap<>();
+    private final Map<UUID, Integer> roundDeaths = new HashMap<>();
     private final Set<UUID> roundPlayers = new HashSet<>();
+    private final Set<UUID> spectatorPlayers = new HashSet<>();
     private final Set<UUID> manuallyStoppedPlayers = new HashSet<>();
 
     private RoundState roundState = RoundState.LOBBY;
     private BukkitTask startCountdownTask;
+    private BukkitTask roundEndTask;
 
     public BorderService(
             Plugin plugin,
@@ -50,7 +57,8 @@ public final class BorderService {
             LevelBorderSettings settings,
             BorderSizeCalculator sizeCalculator,
             BorderNotifier notifier,
-            Messages messages
+            Messages messages,
+            LuckPermsRoleService luckPermsRoleService
     ) {
         this.plugin = plugin;
         this.worldBorderApi = worldBorderApi;
@@ -59,6 +67,7 @@ public final class BorderService {
         this.sizeCalculator = sizeCalculator;
         this.notifier = notifier;
         this.messages = messages;
+        this.luckPermsRoleService = luckPermsRoleService;
     }
 
     public void applyNextTick(Player player, BorderNotification notification) {
@@ -67,6 +76,38 @@ public final class BorderService {
 
     public void applyLater(Player player, BorderNotification notification, long delayTicks) {
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> applyCurrentState(player, notification), delayTicks);
+    }
+
+    public void reapplyOnlinePlayers() {
+        for (Player player : plugin.getServer().getOnlinePlayers()) {
+            applyNextTick(player, BorderNotification.NONE);
+        }
+    }
+
+    public void refreshRuntimeSettings() {
+        reapplyOnlinePlayers();
+        if (roundState != RoundState.ACTIVE) {
+            return;
+        }
+
+        cancelRoundEndTask();
+        scheduleRoundEnd();
+
+        for (Player player : plugin.getServer().getOnlinePlayers()) {
+            if (roundState != RoundState.ACTIVE || !isActive(player)) {
+                continue;
+            }
+
+            PlayerScore score = score(player);
+            checkTargetLevel(player, getOrCreateBorderData(player), Math.max(0, player.getLevel()));
+            checkTargetBorder(player, score.borderSize());
+        }
+
+        checkEliminationWinner();
+    }
+
+    public boolean isSpectator(Player player) {
+        return spectatorPlayers.contains(player.getUniqueId());
     }
 
     public void handleLevelChange(Player player, int newLevel) {
@@ -89,16 +130,24 @@ public final class BorderService {
         } else if (reachedNewHighestLevel) {
             apply(player, data, normalizedLevel, BorderNotification.LEVEL_UP);
         }
+
+        checkTargetLevel(player, data, normalizedLevel);
     }
 
     public void handlePlayerKill(Player killer, Player killed) {
-        if (settings.usesCurrentLevelMode() || !settings.highestKillBonusEnabled()) {
-            return;
-        }
         if (!isActive(killer)) {
             return;
         }
         if (killer.getUniqueId().equals(killed.getUniqueId())) {
+            return;
+        }
+        if (!isActive(killed)) {
+            return;
+        }
+
+        roundKills.merge(killer.getUniqueId(), 1, Integer::sum);
+
+        if (settings.usesCurrentLevelMode() || !settings.highestKillBonusEnabled()) {
             return;
         }
 
@@ -125,16 +174,35 @@ public final class BorderService {
         apply(killer, killerData, Math.max(0, killer.getLevel()), BorderNotification.KILL_BONUS);
     }
 
+    public void handlePlayerDeath(Player player) {
+        if (!isActive(player)) {
+            return;
+        }
+
+        roundDeaths.merge(player.getUniqueId(), 1, Integer::sum);
+        if (!settings.spectatorModeEnabled() && settings.endCondition() != RoundEndCondition.ELIMINATION) {
+            return;
+        }
+
+        enterSpectator(player, BorderNotification.SPECTATOR);
+        checkEliminationWinner();
+    }
+
     public void start(int countdownSeconds) {
         cancelStartCountdown();
+        cancelRoundEndTask();
 
         int boundedCountdownSeconds = Math.max(0, Math.min(countdownSeconds, settings.maxStartCountdownSeconds()));
         roundState = RoundState.COUNTDOWN;
         roundPlayers.clear();
+        spectatorPlayers.clear();
         manuallyStoppedPlayers.clear();
+        roundKills.clear();
+        roundDeaths.clear();
 
         for (Player player : plugin.getServer().getOnlinePlayers()) {
             cancelBorderAnimation(player);
+            luckPermsRoleService.clear(player);
             worldBorderApi.resetWorldBorderToGlobal(player);
         }
 
@@ -173,19 +241,26 @@ public final class BorderService {
         UUID playerId = player.getUniqueId();
         cancelBorderAnimation(player);
         manuallyStoppedPlayers.add(playerId);
+        spectatorPlayers.remove(playerId);
+        luckPermsRoleService.clear(player);
         worldBorderApi.resetWorldBorderToGlobal(player);
     }
 
     public void reset(Player player) {
         cancelBorderAnimation(player);
+        UUID playerId = player.getUniqueId();
+        manuallyStoppedPlayers.remove(playerId);
+        spectatorPlayers.remove(playerId);
 
         PlayerBorderData data = createInitialBorderData(player, Math.max(0, player.getLevel()));
         playerBorderRepository.save(data);
 
-        if (isActive(player)) {
+        if (roundState == RoundState.ACTIVE) {
             roundPlayers.add(player.getUniqueId());
+            luckPermsRoleService.markActive(player);
             apply(player, data, Math.max(0, player.getLevel()), BorderNotification.JOIN);
         } else if (roundState == RoundState.LOBBY) {
+            luckPermsRoleService.clear(player);
             applyLobbyBorder(player);
         } else {
             worldBorderApi.resetWorldBorderToGlobal(player);
@@ -194,6 +269,7 @@ public final class BorderService {
 
     public void shutdown() {
         cancelStartCountdown();
+        cancelRoundEndTask();
 
         for (BukkitTask task : borderAnimationTasks.values()) {
             task.cancel();
@@ -204,13 +280,20 @@ public final class BorderService {
 
     private void applyCurrentState(Player player, BorderNotification notification) {
         if (roundState == RoundState.LOBBY) {
+            luckPermsRoleService.clear(player);
             applyLobbyBorder(player);
             return;
         }
 
         if (roundState == RoundState.COUNTDOWN) {
             cancelBorderAnimation(player);
+            luckPermsRoleService.clear(player);
             worldBorderApi.resetWorldBorderToGlobal(player);
+            return;
+        }
+
+        if (spectatorPlayers.contains(player.getUniqueId())) {
+            applySpectator(player, notification);
             return;
         }
 
@@ -220,19 +303,33 @@ public final class BorderService {
         }
 
         if (!roundPlayers.contains(player.getUniqueId())) {
+            if (usesSpectatorForLateJoiners()) {
+                enterSpectator(player, notification);
+                return;
+            }
             activatePlayerFromCurrentPosition(player, notification);
             return;
         }
 
+        luckPermsRoleService.markActive(player);
         apply(player, notification);
     }
 
     private void ensureRoundPlayer(Player player) {
         if (roundState == RoundState.ACTIVE
                 && !manuallyStoppedPlayers.contains(player.getUniqueId())
+                && !spectatorPlayers.contains(player.getUniqueId())
                 && !roundPlayers.contains(player.getUniqueId())) {
+            if (usesSpectatorForLateJoiners()) {
+                enterSpectator(player, BorderNotification.NONE);
+                return;
+            }
             activatePlayerFromCurrentPosition(player, BorderNotification.NONE);
         }
+    }
+
+    private boolean usesSpectatorForLateJoiners() {
+        return settings.spectatorModeEnabled() || settings.endCondition() == RoundEndCondition.ELIMINATION;
     }
 
     private void apply(Player player, BorderNotification notification) {
@@ -258,6 +355,7 @@ public final class BorderService {
         playerBorderRepository.save(data.withLastAppliedBorderSize(size));
 
         notifyPlayer(player, notification, size, previousSize);
+        checkTargetBorder(player, size);
     }
 
     private void applyBorder(
@@ -290,6 +388,24 @@ public final class BorderService {
         worldBorderApi.setBorder(player, lobbyRadius * 2.0D, player.getWorld().getSpawnLocation());
     }
 
+    private void applySpectator(Player player, BorderNotification notification) {
+        cancelBorderAnimation(player);
+        worldBorderApi.resetWorldBorderToGlobal(player);
+        luckPermsRoleService.markSpectator(player);
+
+        if (notification == BorderNotification.SPECTATOR
+                || notification == BorderNotification.JOIN
+                || notification == BorderNotification.RESPAWN) {
+            notifier.showSpectator(player);
+        }
+    }
+
+    private void enterSpectator(Player player, BorderNotification notification) {
+        spectatorPlayers.add(player.getUniqueId());
+        manuallyStoppedPlayers.remove(player.getUniqueId());
+        applySpectator(player, notification);
+    }
+
     private void broadcastCountdown(int remainingSeconds) {
         String message = messages.text(
                 "service.countdown",
@@ -303,18 +419,207 @@ public final class BorderService {
     private void activateRound() {
         roundState = RoundState.ACTIVE;
         roundPlayers.clear();
+        spectatorPlayers.clear();
         manuallyStoppedPlayers.clear();
 
         for (Player player : plugin.getServer().getOnlinePlayers()) {
+            if (roundState != RoundState.ACTIVE) {
+                break;
+            }
             activatePlayerFromCurrentPosition(player, BorderNotification.JOIN);
+        }
+
+        if (roundState == RoundState.ACTIVE) {
+            scheduleRoundEnd();
+            checkEliminationWinner();
         }
     }
 
     private void activatePlayerFromCurrentPosition(Player player, BorderNotification notification) {
         roundPlayers.add(player.getUniqueId());
+        spectatorPlayers.remove(player.getUniqueId());
+        manuallyStoppedPlayers.remove(player.getUniqueId());
+        luckPermsRoleService.markActive(player);
         PlayerBorderData data = createInitialBorderData(player, Math.max(0, player.getLevel()));
         playerBorderRepository.save(data);
         apply(player, data, Math.max(0, player.getLevel()), notification);
+    }
+
+    private void scheduleRoundEnd() {
+        cancelRoundEndTask();
+        if (settings.endCondition() != RoundEndCondition.TIMED_SCORE) {
+            return;
+        }
+
+        long delayTicks = settings.roundDurationMinutes() * 60L * 20L;
+        roundEndTask = plugin.getServer().getScheduler().runTaskLater(plugin, this::finishTimedScoreRound, delayTicks);
+    }
+
+    private void finishTimedScoreRound() {
+        if (roundState != RoundState.ACTIVE) {
+            return;
+        }
+
+        PlayerScore winner = findScoreWinner();
+        if (winner == null) {
+            finishRoundWithoutWinner("service.end-reason-time");
+            return;
+        }
+
+        finishRoundWithWinner(winner.player(), "service.end-reason-time");
+    }
+
+    private PlayerScore findScoreWinner() {
+        PlayerScore best = null;
+        boolean tied = false;
+
+        for (Player player : plugin.getServer().getOnlinePlayers()) {
+            if (!isActive(player)) {
+                continue;
+            }
+
+            PlayerScore candidate = score(player);
+            if (best == null) {
+                best = candidate;
+                tied = false;
+                continue;
+            }
+
+            int comparison = compareScores(candidate, best);
+            if (comparison > 0) {
+                best = candidate;
+                tied = false;
+            } else if (comparison == 0) {
+                tied = true;
+            }
+        }
+
+        return tied ? null : best;
+    }
+
+    private PlayerScore score(Player player) {
+        PlayerBorderData data = updateMaxReachedLevel(player, getOrCreateBorderData(player));
+        int currentLevel = Math.max(0, player.getLevel());
+        int borderLevel = resolveLevelForBorder(data, currentLevel);
+        return new PlayerScore(
+                player,
+                sizeCalculator.calculate(borderLevel),
+                Math.max(data.maxReachedLevel(), currentLevel),
+                roundKills.getOrDefault(player.getUniqueId(), 0),
+                roundDeaths.getOrDefault(player.getUniqueId(), 0)
+        );
+    }
+
+    private int compareScores(PlayerScore first, PlayerScore second) {
+        int borderComparison = Double.compare(first.borderSize(), second.borderSize());
+        if (borderComparison != 0) {
+            return borderComparison;
+        }
+
+        for (String tiebreaker : settings.scoreTiebreakers()) {
+            int comparison = compareScoreTiebreaker(first, second, tiebreaker);
+            if (comparison != 0) {
+                return comparison;
+            }
+        }
+
+        return 0;
+    }
+
+    private int compareScoreTiebreaker(PlayerScore first, PlayerScore second, String tiebreaker) {
+        if (tiebreaker == null) {
+            return 0;
+        }
+
+        return switch (tiebreaker.trim().toLowerCase()) {
+            case "kills" -> Integer.compare(first.kills(), second.kills());
+            case "highest-level" -> Integer.compare(first.highestLevel(), second.highestLevel());
+            case "deaths-ascending" -> Integer.compare(second.deaths(), first.deaths());
+            default -> 0;
+        };
+    }
+
+    private void checkTargetLevel(Player player, PlayerBorderData data, int currentLevel) {
+        if (roundState != RoundState.ACTIVE || settings.endCondition() != RoundEndCondition.TARGET_LEVEL) {
+            return;
+        }
+
+        int reachedLevel = settings.usesCurrentLevelMode() ? currentLevel : Math.max(data.maxReachedLevel(), currentLevel);
+        if (reachedLevel >= settings.winTargetLevel()) {
+            finishRoundWithWinner(player, "service.end-reason-target-level");
+        }
+    }
+
+    private void checkTargetBorder(Player player, double borderSize) {
+        if (roundState != RoundState.ACTIVE || settings.endCondition() != RoundEndCondition.TARGET_BORDER) {
+            return;
+        }
+
+        if (borderSize >= settings.winTargetBorderSizeBlocks()) {
+            finishRoundWithWinner(player, "service.end-reason-target-border");
+        }
+    }
+
+    private void checkEliminationWinner() {
+        if (roundState != RoundState.ACTIVE || settings.endCondition() != RoundEndCondition.ELIMINATION) {
+            return;
+        }
+
+        Player remaining = null;
+        int activePlayers = 0;
+        for (Player player : plugin.getServer().getOnlinePlayers()) {
+            if (!isActive(player)) {
+                continue;
+            }
+            remaining = player;
+            activePlayers++;
+        }
+
+        if (activePlayers == 1) {
+            finishRoundWithWinner(remaining, "service.end-reason-elimination");
+        } else if (activePlayers == 0) {
+            finishRoundWithoutWinner("service.end-reason-elimination");
+        }
+    }
+
+    private void finishRoundWithWinner(Player winner, String reasonKey) {
+        String reason = messages.text(reasonKey);
+        plugin.getServer().broadcastMessage(messages.text(
+                "service.round-ended-winner",
+                Messages.placeholder("winner", winner.getName()),
+                Messages.placeholder("reason", reason)
+        ));
+        finishRound();
+    }
+
+    private void finishRoundWithoutWinner(String reasonKey) {
+        String reason = messages.text(reasonKey);
+        plugin.getServer().broadcastMessage(messages.text(
+                "service.round-ended-no-winner",
+                Messages.placeholder("reason", reason)
+        ));
+        finishRound();
+    }
+
+    private void finishRound() {
+        cancelStartCountdown();
+        cancelRoundEndTask();
+        roundState = RoundState.LOBBY;
+
+        for (Player player : plugin.getServer().getOnlinePlayers()) {
+            cancelBorderAnimation(player);
+            luckPermsRoleService.clear(player);
+            applyLobbyBorder(player);
+        }
+
+        roundPlayers.clear();
+        spectatorPlayers.clear();
+        manuallyStoppedPlayers.clear();
+        roundKills.clear();
+        roundDeaths.clear();
+    }
+
+    private record PlayerScore(Player player, double borderSize, int highestLevel, int kills, int deaths) {
     }
 
     private double currentDisplayedBorderSize(Player player, PlayerBorderData data) {
@@ -381,8 +686,19 @@ public final class BorderService {
         }
     }
 
+    private void cancelRoundEndTask() {
+        if (roundEndTask != null) {
+            roundEndTask.cancel();
+            roundEndTask = null;
+        }
+    }
+
     private boolean isActive(Player player) {
-        return roundState == RoundState.ACTIVE && !manuallyStoppedPlayers.contains(player.getUniqueId());
+        UUID playerId = player.getUniqueId();
+        return roundState == RoundState.ACTIVE
+                && roundPlayers.contains(playerId)
+                && !spectatorPlayers.contains(playerId)
+                && !manuallyStoppedPlayers.contains(playerId);
     }
 
     private void keepPlayerInsideShrinkingBorder(Player player, Location center, double previousSize, double size) {

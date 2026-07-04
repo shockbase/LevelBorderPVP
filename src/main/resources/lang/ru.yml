@@ -1,32 +1,47 @@
 command:
   players-only: "Эту команду могут использовать только игроки."
-  usage: "Использование: /{label} <start|stop|reset> [секунды]"
+  usage: "Использование: /{label} <start|stop|reset|config> [аргументы]"
   start-usage: "Использование: /{label} start [секунды]"
   stop-usage: "Использование: /{label} stop"
   reset-usage: "Использование: /{label} reset"
+  config-usage: "Использование: /{label} config [list|get <key>|set <key> <value>]"
   invalid-seconds: "Укажите секунды целым числом."
-  negative-countdown: "Отсчет не может быть отрицательным."
-  max-countdown: "Отсчет может быть максимум {seconds} сек."
+  negative-countdown: "Обратный отсчет не может быть отрицательным."
+  max-countdown: "Обратный отсчет может быть максимум {seconds} сек."
   starting: "Обратный отсчет запущен: {seconds} сек."
   stopped: "Граница остановлена."
   reset: "Граница сброшена."
+  config-list-header: "Настройки LevelBorderPvP:"
+  config-entry: "{key}: {value}"
+  config-set: "{key} установлено на {value}."
+  config-unknown: "Неизвестная настройка: {key}"
+  config-invalid: "Недопустимое значение: {reason}"
 
 service:
   countdown: "Граница запустится через {seconds} сек."
+  round-ended-winner: "Игра окончена: победил {winner}. Причина: {reason}"
+  round-ended-no-winner: "Игра окончена без победителя. Причина: {reason}"
+  end-reason-time: "истекло время"
+  end-reason-target-level: "достигнут целевой уровень"
+  end-reason-target-border: "достигнута целевая граница"
+  end-reason-elimination: "последний активный игрок"
 
 title:
   level-up: "УРОВЕНЬ ПОВЫШЕН!"
   border-changed: "ГРАНИЦА ОБНОВЛЕНА"
   kill-bonus: "ГРАНИЦА ЗАХВАЧЕНА"
   border-active: "ГРАНИЦА АКТИВНА"
+  spectator: "НАБЛЮДАТЕЛЬ"
 
 subtitle:
   border-now: "Твоя граница теперь {size}."
   border-current: "Твоя граница: {size}."
   border-set: "Твоя граница установлена на {size}."
+  spectator: "Ты не активный игрок и не имеешь своей границы."
 
 log:
   world-border-api-missing: "Сервис WorldBorderAPI не найден. Установлен и загружен ли плагин WorldBorderAPI?"
   command-missing: "Команда /{command} отсутствует в plugin.yml"
   players-save-failed: "Не удалось сохранить players.yml"
   language-file-missing: "Файл языка lang/{language}.yml не найден. Используется {fallback}."
+  luckperms-command-failed: "Команда LuckPerms завершилась с ошибкой: {command}"

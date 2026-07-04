@@ -1,13 +1,20 @@
 package de.shockbase.levelborderpvp.config;
 
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.plugin.java.JavaPlugin;
+
+import java.util.List;
 
 public final class LevelBorderSettings {
 
+    private static final List<String> DEFAULT_SCORE_TIEBREAKERS = List.of("kills", "highest-level", "deaths-ascending");
+
+    private final JavaPlugin plugin;
     private final FileConfiguration config;
 
-    public LevelBorderSettings(FileConfiguration config) {
-        this.config = config;
+    public LevelBorderSettings(JavaPlugin plugin) {
+        this.plugin = plugin;
+        this.config = plugin.getConfig();
     }
 
     public double initialSizeBlocks() {
@@ -65,5 +72,71 @@ public final class LevelBorderSettings {
 
     public boolean reapplyOnRespawn() {
         return config.getBoolean("reapply-on-respawn", true);
+    }
+
+    public RoundEndCondition endCondition() {
+        return RoundEndCondition.fromConfig(config.getString("end-condition", RoundEndCondition.TIMED_SCORE.configValue()));
+    }
+
+    public int roundDurationMinutes() {
+        return Math.max(1, config.getInt("round-duration-minutes", 60));
+    }
+
+    public List<String> scoreTiebreakers() {
+        List<String> configured = config.getStringList("score-tiebreakers");
+        return configured.isEmpty() ? DEFAULT_SCORE_TIEBREAKERS : configured;
+    }
+
+    public int winTargetLevel() {
+        return Math.max(1, config.getInt("win-target-level", 30));
+    }
+
+    public double winTargetBorderSizeBlocks() {
+        return Math.max(1.0D, config.getDouble("win-target-border-size-blocks", 63.0D));
+    }
+
+    public boolean spectatorModeEnabled() {
+        return config.getBoolean("spectator-mode-enabled", true);
+    }
+
+    public boolean luckPermsIntegrationEnabled() {
+        return config.getBoolean("luckperms-integration-enabled", false);
+    }
+
+    public String luckPermsActiveGroup() {
+        return config.getString("luckperms-active-group", "levelborder_active");
+    }
+
+    public String luckPermsSpectatorGroup() {
+        return config.getString("luckperms-spectator-group", "levelborder_spectator");
+    }
+
+    public boolean luckPermsClearGroupsOnRoundEnd() {
+        return config.getBoolean("luckperms-clear-groups-on-round-end", true);
+    }
+
+    public String luckPermsAddActiveCommand() {
+        return config.getString("luckperms-command-add-active", "lp user {player} parent add {active_group}");
+    }
+
+    public String luckPermsRemoveActiveCommand() {
+        return config.getString("luckperms-command-remove-active", "lp user {player} parent remove {active_group}");
+    }
+
+    public String luckPermsAddSpectatorCommand() {
+        return config.getString("luckperms-command-add-spectator", "lp user {player} parent add {spectator_group}");
+    }
+
+    public String luckPermsRemoveSpectatorCommand() {
+        return config.getString("luckperms-command-remove-spectator", "lp user {player} parent remove {spectator_group}");
+    }
+
+    public Object configValue(String path) {
+        return config.get(path);
+    }
+
+    public void setConfigValue(String path, Object value) {
+        config.set(path, value);
+        plugin.saveConfig();
     }
 }

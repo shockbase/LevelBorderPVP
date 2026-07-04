@@ -12,10 +12,15 @@ import org.bukkit.entity.Player;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.StringJoiner;
 
 public final class BorderCommand implements CommandExecutor, TabCompleter {
+
+    private static final Map<String, ConfigOption> CONFIG_OPTIONS = createConfigOptions();
 
     private final LevelBorderSettings settings;
     private final BorderService borderService;
@@ -25,6 +30,42 @@ public final class BorderCommand implements CommandExecutor, TabCompleter {
         this.settings = settings;
         this.borderService = borderService;
         this.messages = messages;
+    }
+
+    private static Map<String, ConfigOption> createConfigOptions() {
+        Map<String, ConfigOption> options = new LinkedHashMap<>();
+        add(options, "initial-size-blocks", ConfigValueType.DOUBLE);
+        add(options, "growth-per-level-blocks", ConfigValueType.DOUBLE);
+        add(options, "level-mode", ConfigValueType.STRING, "highest", "current");
+        add(options, "highest-kill-bonus-enabled", ConfigValueType.BOOLEAN);
+        add(options, "highest-kill-bonus-inherits-victim-bonus", ConfigValueType.BOOLEAN);
+        add(options, "lobby-radius-blocks", ConfigValueType.DOUBLE);
+        add(options, "center-at-block-center", ConfigValueType.BOOLEAN);
+        add(options, "max-size-blocks", ConfigValueType.DOUBLE);
+        add(options, "border-transition-milliseconds", ConfigValueType.LONG);
+        add(options, "start-countdown-seconds", ConfigValueType.INT);
+        add(options, "max-start-countdown-seconds", ConfigValueType.INT);
+        add(options, "reapply-on-world-change", ConfigValueType.BOOLEAN);
+        add(options, "reapply-on-respawn", ConfigValueType.BOOLEAN);
+        add(options, "end-condition", ConfigValueType.STRING, "timed-score", "target-level", "target-border", "elimination", "disabled");
+        add(options, "round-duration-minutes", ConfigValueType.INT);
+        add(options, "score-tiebreakers", ConfigValueType.STRING_LIST, "kills,highest-level,deaths-ascending");
+        add(options, "win-target-level", ConfigValueType.INT);
+        add(options, "win-target-border-size-blocks", ConfigValueType.DOUBLE);
+        add(options, "spectator-mode-enabled", ConfigValueType.BOOLEAN);
+        add(options, "luckperms-integration-enabled", ConfigValueType.BOOLEAN);
+        add(options, "luckperms-active-group", ConfigValueType.STRING);
+        add(options, "luckperms-spectator-group", ConfigValueType.STRING);
+        add(options, "luckperms-clear-groups-on-round-end", ConfigValueType.BOOLEAN);
+        add(options, "luckperms-command-add-active", ConfigValueType.STRING);
+        add(options, "luckperms-command-remove-active", ConfigValueType.STRING);
+        add(options, "luckperms-command-add-spectator", ConfigValueType.STRING);
+        add(options, "luckperms-command-remove-spectator", ConfigValueType.STRING);
+        return Collections.unmodifiableMap(options);
+    }
+
+    private static void add(Map<String, ConfigOption> options, String path, ConfigValueType type, String... suggestions) {
+        options.put(path, new ConfigOption(path, type, List.of(suggestions)));
     }
 
     @Override
@@ -42,7 +83,10 @@ public final class BorderCommand implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
-            return matching(List.of("start", "stop", "reset"), args[0]);
+            return matching(List.of("start", "stop", "reset", "config"), args[0]);
+        }
+        if ("config".equalsIgnoreCase(args[0])) {
+            return tabCompleteConfig(args);
         }
         if (args.length != 2 || !"start".equalsIgnoreCase(args[0])) {
             return Collections.emptyList();
@@ -54,6 +98,23 @@ public final class BorderCommand implements CommandExecutor, TabCompleter {
                 "5",
                 "10"
         ), args[1]);
+    }
+
+    private List<String> tabCompleteConfig(String[] args) {
+        if (args.length == 2) {
+            return matching(List.of("list", "get", "set"), args[1]);
+        }
+        if (args.length == 3 && ("get".equalsIgnoreCase(args[1]) || "set".equalsIgnoreCase(args[1]))) {
+            return matching(new ArrayList<>(CONFIG_OPTIONS.keySet()), args[2]);
+        }
+        if (args.length == 4 && "set".equalsIgnoreCase(args[1])) {
+            ConfigOption option = CONFIG_OPTIONS.get(args[2].toLowerCase(Locale.ROOT));
+            if (option == null) {
+                return Collections.emptyList();
+            }
+            return matching(option.valueSuggestions(), args[3]);
+        }
+        return Collections.emptyList();
     }
 
     private List<String> matching(List<String> suggestions, String currentArgument) {
@@ -76,6 +137,9 @@ public final class BorderCommand implements CommandExecutor, TabCompleter {
         }
         if ("reset".equals(subCommand)) {
             return handleReset(sender, label, args);
+        }
+        if ("config".equals(subCommand)) {
+            return handleConfig(sender, label, args);
         }
 
         sender.sendMessage(messages.text("command.usage", Messages.placeholder("label", label)));
@@ -146,5 +210,169 @@ public final class BorderCommand implements CommandExecutor, TabCompleter {
         borderService.reset(player);
         player.sendMessage(messages.text("command.reset"));
         return true;
+    }
+
+    private boolean handleConfig(CommandSender sender, String label, String[] args) {
+        if (args.length == 0 || (args.length == 1 && "list".equalsIgnoreCase(args[0]))) {
+            sender.sendMessage(messages.text("command.config-list-header"));
+            for (ConfigOption option : CONFIG_OPTIONS.values()) {
+                sender.sendMessage(messages.text(
+                        "command.config-entry",
+                        Messages.placeholder("key", option.path()),
+                        Messages.placeholder("value", formatConfigValue(settings.configValue(option.path())))
+                ));
+            }
+            return true;
+        }
+
+        if (args.length == 2 && "get".equalsIgnoreCase(args[0])) {
+            ConfigOption option = findConfigOption(args[1]);
+            if (option == null) {
+                sender.sendMessage(messages.text("command.config-unknown", Messages.placeholder("key", args[1])));
+                return true;
+            }
+
+            sender.sendMessage(messages.text(
+                    "command.config-entry",
+                    Messages.placeholder("key", option.path()),
+                    Messages.placeholder("value", formatConfigValue(settings.configValue(option.path())))
+            ));
+            return true;
+        }
+
+        if (args.length >= 3 && "set".equalsIgnoreCase(args[0])) {
+            ConfigOption option = findConfigOption(args[1]);
+            if (option == null) {
+                sender.sendMessage(messages.text("command.config-unknown", Messages.placeholder("key", args[1])));
+                return true;
+            }
+
+            String rawValue = String.join(" ", Arrays.copyOfRange(args, 2, args.length));
+            Object parsedValue;
+            try {
+                parsedValue = parseConfigValue(option, rawValue);
+            } catch (IllegalArgumentException exception) {
+                sender.sendMessage(messages.text("command.config-invalid", Messages.placeholder("reason", exception.getMessage())));
+                return true;
+            }
+
+            settings.setConfigValue(option.path(), parsedValue);
+            borderService.refreshRuntimeSettings();
+            sender.sendMessage(messages.text(
+                    "command.config-set",
+                    Messages.placeholder("key", option.path()),
+                    Messages.placeholder("value", formatConfigValue(parsedValue))
+            ));
+            return true;
+        }
+
+        sender.sendMessage(messages.text("command.config-usage", Messages.placeholder("label", label)));
+        return true;
+    }
+
+    private ConfigOption findConfigOption(String key) {
+        if (key == null) {
+            return null;
+        }
+        return CONFIG_OPTIONS.get(key.toLowerCase(Locale.ROOT));
+    }
+
+    private Object parseConfigValue(ConfigOption option, String rawValue) {
+        String value = rawValue == null ? "" : rawValue.trim();
+        if (value.isEmpty()) {
+            throw new IllegalArgumentException("value is empty");
+        }
+
+        return switch (option.type()) {
+            case BOOLEAN -> parseBoolean(value);
+            case INT -> parseInteger(value);
+            case LONG -> parseLong(value);
+            case DOUBLE -> parseDouble(value);
+            case STRING -> parseString(option, value);
+            case STRING_LIST -> parseStringList(value);
+        };
+    }
+
+    private boolean parseBoolean(String value) {
+        return switch (value.toLowerCase(Locale.ROOT)) {
+            case "true", "yes", "on", "1" -> true;
+            case "false", "no", "off", "0" -> false;
+            default -> throw new IllegalArgumentException("expected true/false");
+        };
+    }
+
+    private int parseInteger(String value) {
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException exception) {
+            throw new IllegalArgumentException("expected whole number");
+        }
+    }
+
+    private long parseLong(String value) {
+        try {
+            return Long.parseLong(value);
+        } catch (NumberFormatException exception) {
+            throw new IllegalArgumentException("expected whole number");
+        }
+    }
+
+    private double parseDouble(String value) {
+        try {
+            return Double.parseDouble(value);
+        } catch (NumberFormatException exception) {
+            throw new IllegalArgumentException("expected decimal number");
+        }
+    }
+
+    private String parseString(ConfigOption option, String value) {
+        if (option.valueSuggestions().isEmpty()) {
+            return value;
+        }
+
+        for (String allowed : option.valueSuggestions()) {
+            if (allowed.equalsIgnoreCase(value)) {
+                return allowed;
+            }
+        }
+
+        throw new IllegalArgumentException("allowed: " + String.join(", ", option.valueSuggestions()));
+    }
+
+    private List<String> parseStringList(String value) {
+        List<String> entries = new ArrayList<>();
+        for (String entry : value.split(",")) {
+            String trimmed = entry.trim();
+            if (!trimmed.isEmpty()) {
+                entries.add(trimmed);
+            }
+        }
+        if (entries.isEmpty()) {
+            throw new IllegalArgumentException("expected comma-separated values");
+        }
+        return entries;
+    }
+
+    private String formatConfigValue(Object value) {
+        if (value instanceof List<?> list) {
+            StringJoiner joiner = new StringJoiner(",");
+            for (Object entry : list) {
+                joiner.add(String.valueOf(entry));
+            }
+            return joiner.toString();
+        }
+        return String.valueOf(value);
+    }
+
+    private enum ConfigValueType {
+        BOOLEAN,
+        INT,
+        LONG,
+        DOUBLE,
+        STRING,
+        STRING_LIST
+    }
+
+    private record ConfigOption(String path, ConfigValueType type, List<String> valueSuggestions) {
     }
 }

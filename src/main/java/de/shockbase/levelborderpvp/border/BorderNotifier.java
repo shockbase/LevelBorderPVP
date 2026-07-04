@@ -52,6 +52,13 @@ public final class BorderNotifier {
         showStatus(player, "title.border-active", "subtitle.border-set", borderSize);
     }
 
+    public void showSpectator(Player player) {
+        Component title = Component.text(messages.text("title.spectator"), NamedTextColor.YELLOW);
+        Component subtitle = Component.text(messages.text("subtitle.spectator"), NamedTextColor.WHITE);
+
+        player.showTitle(Title.title(title, subtitle, TITLE_TIMES));
+    }
+
     private void showStatus(Player player, String titleKey, String subtitleKey, double borderSize) {
         Component title = Component.text(messages.text(titleKey), NamedTextColor.GREEN);
         Component subtitle = Component.text(
