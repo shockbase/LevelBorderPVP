@@ -1,9 +1,9 @@
-package de.oehme.personallevelborder.border;
+package de.shockbase.levelborderpvp.border;
 
 import com.github.yannicklamprecht.worldborder.api.WorldBorderApi;
-import de.oehme.personallevelborder.config.LevelBorderSettings;
-import de.oehme.personallevelborder.data.PlayerBorderData;
-import de.oehme.personallevelborder.data.PlayerBorderRepository;
+import de.shockbase.levelborderpvp.config.LevelBorderSettings;
+import de.shockbase.levelborderpvp.data.PlayerBorderData;
+import de.shockbase.levelborderpvp.data.PlayerBorderRepository;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;

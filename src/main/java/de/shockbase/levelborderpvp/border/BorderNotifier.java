@@ -1,4 +1,4 @@
-package de.oehme.personallevelborder.border;
+package de.shockbase.levelborderpvp.border;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;

@@ -1,8 +1,8 @@
-package de.oehme.personallevelborder.listener;
+package de.shockbase.levelborderpvp.listener;
 
-import de.oehme.personallevelborder.border.BorderNotification;
-import de.oehme.personallevelborder.border.BorderService;
-import de.oehme.personallevelborder.config.LevelBorderSettings;
+import de.shockbase.levelborderpvp.border.BorderNotification;
+import de.shockbase.levelborderpvp.border.BorderService;
+import de.shockbase.levelborderpvp.config.LevelBorderSettings;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;

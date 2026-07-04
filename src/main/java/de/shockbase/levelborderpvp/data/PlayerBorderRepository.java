@@ -1,4 +1,4 @@
-package de.oehme.personallevelborder.data;
+package de.shockbase.levelborderpvp.data;
 
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;

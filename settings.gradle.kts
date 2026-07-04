@@ -5,4 +5,4 @@ pluginManagement {
     }
 }
 
-rootProject.name = "PersonalLevelBorder"
+rootProject.name = "LevelBorderPvP"

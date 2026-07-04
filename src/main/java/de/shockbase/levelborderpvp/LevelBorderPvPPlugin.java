@@ -1,22 +1,22 @@
-package de.oehme.personallevelborder;
+package de.shockbase.levelborderpvp;
 
 import com.github.yannicklamprecht.worldborder.api.WorldBorderApi;
-import de.oehme.personallevelborder.border.BorderNotification;
-import de.oehme.personallevelborder.border.BorderNotifier;
-import de.oehme.personallevelborder.border.BorderService;
-import de.oehme.personallevelborder.border.BorderSizeCalculator;
-import de.oehme.personallevelborder.border.BorderSizeFormatter;
-import de.oehme.personallevelborder.command.BorderCommand;
-import de.oehme.personallevelborder.config.LevelBorderSettings;
-import de.oehme.personallevelborder.data.PlayerBorderRepository;
-import de.oehme.personallevelborder.listener.PlayerBorderListener;
+import de.shockbase.levelborderpvp.border.BorderNotification;
+import de.shockbase.levelborderpvp.border.BorderNotifier;
+import de.shockbase.levelborderpvp.border.BorderService;
+import de.shockbase.levelborderpvp.border.BorderSizeCalculator;
+import de.shockbase.levelborderpvp.border.BorderSizeFormatter;
+import de.shockbase.levelborderpvp.command.BorderCommand;
+import de.shockbase.levelborderpvp.config.LevelBorderSettings;
+import de.shockbase.levelborderpvp.data.PlayerBorderRepository;
+import de.shockbase.levelborderpvp.listener.PlayerBorderListener;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
-public final class PersonalLevelBorderPlugin extends JavaPlugin {
+public final class LevelBorderPvPPlugin extends JavaPlugin {
 
     private PlayerBorderRepository playerBorderRepository;
     private BorderService borderService;

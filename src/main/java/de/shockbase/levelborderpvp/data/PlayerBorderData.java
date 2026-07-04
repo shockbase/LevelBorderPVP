@@ -1,4 +1,4 @@
-package de.oehme.personallevelborder.data;
+package de.shockbase.levelborderpvp.data;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;

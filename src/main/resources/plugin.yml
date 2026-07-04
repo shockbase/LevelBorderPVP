@@ -1,9 +1,9 @@
-name: PersonalLevelBorder
+name: LevelBorderPvP
 version: '${version}'
-main: de.oehme.personallevelborder.PersonalLevelBorderPlugin
+main: de.shockbase.levelborderpvp.LevelBorderPvPPlugin
 api-version: '26.2'
 description: Per-player WorldBorderAPI borders that scale with player XP levels.
-author: Oliver Oehme
+author: Shockbase
 depend:
   - WorldBorderAPI
 commands:

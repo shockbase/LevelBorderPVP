@@ -2,7 +2,7 @@ plugins {
     java
 }
 
-group = "de.oehme"
+group = "de.shockbase"
 version = "1.0.0"
 
 description = "Per-player WorldBorderAPI borders that scale with player XP levels."

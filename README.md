@@ -1,4 +1,4 @@
-# PersonalLevelBorder
+# LevelBorderPvP
 
 Paper plugin for individual per-player borders via WorldBorderAPI.
 
@@ -13,7 +13,7 @@ WorldBorderAPI must also be installed as a server plugin. This plugin only compi
 ## Behavior
 
 - On the player's first handled spawn/join, the plugin stores the block the player is standing on.
-- The border center is stored in `plugins/PersonalLevelBorder/players.yml` and is never recalculated afterward.
+- The border center is stored in `plugins/LevelBorderPvP/players.yml` and is never recalculated afterward.
 - The real server world border is not modified.
 - The WorldBorderAPI border size can use either the highest XP level the player has ever reached or the player's current XP level.
 - Level-based size changes are animated over `border-transition-milliseconds` by default.
@@ -60,19 +60,19 @@ gradle build
 The plugin jar is created in:
 
 ```text
-build/libs/PersonalLevelBorder-1.0.0.jar
+build/libs/LevelBorderPvP-1.0.0.jar
 ```
 
 Install both jars on the server:
 
 ```text
 plugins/worldborderapiplugin-26.2.0.0.jar
-plugins/PersonalLevelBorder-1.0.0.jar
+plugins/LevelBorderPvP-1.0.0.jar
 ```
 
 ## Configuration
 
-`src/main/resources/config.yml` is copied to `plugins/PersonalLevelBorder/config.yml` on first start.
+`src/main/resources/config.yml` is copied to `plugins/LevelBorderPvP/config.yml` on first start.
 
 Commands:
 

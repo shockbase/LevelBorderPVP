@@ -1,4 +1,4 @@
-package de.oehme.personallevelborder.border;
+package de.shockbase.levelborderpvp.border;
 
 public enum BorderNotification {
     NONE,

@@ -1,7 +1,7 @@
-package de.oehme.personallevelborder.command;
+package de.shockbase.levelborderpvp.command;
 
-import de.oehme.personallevelborder.border.BorderService;
-import de.oehme.personallevelborder.config.LevelBorderSettings;
+import de.shockbase.levelborderpvp.border.BorderService;
+import de.shockbase.levelborderpvp.config.LevelBorderSettings;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;

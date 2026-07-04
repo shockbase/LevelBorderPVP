@@ -1,4 +1,4 @@
-package de.oehme.personallevelborder.config;
+package de.shockbase.levelborderpvp.config;
 
 import org.bukkit.configuration.file.FileConfiguration;
 

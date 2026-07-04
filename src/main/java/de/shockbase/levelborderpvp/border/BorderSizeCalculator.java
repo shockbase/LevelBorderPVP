@@ -1,6 +1,6 @@
-package de.oehme.personallevelborder.border;
+package de.shockbase.levelborderpvp.border;
 
-import de.oehme.personallevelborder.config.LevelBorderSettings;
+import de.shockbase.levelborderpvp.config.LevelBorderSettings;
 
 public final class BorderSizeCalculator {
 
