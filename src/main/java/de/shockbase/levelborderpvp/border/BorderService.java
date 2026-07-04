@@ -7,44 +7,21 @@ import de.shockbase.levelborderpvp.data.PlayerBorderData;
 import de.shockbase.levelborderpvp.data.PlayerBorderRepository;
 import de.shockbase.levelborderpvp.i18n.Messages;
 import de.shockbase.levelborderpvp.integration.LuckPermsRoleService;
-import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-
 public final class BorderService {
 
-    private static final double BORDER_SIZE_EPSILON = 0.000001D;
-    private static final double BORDER_SAFE_MARGIN_BLOCKS = 0.3D;
-
-    private enum RoundState {
-        LOBBY,
-        COUNTDOWN,
-        ACTIVE
-    }
-
     private final Plugin plugin;
-    private final WorldBorderApi worldBorderApi;
-    private final PlayerBorderRepository playerBorderRepository;
     private final LevelBorderSettings settings;
-    private final BorderSizeCalculator sizeCalculator;
-    private final BorderNotifier notifier;
     private final Messages messages;
     private final LuckPermsRoleService luckPermsRoleService;
-    private final Map<UUID, BukkitTask> borderAnimationTasks = new HashMap<>();
-    private final Map<UUID, Double> animatedBorderSizes = new HashMap<>();
-    private final Map<UUID, Integer> roundKills = new HashMap<>();
-    private final Map<UUID, Integer> roundDeaths = new HashMap<>();
-    private final Set<UUID> roundPlayers = new HashSet<>();
-    private final Set<UUID> spectatorPlayers = new HashSet<>();
-    private final Set<UUID> manuallyStoppedPlayers = new HashSet<>();
+    private final BorderRenderer borderRenderer;
+    private final PlayerBorderDataService playerBorderDataService;
+    private final RoundPlayerTracker roundPlayers = new RoundPlayerTracker();
+    private final RoundScoreTracker roundScores;
 
     private RoundState roundState = RoundState.LOBBY;
     private BukkitTask startCountdownTask;
@@ -61,13 +38,12 @@ public final class BorderService {
             LuckPermsRoleService luckPermsRoleService
     ) {
         this.plugin = plugin;
-        this.worldBorderApi = worldBorderApi;
-        this.playerBorderRepository = playerBorderRepository;
         this.settings = settings;
-        this.sizeCalculator = sizeCalculator;
-        this.notifier = notifier;
         this.messages = messages;
         this.luckPermsRoleService = luckPermsRoleService;
+        this.borderRenderer = new BorderRenderer(plugin, worldBorderApi, playerBorderRepository, settings, sizeCalculator, notifier);
+        this.playerBorderDataService = new PlayerBorderDataService(playerBorderRepository, settings, sizeCalculator);
+        this.roundScores = new RoundScoreTracker(settings, sizeCalculator, playerBorderDataService, roundPlayers);
     }
 
     public void applyNextTick(Player player, BorderNotification notification) {
@@ -94,12 +70,13 @@ public final class BorderService {
         scheduleRoundEnd();
 
         for (Player player : plugin.getServer().getOnlinePlayers()) {
-            if (roundState != RoundState.ACTIVE || !isActive(player)) {
+            if (!isActive(player)) {
                 continue;
             }
 
-            PlayerScore score = score(player);
-            checkTargetLevel(player, getOrCreateBorderData(player), Math.max(0, player.getLevel()));
+            int currentLevel = Math.max(0, player.getLevel());
+            PlayerScore score = roundScores.score(player);
+            checkTargetLevel(player, settings.usesCurrentLevelMode() ? currentLevel : score.highestLevel());
             checkTargetBorder(player, score.borderSize());
         }
 
@@ -107,7 +84,7 @@ public final class BorderService {
     }
 
     public boolean isSpectator(Player player) {
-        return spectatorPlayers.contains(player.getUniqueId());
+        return roundPlayers.isSpectator(player);
     }
 
     public void handleLevelChange(Player player, int newLevel) {
@@ -116,13 +93,13 @@ public final class BorderService {
         }
         ensureRoundPlayer(player);
 
-        PlayerBorderData data = getOrCreateBorderData(player);
+        PlayerBorderData data = playerBorderDataService.getOrCreate(player);
         int normalizedLevel = Math.max(0, newLevel);
         boolean reachedNewHighestLevel = normalizedLevel > data.maxReachedLevel();
 
         if (reachedNewHighestLevel) {
             data = data.withMaxReachedLevel(normalizedLevel);
-            playerBorderRepository.save(data);
+            playerBorderDataService.save(data);
         }
 
         if (settings.usesCurrentLevelMode()) {
@@ -131,7 +108,10 @@ public final class BorderService {
             apply(player, data, normalizedLevel, BorderNotification.LEVEL_UP);
         }
 
-        checkTargetLevel(player, data, normalizedLevel);
+        int reachedLevel = settings.usesCurrentLevelMode()
+                ? normalizedLevel
+                : Math.max(data.maxReachedLevel(), normalizedLevel);
+        checkTargetLevel(player, reachedLevel);
     }
 
     public void handlePlayerKill(Player killer, Player killed) {
@@ -145,7 +125,7 @@ public final class BorderService {
             return;
         }
 
-        roundKills.merge(killer.getUniqueId(), 1, Integer::sum);
+        roundPlayers.recordKill(killer);
 
         if (settings.usesCurrentLevelMode() || !settings.highestKillBonusEnabled()) {
             return;
@@ -154,23 +134,23 @@ public final class BorderService {
         ensureRoundPlayer(killer);
         ensureRoundPlayer(killed);
 
-        PlayerBorderData killedData = updateMaxReachedLevel(killed, getOrCreateBorderData(killed));
+        PlayerBorderData killedData = playerBorderDataService.updateMaxReachedLevel(killed, playerBorderDataService.getOrCreate(killed));
         int bonusLevels = Math.max(0, killedData.maxReachedLevel());
         if (settings.highestKillBonusInheritsVictimBonus()) {
-            bonusLevels = addLevels(bonusLevels, killedData.killBonusLevels());
+            bonusLevels = playerBorderDataService.addLevels(bonusLevels, killedData.killBonusLevels());
         }
         if (bonusLevels <= 0) {
             return;
         }
 
-        PlayerBorderData killerData = updateMaxReachedLevel(killer, getOrCreateBorderData(killer));
-        int newKillBonusLevels = addLevels(killerData.killBonusLevels(), bonusLevels);
+        PlayerBorderData killerData = playerBorderDataService.updateMaxReachedLevel(killer, playerBorderDataService.getOrCreate(killer));
+        int newKillBonusLevels = playerBorderDataService.addLevels(killerData.killBonusLevels(), bonusLevels);
         if (newKillBonusLevels == killerData.killBonusLevels()) {
             return;
         }
 
         killerData = killerData.withKillBonusLevels(newKillBonusLevels);
-        playerBorderRepository.save(killerData);
+        playerBorderDataService.save(killerData);
         apply(killer, killerData, Math.max(0, killer.getLevel()), BorderNotification.KILL_BONUS);
     }
 
@@ -179,7 +159,7 @@ public final class BorderService {
             return;
         }
 
-        roundDeaths.merge(player.getUniqueId(), 1, Integer::sum);
+        roundPlayers.recordDeath(player);
         if (!settings.spectatorModeEnabled() && settings.endCondition() != RoundEndCondition.ELIMINATION) {
             return;
         }
@@ -194,16 +174,12 @@ public final class BorderService {
 
         int boundedCountdownSeconds = Math.max(0, Math.min(countdownSeconds, settings.maxStartCountdownSeconds()));
         roundState = RoundState.COUNTDOWN;
-        roundPlayers.clear();
-        spectatorPlayers.clear();
-        manuallyStoppedPlayers.clear();
-        roundKills.clear();
-        roundDeaths.clear();
+        roundPlayers.clearRound();
 
         for (Player player : plugin.getServer().getOnlinePlayers()) {
-            cancelBorderAnimation(player);
+            borderRenderer.cancelAnimation(player);
             luckPermsRoleService.clear(player);
-            worldBorderApi.resetWorldBorderToGlobal(player);
+            borderRenderer.resetToGlobal(player);
         }
 
         if (boundedCountdownSeconds <= 0) {
@@ -238,71 +214,62 @@ public final class BorderService {
     }
 
     public void stop(Player player) {
-        UUID playerId = player.getUniqueId();
-        cancelBorderAnimation(player);
-        manuallyStoppedPlayers.add(playerId);
-        spectatorPlayers.remove(playerId);
+        borderRenderer.cancelAnimation(player);
+        roundPlayers.stop(player);
         luckPermsRoleService.clear(player);
-        worldBorderApi.resetWorldBorderToGlobal(player);
+        borderRenderer.resetToGlobal(player);
     }
 
     public void reset(Player player) {
-        cancelBorderAnimation(player);
-        UUID playerId = player.getUniqueId();
-        manuallyStoppedPlayers.remove(playerId);
-        spectatorPlayers.remove(playerId);
+        borderRenderer.cancelAnimation(player);
+        roundPlayers.reset(player);
 
-        PlayerBorderData data = createInitialBorderData(player, Math.max(0, player.getLevel()));
-        playerBorderRepository.save(data);
+        PlayerBorderData data = playerBorderDataService.createInitial(player, Math.max(0, player.getLevel()));
+        playerBorderDataService.save(data);
 
         if (roundState == RoundState.ACTIVE) {
-            roundPlayers.add(player.getUniqueId());
+            roundPlayers.activate(player);
             luckPermsRoleService.markActive(player);
             apply(player, data, Math.max(0, player.getLevel()), BorderNotification.JOIN);
         } else if (roundState == RoundState.LOBBY) {
             luckPermsRoleService.clear(player);
-            applyLobbyBorder(player);
+            borderRenderer.applyLobbyBorder(player);
         } else {
-            worldBorderApi.resetWorldBorderToGlobal(player);
+            borderRenderer.resetToGlobal(player);
         }
     }
 
     public void shutdown() {
         cancelStartCountdown();
         cancelRoundEndTask();
-
-        for (BukkitTask task : borderAnimationTasks.values()) {
-            task.cancel();
-        }
-        borderAnimationTasks.clear();
-        animatedBorderSizes.clear();
+        borderRenderer.shutdown();
     }
 
     private void applyCurrentState(Player player, BorderNotification notification) {
         if (roundState == RoundState.LOBBY) {
             luckPermsRoleService.clear(player);
-            applyLobbyBorder(player);
+            borderRenderer.applyLobbyBorder(player);
             return;
         }
 
         if (roundState == RoundState.COUNTDOWN) {
-            cancelBorderAnimation(player);
+            borderRenderer.cancelAnimation(player);
             luckPermsRoleService.clear(player);
-            worldBorderApi.resetWorldBorderToGlobal(player);
+            borderRenderer.resetToGlobal(player);
             return;
         }
 
-        if (spectatorPlayers.contains(player.getUniqueId())) {
+        if (roundPlayers.isSpectator(player)) {
             applySpectator(player, notification);
             return;
         }
 
-        if (manuallyStoppedPlayers.contains(player.getUniqueId())) {
-            worldBorderApi.resetWorldBorderToGlobal(player);
+        if (roundPlayers.isManuallyStopped(player)) {
+            borderRenderer.resetToGlobal(player);
             return;
         }
 
-        if (!roundPlayers.contains(player.getUniqueId())) {
+        if (!roundPlayers.isRoundPlayer(player)) {
             if (usesSpectatorForLateJoiners()) {
                 enterSpectator(player, notification);
                 return;
@@ -316,16 +283,18 @@ public final class BorderService {
     }
 
     private void ensureRoundPlayer(Player player) {
-        if (roundState == RoundState.ACTIVE
-                && !manuallyStoppedPlayers.contains(player.getUniqueId())
-                && !spectatorPlayers.contains(player.getUniqueId())
-                && !roundPlayers.contains(player.getUniqueId())) {
-            if (usesSpectatorForLateJoiners()) {
-                enterSpectator(player, BorderNotification.NONE);
-                return;
-            }
-            activatePlayerFromCurrentPosition(player, BorderNotification.NONE);
+        if (roundState != RoundState.ACTIVE
+                || roundPlayers.isManuallyStopped(player)
+                || roundPlayers.isSpectator(player)
+                || roundPlayers.isRoundPlayer(player)) {
+            return;
         }
+
+        if (usesSpectatorForLateJoiners()) {
+            enterSpectator(player, BorderNotification.NONE);
+            return;
+        }
+        activatePlayerFromCurrentPosition(player, BorderNotification.NONE);
     }
 
     private boolean usesSpectatorForLateJoiners() {
@@ -337,72 +306,25 @@ public final class BorderService {
             return;
         }
 
-        PlayerBorderData data = updateMaxReachedLevel(player, getOrCreateBorderData(player));
-
+        PlayerBorderData data = playerBorderDataService.updateMaxReachedLevel(player, playerBorderDataService.getOrCreate(player));
         apply(player, data, Math.max(0, player.getLevel()), notification);
     }
 
     private void apply(Player player, PlayerBorderData data, int currentLevel, BorderNotification notification) {
-        if (!player.isOnline()) {
-            return;
+        int borderLevel = playerBorderDataService.resolveLevelForBorder(data, currentLevel);
+        double size = borderRenderer.apply(player, data, borderLevel, notification);
+        if (!Double.isNaN(size)) {
+            checkTargetBorder(player, size);
         }
-
-        double size = sizeCalculator.calculate(resolveLevelForBorder(data, currentLevel));
-        double previousSize = currentDisplayedBorderSize(player, data);
-        Location center = data.toLocation(player.getWorld());
-        applyBorder(player, center, previousSize, size, notification);
-
-        playerBorderRepository.save(data.withLastAppliedBorderSize(size));
-
-        notifyPlayer(player, notification, size, previousSize);
-        checkTargetBorder(player, size);
-    }
-
-    private void applyBorder(
-            Player player,
-            Location center,
-            double previousSize,
-            double size,
-            BorderNotification notification
-    ) {
-        if (!shouldAnimateSizeChange(notification, previousSize, size)) {
-            cancelBorderAnimation(player);
-            keepPlayerInsideShrinkingBorder(player, center, previousSize, size);
-            worldBorderApi.setBorder(player, size, center);
-            return;
-        }
-
-        keepPlayerInsideShrinkingBorder(player, center, previousSize, size);
-        animateBorder(player, center, previousSize, size);
-    }
-
-    private void applyLobbyBorder(Player player) {
-        cancelBorderAnimation(player);
-
-        double lobbyRadius = settings.lobbyRadiusBlocks();
-        if (lobbyRadius <= 0.0D) {
-            worldBorderApi.resetWorldBorderToGlobal(player);
-            return;
-        }
-
-        worldBorderApi.setBorder(player, lobbyRadius * 2.0D, player.getWorld().getSpawnLocation());
     }
 
     private void applySpectator(Player player, BorderNotification notification) {
-        cancelBorderAnimation(player);
-        worldBorderApi.resetWorldBorderToGlobal(player);
+        borderRenderer.applySpectator(player, notification);
         luckPermsRoleService.markSpectator(player);
-
-        if (notification == BorderNotification.SPECTATOR
-                || notification == BorderNotification.JOIN
-                || notification == BorderNotification.RESPAWN) {
-            notifier.showSpectator(player);
-        }
     }
 
     private void enterSpectator(Player player, BorderNotification notification) {
-        spectatorPlayers.add(player.getUniqueId());
-        manuallyStoppedPlayers.remove(player.getUniqueId());
+        roundPlayers.markSpectator(player);
         applySpectator(player, notification);
     }
 
@@ -418,9 +340,7 @@ public final class BorderService {
 
     private void activateRound() {
         roundState = RoundState.ACTIVE;
-        roundPlayers.clear();
-        spectatorPlayers.clear();
-        manuallyStoppedPlayers.clear();
+        roundPlayers.clearPlayerStates();
 
         for (Player player : plugin.getServer().getOnlinePlayers()) {
             if (roundState != RoundState.ACTIVE) {
@@ -436,12 +356,10 @@ public final class BorderService {
     }
 
     private void activatePlayerFromCurrentPosition(Player player, BorderNotification notification) {
-        roundPlayers.add(player.getUniqueId());
-        spectatorPlayers.remove(player.getUniqueId());
-        manuallyStoppedPlayers.remove(player.getUniqueId());
+        roundPlayers.activate(player);
         luckPermsRoleService.markActive(player);
-        PlayerBorderData data = createInitialBorderData(player, Math.max(0, player.getLevel()));
-        playerBorderRepository.save(data);
+        PlayerBorderData data = playerBorderDataService.createInitial(player, Math.max(0, player.getLevel()));
+        playerBorderDataService.save(data);
         apply(player, data, Math.max(0, player.getLevel()), notification);
     }
 
@@ -460,7 +378,7 @@ public final class BorderService {
             return;
         }
 
-        PlayerScore winner = findScoreWinner();
+        PlayerScore winner = roundScores.findWinner(plugin.getServer().getOnlinePlayers(), this::isActive);
         if (winner == null) {
             finishRoundWithoutWinner("service.end-reason-time");
             return;
@@ -469,82 +387,11 @@ public final class BorderService {
         finishRoundWithWinner(winner.player(), "service.end-reason-time");
     }
 
-    private PlayerScore findScoreWinner() {
-        PlayerScore best = null;
-        boolean tied = false;
-
-        for (Player player : plugin.getServer().getOnlinePlayers()) {
-            if (!isActive(player)) {
-                continue;
-            }
-
-            PlayerScore candidate = score(player);
-            if (best == null) {
-                best = candidate;
-                tied = false;
-                continue;
-            }
-
-            int comparison = compareScores(candidate, best);
-            if (comparison > 0) {
-                best = candidate;
-                tied = false;
-            } else if (comparison == 0) {
-                tied = true;
-            }
-        }
-
-        return tied ? null : best;
-    }
-
-    private PlayerScore score(Player player) {
-        PlayerBorderData data = updateMaxReachedLevel(player, getOrCreateBorderData(player));
-        int currentLevel = Math.max(0, player.getLevel());
-        int borderLevel = resolveLevelForBorder(data, currentLevel);
-        return new PlayerScore(
-                player,
-                sizeCalculator.calculate(borderLevel),
-                Math.max(data.maxReachedLevel(), currentLevel),
-                roundKills.getOrDefault(player.getUniqueId(), 0),
-                roundDeaths.getOrDefault(player.getUniqueId(), 0)
-        );
-    }
-
-    private int compareScores(PlayerScore first, PlayerScore second) {
-        int borderComparison = Double.compare(first.borderSize(), second.borderSize());
-        if (borderComparison != 0) {
-            return borderComparison;
-        }
-
-        for (String tiebreaker : settings.scoreTiebreakers()) {
-            int comparison = compareScoreTiebreaker(first, second, tiebreaker);
-            if (comparison != 0) {
-                return comparison;
-            }
-        }
-
-        return 0;
-    }
-
-    private int compareScoreTiebreaker(PlayerScore first, PlayerScore second, String tiebreaker) {
-        if (tiebreaker == null) {
-            return 0;
-        }
-
-        return switch (tiebreaker.trim().toLowerCase()) {
-            case "kills" -> Integer.compare(first.kills(), second.kills());
-            case "highest-level" -> Integer.compare(first.highestLevel(), second.highestLevel());
-            case "deaths-ascending" -> Integer.compare(second.deaths(), first.deaths());
-            default -> 0;
-        };
-    }
-
-    private void checkTargetLevel(Player player, PlayerBorderData data, int currentLevel) {
+    private void checkTargetLevel(Player player, int reachedLevel) {
         if (roundState != RoundState.ACTIVE || settings.endCondition() != RoundEndCondition.TARGET_LEVEL) {
             return;
         }
 
-        int reachedLevel = settings.usesCurrentLevelMode() ? currentLevel : Math.max(data.maxReachedLevel(), currentLevel);
         if (reachedLevel >= settings.winTargetLevel()) {
             finishRoundWithWinner(player, "service.end-reason-target-level");
         }
@@ -607,76 +454,12 @@ public final class BorderService {
         roundState = RoundState.LOBBY;
 
         for (Player player : plugin.getServer().getOnlinePlayers()) {
-            cancelBorderAnimation(player);
+            borderRenderer.cancelAnimation(player);
             luckPermsRoleService.clear(player);
-            applyLobbyBorder(player);
+            borderRenderer.applyLobbyBorder(player);
         }
 
-        roundPlayers.clear();
-        spectatorPlayers.clear();
-        manuallyStoppedPlayers.clear();
-        roundKills.clear();
-        roundDeaths.clear();
-    }
-
-    private record PlayerScore(Player player, double borderSize, int highestLevel, int kills, int deaths) {
-    }
-
-    private double currentDisplayedBorderSize(Player player, PlayerBorderData data) {
-        return animatedBorderSizes.getOrDefault(player.getUniqueId(), data.lastAppliedBorderSize());
-    }
-
-    private void animateBorder(Player player, Location center, double previousSize, double size) {
-        cancelBorderAnimation(player);
-
-        UUID playerId = player.getUniqueId();
-        int totalTicks = Math.max(1, (int) Math.ceil(settings.borderTransitionMilliseconds() / 50.0D));
-        animatedBorderSizes.put(playerId, previousSize);
-        worldBorderApi.setBorder(player, previousSize, center);
-
-        BukkitRunnable animation = new BukkitRunnable() {
-            private int elapsedTicks;
-
-            @Override
-            public void run() {
-                if (!player.isOnline()) {
-                    borderAnimationTasks.remove(playerId);
-                    animatedBorderSizes.remove(playerId);
-                    cancel();
-                    return;
-                }
-
-                elapsedTicks++;
-                double progress = Math.min(1.0D, elapsedTicks / (double) totalTicks);
-                double easedProgress = smoothStep(progress);
-                double currentSize = previousSize + ((size - previousSize) * easedProgress);
-
-                animatedBorderSizes.put(playerId, currentSize);
-                worldBorderApi.setBorder(player, currentSize, center);
-
-                if (progress >= 1.0D) {
-                    borderAnimationTasks.remove(playerId);
-                    animatedBorderSizes.remove(playerId);
-                    worldBorderApi.setBorder(player, size, center);
-                    cancel();
-                }
-            }
-        };
-
-        borderAnimationTasks.put(playerId, animation.runTaskTimer(plugin, 1L, 1L));
-    }
-
-    private double smoothStep(double progress) {
-        return progress * progress * (3.0D - (2.0D * progress));
-    }
-
-    private void cancelBorderAnimation(Player player) {
-        UUID playerId = player.getUniqueId();
-        BukkitTask task = borderAnimationTasks.remove(playerId);
-        if (task != null) {
-            task.cancel();
-        }
-        animatedBorderSizes.remove(playerId);
+        roundPlayers.clearRound();
     }
 
     private void cancelStartCountdown() {
@@ -694,134 +477,6 @@ public final class BorderService {
     }
 
     private boolean isActive(Player player) {
-        UUID playerId = player.getUniqueId();
-        return roundState == RoundState.ACTIVE
-                && roundPlayers.contains(playerId)
-                && !spectatorPlayers.contains(playerId)
-                && !manuallyStoppedPlayers.contains(playerId);
-    }
-
-    private void keepPlayerInsideShrinkingBorder(Player player, Location center, double previousSize, double size) {
-        if (size >= previousSize - BORDER_SIZE_EPSILON) {
-            return;
-        }
-
-        Location playerLocation = player.getLocation();
-        double maxOffset = safeBorderOffset(size);
-        double clampedX = clamp(playerLocation.getX(), center.getX() - maxOffset, center.getX() + maxOffset);
-        double clampedZ = clamp(playerLocation.getZ(), center.getZ() - maxOffset, center.getZ() + maxOffset);
-
-        if (Math.abs(clampedX - playerLocation.getX()) <= BORDER_SIZE_EPSILON
-                && Math.abs(clampedZ - playerLocation.getZ()) <= BORDER_SIZE_EPSILON) {
-            return;
-        }
-
-        playerLocation.setX(clampedX);
-        playerLocation.setZ(clampedZ);
-        player.teleport(playerLocation);
-    }
-
-    private double safeBorderOffset(double size) {
-        double halfSize = size / 2.0D;
-        double safeMargin = Math.min(BORDER_SAFE_MARGIN_BLOCKS, Math.max(0.0D, halfSize - 0.05D));
-        return Math.max(0.0D, halfSize - safeMargin);
-    }
-
-    private double clamp(double value, double minimum, double maximum) {
-        return Math.max(minimum, Math.min(maximum, value));
-    }
-
-    private boolean shouldAnimateSizeChange(BorderNotification notification, double previousSize, double size) {
-        if (settings.borderTransitionMilliseconds() <= 0L || previousSize <= 0.0D) {
-            return false;
-        }
-        if (Math.abs(size - previousSize) <= BORDER_SIZE_EPSILON) {
-            return false;
-        }
-        return notification == BorderNotification.LEVEL_UP
-                || notification == BorderNotification.LEVEL_CHANGED
-                || notification == BorderNotification.KILL_BONUS;
-    }
-
-    private void notifyPlayer(Player player, BorderNotification notification, double size, double previousSize) {
-        if (notification == BorderNotification.LEVEL_UP && size > previousSize + BORDER_SIZE_EPSILON) {
-            notifier.showLevelUp(player, size);
-        } else if (notification == BorderNotification.LEVEL_CHANGED) {
-            if (size > previousSize + BORDER_SIZE_EPSILON) {
-                notifier.showLevelUp(player, size);
-            } else if (size < previousSize - BORDER_SIZE_EPSILON) {
-                notifier.showBorderChanged(player, size);
-            }
-        } else if (notification == BorderNotification.KILL_BONUS && size > previousSize + BORDER_SIZE_EPSILON) {
-            notifier.showKillBonus(player, size);
-        } else if (notification == BorderNotification.JOIN) {
-            notifier.showJoined(player, size);
-        } else if (notification == BorderNotification.RESPAWN) {
-            notifier.showRespawned(player, size);
-        }
-    }
-
-    private int resolveLevelForBorder(PlayerBorderData data, int currentLevel) {
-        if (settings.usesCurrentLevelMode()) {
-            return Math.max(0, currentLevel);
-        }
-        return addLevels(data.maxReachedLevel(), data.killBonusLevels());
-    }
-
-    private PlayerBorderData updateMaxReachedLevel(Player player, PlayerBorderData data) {
-        int currentLevel = Math.max(0, player.getLevel());
-        if (currentLevel <= data.maxReachedLevel()) {
-            return data;
-        }
-
-        PlayerBorderData updated = data.withMaxReachedLevel(currentLevel);
-        playerBorderRepository.save(updated);
-        return updated;
-    }
-
-    private int addLevels(int first, int second) {
-        long result = (long) Math.max(0, first) + Math.max(0, second);
-        return result > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) result;
-    }
-
-    private PlayerBorderData getOrCreateBorderData(Player player) {
-        int currentLevel = Math.max(0, player.getLevel());
-        PlayerBorderData existing = playerBorderRepository.find(
-                player,
-                settings.usesCurrentLevelMode(),
-                sizeCalculator::calculate
-        );
-        if (existing != null) {
-            return existing;
-        }
-
-        PlayerBorderData created = createInitialBorderData(player, currentLevel);
-        playerBorderRepository.save(created);
-        return created;
-    }
-
-    private PlayerBorderData createInitialBorderData(Player player, int currentLevel) {
-        Location location = player.getLocation();
-        double x = location.getX();
-        double y = location.getY();
-        double z = location.getZ();
-
-        if (settings.centerAtBlockCenter()) {
-            x = location.getBlockX() + 0.5D;
-            y = location.getBlockY() + 0.5D;
-            z = location.getBlockZ() + 0.5D;
-        }
-
-        return new PlayerBorderData(
-                player.getUniqueId(),
-                location.getWorld().getUID(),
-                location.getWorld().getName(),
-                x,
-                y,
-                z,
-                currentLevel,
-                0,
-                sizeCalculator.calculate(currentLevel)
-        );
+        return roundPlayers.isActive(roundState, player);
     }
 }
