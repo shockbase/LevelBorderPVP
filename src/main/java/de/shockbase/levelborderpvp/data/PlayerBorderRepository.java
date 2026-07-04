@@ -1,5 +1,6 @@
 package de.shockbase.levelborderpvp.data;
 
+import de.shockbase.levelborderpvp.i18n.Messages;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 
@@ -14,12 +15,14 @@ public final class PlayerBorderRepository {
 
     private final File dataFile;
     private final Logger logger;
+    private final Messages messages;
 
     private YamlConfiguration playerData;
 
-    public PlayerBorderRepository(File dataFolder, Logger logger) {
+    public PlayerBorderRepository(File dataFolder, Logger logger, Messages messages) {
         this.dataFile = new File(dataFolder, "players.yml");
         this.logger = logger;
+        this.messages = messages;
     }
 
     public void load() {
@@ -78,7 +81,7 @@ public final class PlayerBorderRepository {
         try {
             playerData.save(dataFile);
         } catch (IOException exception) {
-            logger.log(Level.SEVERE, "Could not save players.yml", exception);
+            logger.log(Level.SEVERE, messages.text("log.players-save-failed"), exception);
         }
     }
 

@@ -1,0 +1,31 @@
+command:
+  players-only: "Nur Spieler können diesen Befehl nutzen."
+  usage: "Nutzung: /{label} <start|stop|reset> [sekunden]"
+  start-usage: "Nutzung: /{label} start [sekunden]"
+  stop-usage: "Nutzung: /{label} stop"
+  reset-usage: "Nutzung: /{label} reset"
+  invalid-seconds: "Bitte Sekunden als ganze Zahl angeben."
+  negative-countdown: "Der Countdown darf nicht negativ sein."
+  max-countdown: "Der Countdown darf maximal {seconds} Sekunden betragen."
+  stopped: "Border gestoppt."
+  reset: "Border zurückgesetzt."
+
+service:
+  countdown: "Border startet in {seconds} Sekunden."
+
+title:
+  level-up: "LEVEL UP!"
+  border-changed: "BORDER AKTUALISIERT"
+  kill-bonus: "BORDER EROBERT"
+  border-active: "BORDER AKTIV"
+
+subtitle:
+  border-now: "Deine Border ist jetzt {size} groß."
+  border-current: "Deine Border ist {size} groß."
+  border-set: "Deine Border wurde auf {size} gesetzt."
+
+log:
+  world-border-api-missing: "WorldBorderAPI-Service nicht gefunden. Ist das WorldBorderAPI-Plugin installiert und geladen?"
+  command-missing: "Command /{command} fehlt in plugin.yml"
+  players-save-failed: "players.yml konnte nicht gespeichert werden"
+  language-file-missing: "Sprachdatei lang/{language}.yml nicht gefunden. Nutze {fallback}."

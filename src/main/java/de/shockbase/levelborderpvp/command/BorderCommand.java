@@ -2,6 +2,7 @@ package de.shockbase.levelborderpvp.command;
 
 import de.shockbase.levelborderpvp.border.BorderService;
 import de.shockbase.levelborderpvp.config.LevelBorderSettings;
+import de.shockbase.levelborderpvp.i18n.Messages;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -18,21 +19,23 @@ public final class BorderCommand implements CommandExecutor, TabCompleter {
 
     private final LevelBorderSettings settings;
     private final BorderService borderService;
+    private final Messages messages;
 
-    public BorderCommand(LevelBorderSettings settings, BorderService borderService) {
+    public BorderCommand(LevelBorderSettings settings, BorderService borderService, Messages messages) {
         this.settings = settings;
         this.borderService = borderService;
+        this.messages = messages;
     }
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage("Nur Spieler koennen diesen Befehl nutzen.");
+            sender.sendMessage(messages.text("command.players-only"));
             return true;
         }
 
         if (args.length == 0) {
-            player.sendMessage("Nutzung: /" + label + " <start|stop|reset> [sekunden]");
+            player.sendMessage(messages.text("command.usage", Messages.placeholder("label", label)));
             return true;
         }
 
@@ -80,13 +83,13 @@ public final class BorderCommand implements CommandExecutor, TabCompleter {
             return handleReset(player, label, args);
         }
 
-        player.sendMessage("Nutzung: /" + label + " <start|stop|reset> [sekunden]");
+        player.sendMessage(messages.text("command.usage", Messages.placeholder("label", label)));
         return true;
     }
 
     private boolean handleStart(Player player, String label, String[] args) {
         if (args.length > 1) {
-            player.sendMessage("Nutzung: /" + label + " start [sekunden]");
+            player.sendMessage(messages.text("command.start-usage", Messages.placeholder("label", label)));
             return true;
         }
 
@@ -95,17 +98,20 @@ public final class BorderCommand implements CommandExecutor, TabCompleter {
             try {
                 countdownSeconds = Integer.parseInt(args[0]);
             } catch (NumberFormatException exception) {
-                player.sendMessage("Bitte Sekunden als ganze Zahl angeben.");
+                player.sendMessage(messages.text("command.invalid-seconds"));
                 return true;
             }
         }
 
         if (countdownSeconds < 0) {
-            player.sendMessage("Der Countdown darf nicht negativ sein.");
+            player.sendMessage(messages.text("command.negative-countdown"));
             return true;
         }
         if (countdownSeconds > settings.maxStartCountdownSeconds()) {
-            player.sendMessage("Der Countdown darf maximal " + settings.maxStartCountdownSeconds() + " Sekunden betragen.");
+            player.sendMessage(messages.text(
+                    "command.max-countdown",
+                    Messages.placeholder("seconds", settings.maxStartCountdownSeconds())
+            ));
             return true;
         }
 
@@ -115,23 +121,23 @@ public final class BorderCommand implements CommandExecutor, TabCompleter {
 
     private boolean handleStop(Player player, String label, String[] args) {
         if (args.length != 0) {
-            player.sendMessage("Nutzung: /" + label + " stop");
+            player.sendMessage(messages.text("command.stop-usage", Messages.placeholder("label", label)));
             return true;
         }
 
         borderService.stop(player);
-        player.sendMessage("Border gestoppt.");
+        player.sendMessage(messages.text("command.stopped"));
         return true;
     }
 
     private boolean handleReset(Player player, String label, String[] args) {
         if (args.length != 0) {
-            player.sendMessage("Nutzung: /" + label + " reset");
+            player.sendMessage(messages.text("command.reset-usage", Messages.placeholder("label", label)));
             return true;
         }
 
         borderService.reset(player);
-        player.sendMessage("Border zurueckgesetzt.");
+        player.sendMessage(messages.text("command.reset"));
         return true;
     }
 }

@@ -22,6 +22,10 @@ public final class LevelBorderSettings {
         return config.getDouble("max-size-blocks", 0.0D);
     }
 
+    public String language() {
+        return config.getString("language", "de");
+    }
+
     public long borderTransitionMilliseconds() {
         return Math.max(0L, config.getLong("border-transition-milliseconds", 1200L));
     }

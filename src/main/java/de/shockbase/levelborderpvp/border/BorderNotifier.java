@@ -1,5 +1,6 @@
 package de.shockbase.levelborderpvp.border;
 
+import de.shockbase.levelborderpvp.i18n.Messages;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.title.Title;
@@ -17,15 +18,17 @@ public final class BorderNotifier {
     );
 
     private final BorderSizeFormatter sizeFormatter;
+    private final Messages messages;
 
-    public BorderNotifier(BorderSizeFormatter sizeFormatter) {
+    public BorderNotifier(BorderSizeFormatter sizeFormatter, Messages messages) {
         this.sizeFormatter = sizeFormatter;
+        this.messages = messages;
     }
 
     public void showLevelUp(Player player, double borderSize) {
-        Component title = Component.text("LEVEL UP!", NamedTextColor.GREEN);
+        Component title = Component.text(messages.text("title.level-up"), NamedTextColor.GREEN);
         Component subtitle = Component.text(
-                "Deine Border ist jetzt " + sizeFormatter.format(borderSize) + " gro\u00df.",
+                messages.text("subtitle.border-now", Messages.placeholder("size", sizeFormatter.format(borderSize))),
                 NamedTextColor.WHITE
         );
 
@@ -34,24 +37,27 @@ public final class BorderNotifier {
     }
 
     public void showBorderChanged(Player player, double borderSize) {
-        showStatus(player, "BORDER AKTUALISIERT", "Deine Border ist jetzt " + sizeFormatter.format(borderSize) + " gro\u00df.");
+        showStatus(player, "title.border-changed", "subtitle.border-now", borderSize);
     }
 
     public void showKillBonus(Player player, double borderSize) {
-        showStatus(player, "BORDER EROBERT", "Deine Border ist jetzt " + sizeFormatter.format(borderSize) + " gro\u00df.");
+        showStatus(player, "title.kill-bonus", "subtitle.border-now", borderSize);
     }
 
     public void showJoined(Player player, double borderSize) {
-        showStatus(player, "BORDER AKTIV", "Deine Border ist " + sizeFormatter.format(borderSize) + " gro\u00df.");
+        showStatus(player, "title.border-active", "subtitle.border-current", borderSize);
     }
 
     public void showRespawned(Player player, double borderSize) {
-        showStatus(player, "BORDER AKTIV", "Deine Border wurde auf " + sizeFormatter.format(borderSize) + " gesetzt.");
+        showStatus(player, "title.border-active", "subtitle.border-set", borderSize);
     }
 
-    private void showStatus(Player player, String titleText, String subtitleText) {
-        Component title = Component.text(titleText, NamedTextColor.GREEN);
-        Component subtitle = Component.text(subtitleText, NamedTextColor.WHITE);
+    private void showStatus(Player player, String titleKey, String subtitleKey, double borderSize) {
+        Component title = Component.text(messages.text(titleKey), NamedTextColor.GREEN);
+        Component subtitle = Component.text(
+                messages.text(subtitleKey, Messages.placeholder("size", sizeFormatter.format(borderSize))),
+                NamedTextColor.WHITE
+        );
 
         player.showTitle(Title.title(title, subtitle, TITLE_TIMES));
     }

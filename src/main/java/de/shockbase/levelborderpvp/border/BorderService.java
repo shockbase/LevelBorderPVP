@@ -4,6 +4,7 @@ import com.github.yannicklamprecht.worldborder.api.WorldBorderApi;
 import de.shockbase.levelborderpvp.config.LevelBorderSettings;
 import de.shockbase.levelborderpvp.data.PlayerBorderData;
 import de.shockbase.levelborderpvp.data.PlayerBorderRepository;
+import de.shockbase.levelborderpvp.i18n.Messages;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -29,6 +30,7 @@ public final class BorderService {
     private final LevelBorderSettings settings;
     private final BorderSizeCalculator sizeCalculator;
     private final BorderNotifier notifier;
+    private final Messages messages;
     private final Map<UUID, BukkitTask> borderAnimationTasks = new HashMap<>();
     private final Map<UUID, Double> animatedBorderSizes = new HashMap<>();
     private final Map<UUID, BukkitTask> startCountdownTasks = new HashMap<>();
@@ -41,7 +43,8 @@ public final class BorderService {
             PlayerBorderRepository playerBorderRepository,
             LevelBorderSettings settings,
             BorderSizeCalculator sizeCalculator,
-            BorderNotifier notifier
+            BorderNotifier notifier,
+            Messages messages
     ) {
         this.plugin = plugin;
         this.worldBorderApi = worldBorderApi;
@@ -49,6 +52,7 @@ public final class BorderService {
         this.settings = settings;
         this.sizeCalculator = sizeCalculator;
         this.notifier = notifier;
+        this.messages = messages;
     }
 
     public void applyNextTick(Player player, BorderNotification notification) {
@@ -139,7 +143,10 @@ public final class BorderService {
                     return;
                 }
 
-                player.sendMessage("Border startet in " + remainingSeconds + " Sekunden.");
+                player.sendMessage(messages.text(
+                        "service.countdown",
+                        Messages.placeholder("seconds", remainingSeconds)
+                ));
                 remainingSeconds--;
             }
         };

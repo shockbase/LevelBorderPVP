@@ -9,6 +9,7 @@ import de.shockbase.levelborderpvp.border.BorderSizeFormatter;
 import de.shockbase.levelborderpvp.command.BorderCommand;
 import de.shockbase.levelborderpvp.config.LevelBorderSettings;
 import de.shockbase.levelborderpvp.data.PlayerBorderRepository;
+import de.shockbase.levelborderpvp.i18n.Messages;
 import de.shockbase.levelborderpvp.listener.PlayerBorderListener;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -25,19 +26,22 @@ public final class LevelBorderPvPPlugin extends JavaPlugin {
     public void onEnable() {
         saveDefaultConfig();
 
+        LevelBorderSettings settings = new LevelBorderSettings(getConfig());
+        Messages messages = new Messages(this, settings.language());
+        messages.load();
+
         WorldBorderApi worldBorderApi = findWorldBorderApi();
         if (worldBorderApi == null) {
-            getLogger().severe("WorldBorderAPI service not found. Is the WorldBorderAPI plugin installed and loaded?");
+            getLogger().severe(messages.text("log.world-border-api-missing"));
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
 
-        LevelBorderSettings settings = new LevelBorderSettings(getConfig());
         BorderSizeCalculator sizeCalculator = new BorderSizeCalculator(settings);
         BorderSizeFormatter sizeFormatter = new BorderSizeFormatter();
-        BorderNotifier notifier = new BorderNotifier(sizeFormatter);
+        BorderNotifier notifier = new BorderNotifier(sizeFormatter, messages);
 
-        playerBorderRepository = new PlayerBorderRepository(getDataFolder(), getLogger());
+        playerBorderRepository = new PlayerBorderRepository(getDataFolder(), getLogger(), messages);
         playerBorderRepository.load();
 
         borderService = new BorderService(
@@ -46,7 +50,8 @@ public final class LevelBorderPvPPlugin extends JavaPlugin {
                 playerBorderRepository,
                 settings,
                 sizeCalculator,
-                notifier
+                notifier,
+                messages
         );
 
         getServer().getPluginManager().registerEvents(
@@ -54,8 +59,8 @@ public final class LevelBorderPvPPlugin extends JavaPlugin {
                 this
         );
 
-        BorderCommand borderCommand = new BorderCommand(settings, borderService);
-        registerCommand("levelborder", borderCommand);
+        BorderCommand borderCommand = new BorderCommand(settings, borderService, messages);
+        registerCommand("levelborder", borderCommand, messages);
 
         for (Player player : Bukkit.getOnlinePlayers()) {
             borderService.applyNextTick(player, BorderNotification.NONE);
@@ -80,10 +85,10 @@ public final class LevelBorderPvPPlugin extends JavaPlugin {
         return provider == null ? null : provider.getProvider();
     }
 
-    private void registerCommand(String name, BorderCommand executor) {
+    private void registerCommand(String name, BorderCommand executor, Messages messages) {
         PluginCommand command = getCommand(name);
         if (command == null) {
-            getLogger().severe("Command /" + name + " is missing from plugin.yml");
+            getLogger().severe(messages.text("log.command-missing", Messages.placeholder("command", name)));
             return;
         }
 

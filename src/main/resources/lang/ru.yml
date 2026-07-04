@@ -1,0 +1,31 @@
+command:
+  players-only: "Эту команду могут использовать только игроки."
+  usage: "Использование: /{label} <start|stop|reset> [секунды]"
+  start-usage: "Использование: /{label} start [секунды]"
+  stop-usage: "Использование: /{label} stop"
+  reset-usage: "Использование: /{label} reset"
+  invalid-seconds: "Укажите секунды целым числом."
+  negative-countdown: "Отсчет не может быть отрицательным."
+  max-countdown: "Отсчет может быть максимум {seconds} сек."
+  stopped: "Граница остановлена."
+  reset: "Граница сброшена."
+
+service:
+  countdown: "Граница запустится через {seconds} сек."
+
+title:
+  level-up: "УРОВЕНЬ ПОВЫШЕН!"
+  border-changed: "ГРАНИЦА ОБНОВЛЕНА"
+  kill-bonus: "ГРАНИЦА ЗАХВАЧЕНА"
+  border-active: "ГРАНИЦА АКТИВНА"
+
+subtitle:
+  border-now: "Твоя граница теперь {size}."
+  border-current: "Твоя граница: {size}."
+  border-set: "Твоя граница установлена на {size}."
+
+log:
+  world-border-api-missing: "Сервис WorldBorderAPI не найден. Установлен и загружен ли плагин WorldBorderAPI?"
+  command-missing: "Команда /{command} отсутствует в plugin.yml"
+  players-save-failed: "Не удалось сохранить players.yml"
+  language-file-missing: "Файл языка lang/{language}.yml не найден. Используется {fallback}."

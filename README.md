@@ -74,6 +74,14 @@ plugins/LevelBorderPvP-1.0.0.jar
 
 `src/main/resources/config.yml` is copied to `plugins/LevelBorderPvP/config.yml` on first start.
 
+Message language defaults to German:
+
+```yaml
+language: de
+```
+
+Bundled language files are copied to `plugins/LevelBorderPvP/lang/`: `de.yml`, `en.yml`, and `ru.yml`.
+
 Commands:
 
 ```text
