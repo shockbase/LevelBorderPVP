@@ -32,12 +32,25 @@ title:
   kill-bonus: "ГРАНИЦА ЗАХВАЧЕНА"
   border-active: "ГРАНИЦА АКТИВНА"
   spectator: "НАБЛЮДАТЕЛЬ"
+  spread-out: "РАЗБЕГАЙТЕСЬ!"
+  countdown: "{seconds}"
+  eliminated: "ВЫБЫЛ!"
+  player-kill: "УБИЙСТВО!"
+  round-placement: "МЕСТО #{place}"
 
 subtitle:
   border-now: "Твоя граница теперь {size}."
   border-current: "Твоя граница: {size}."
   border-set: "Твоя граница установлена на {size}."
   spectator: "Ты не активный игрок и не имеешь своей границы."
+  spread-out: "Граница запустится через {seconds} сек."
+  countdown: "сек."
+  eliminated-by: "Тебя убил {killer}."
+  player-kill: "Ты выбил {victim}: +{radius} к радиусу."
+  round-stats: "Убийства: {kills} | Смерти: {deaths} | Уровень: {level} | Граница: {border}"
+
+unit:
+  blocks: "бл."
 
 log:
   world-border-api-missing: "Сервис WorldBorderAPI не найден. Установлен и загружен ли плагин WorldBorderAPI?"

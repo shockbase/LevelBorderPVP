@@ -54,7 +54,7 @@ public final class PlayerBorderListener implements Listener {
         if (killer != null) {
             borderService.handlePlayerKill(killer, event.getEntity());
         }
-        borderService.handlePlayerDeath(event.getEntity());
+        borderService.handlePlayerDeath(event.getEntity(), killer);
     }
 
     @EventHandler

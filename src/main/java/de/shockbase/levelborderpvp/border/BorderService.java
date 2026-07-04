@@ -14,6 +14,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -25,6 +26,8 @@ public final class BorderService {
     private final LuckPermsRoleService luckPermsRoleService;
     private final BorderRenderer borderRenderer;
     private final PlayerBorderDataService playerBorderDataService;
+    private final BorderSizeCalculator sizeCalculator;
+    private final BorderNotifier notifier;
     private final RoundPlayerTracker roundPlayers = new RoundPlayerTracker();
     private final Set<UUID> startCandidateIds = new HashSet<>();
     private final RoundScoreTracker roundScores;
@@ -47,6 +50,8 @@ public final class BorderService {
         this.settings = settings;
         this.messages = messages;
         this.luckPermsRoleService = luckPermsRoleService;
+        this.sizeCalculator = sizeCalculator;
+        this.notifier = notifier;
         this.borderRenderer = new BorderRenderer(worldBorderApi, playerBorderRepository, settings, sizeCalculator, notifier);
         this.playerBorderDataService = new PlayerBorderDataService(playerBorderRepository, settings, sizeCalculator);
         this.roundScores = new RoundScoreTracker(settings, sizeCalculator, playerBorderDataService, roundPlayers);
@@ -131,36 +136,15 @@ public final class BorderService {
             return;
         }
 
-        roundPlayers.recordKill(killer);
-
-        if (settings.usesCurrentLevelMode() || !settings.highestKillBonusEnabled()) {
-            return;
-        }
-
         ensureRoundPlayer(killer);
         ensureRoundPlayer(killed);
+        roundPlayers.recordKill(killer);
 
-        PlayerBorderData killedData = playerBorderDataService.updateMaxReachedLevel(killed, playerBorderDataService.getOrCreate(killed));
-        int bonusLevels = Math.max(0, killedData.maxReachedLevel());
-        if (settings.highestKillBonusInheritsVictimBonus()) {
-            bonusLevels = playerBorderDataService.addLevels(bonusLevels, killedData.killBonusLevels());
-        }
-        if (bonusLevels <= 0) {
-            return;
-        }
-
-        PlayerBorderData killerData = playerBorderDataService.updateMaxReachedLevel(killer, playerBorderDataService.getOrCreate(killer));
-        int newKillBonusLevels = playerBorderDataService.addLevels(killerData.killBonusLevels(), bonusLevels);
-        if (newKillBonusLevels == killerData.killBonusLevels()) {
-            return;
-        }
-
-        killerData = killerData.withKillBonusLevels(newKillBonusLevels);
-        playerBorderDataService.save(killerData);
-        apply(killer, killerData, Math.max(0, killer.getLevel()), BorderNotification.KILL_BONUS);
+        double radiusGainedBlocks = applyPlayerKillBonus(killer, killed);
+        notifier.showPlayerKill(killer, killed.getName(), radiusGainedBlocks);
     }
 
-    public void handlePlayerDeath(Player player) {
+    public void handlePlayerDeath(Player player, Player killer) {
         if (!isActive(player)) {
             return;
         }
@@ -170,8 +154,57 @@ public final class BorderService {
             return;
         }
 
-        enterSpectator(player, BorderNotification.SPECTATOR);
+        boolean eliminatedByPlayer = isActivePlayerKill(killer, player);
+        enterSpectator(player, eliminatedByPlayer ? BorderNotification.NONE : BorderNotification.SPECTATOR);
+        if (eliminatedByPlayer) {
+            notifier.showEliminated(player, killer.getName());
+        }
         checkEliminationWinner();
+    }
+
+    private double applyPlayerKillBonus(Player killer, Player killed) {
+        double previousBorderSize = currentBorderSize(killer);
+        if (settings.usesCurrentLevelMode() || !settings.highestKillBonusEnabled()) {
+            return 0.0D;
+        }
+
+        PlayerBorderData killedData = playerBorderDataService.updateMaxReachedLevel(killed, playerBorderDataService.getOrCreate(killed));
+        int bonusLevels = Math.max(0, killedData.maxReachedLevel());
+        if (settings.highestKillBonusInheritsVictimBonus()) {
+            bonusLevels = playerBorderDataService.addLevels(bonusLevels, killedData.killBonusLevels());
+        }
+        if (bonusLevels <= 0) {
+            return 0.0D;
+        }
+
+        PlayerBorderData killerData = playerBorderDataService.updateMaxReachedLevel(killer, playerBorderDataService.getOrCreate(killer));
+        int newKillBonusLevels = playerBorderDataService.addLevels(killerData.killBonusLevels(), bonusLevels);
+        if (newKillBonusLevels == killerData.killBonusLevels()) {
+            return 0.0D;
+        }
+
+        killerData = killerData.withKillBonusLevels(newKillBonusLevels);
+        playerBorderDataService.save(killerData);
+
+        int currentLevel = Math.max(0, killer.getLevel());
+        double newBorderSize = borderSize(killerData, currentLevel);
+        apply(killer, killerData, currentLevel, BorderNotification.PLAYER_KILL);
+        return Math.max(0.0D, (newBorderSize - previousBorderSize) / 2.0D);
+    }
+
+    private double currentBorderSize(Player player) {
+        return roundScores.score(player).borderSize();
+    }
+
+    private double borderSize(PlayerBorderData data, int currentLevel) {
+        int borderLevel = playerBorderDataService.resolveLevelForBorder(data, currentLevel);
+        return sizeCalculator.calculate(borderLevel);
+    }
+
+    private boolean isActivePlayerKill(Player killer, Player killed) {
+        return killer != null
+                && !killer.getUniqueId().equals(killed.getUniqueId())
+                && isActive(killer);
     }
 
     public void start(int countdownSeconds) {
@@ -197,6 +230,8 @@ public final class BorderService {
             activateRound();
             return;
         }
+
+        showSpreadOutToStartCandidates(boundedCountdownSeconds);
 
         BukkitRunnable countdown = new BukkitRunnable() {
             private int remainingSeconds = boundedCountdownSeconds;
@@ -311,6 +346,14 @@ public final class BorderService {
         applySpectator(player, notification);
     }
 
+    private void showSpreadOutToStartCandidates(int countdownSeconds) {
+        for (Player player : plugin.getServer().getOnlinePlayers()) {
+            if (startCandidateIds.contains(player.getUniqueId())) {
+                notifier.showSpreadOut(player, countdownSeconds);
+            }
+        }
+    }
+
     private void broadcastCountdown(int remainingSeconds) {
         String message = messages.text(
                 "service.countdown",
@@ -318,6 +361,9 @@ public final class BorderService {
         );
         for (Player player : plugin.getServer().getOnlinePlayers()) {
             player.sendMessage(message);
+            if (remainingSeconds <= 3) {
+                notifier.showCountdown(player, remainingSeconds);
+            }
         }
     }
 
@@ -450,6 +496,7 @@ public final class BorderService {
                 Messages.placeholder("winner", winner.getName()),
                 Messages.placeholder("reason", reason)
         ));
+        showRoundPlacements(winner);
         finishRound();
     }
 
@@ -459,11 +506,59 @@ public final class BorderService {
                 "service.round-ended-no-winner",
                 Messages.placeholder("reason", reason)
         ));
+        showRoundPlacements(null);
         finishRound();
     }
 
     private void finishRound() {
         enterIdle();
+    }
+
+    private void showRoundPlacements(Player winner) {
+        List<PlayerScore> scores = roundScores.rankedScores(plugin.getServer().getOnlinePlayers(), roundPlayers::isRoundPlayer);
+        moveWinnerToFirst(scores, winner);
+        PlayerScore previousScore = null;
+        int place = 0;
+
+        for (int index = 0; index < scores.size(); index++) {
+            PlayerScore score = scores.get(index);
+            if (previousScore == null || isWinner(score, winner) || isWinner(previousScore, winner)
+                    || roundScores.compareScores(score, previousScore) != 0) {
+                place = index + 1;
+            }
+
+            notifier.showRoundPlacement(
+                    score.player(),
+                    place,
+                    score.kills(),
+                    score.deaths(),
+                    score.highestLevel(),
+                    score.borderSize()
+            );
+            previousScore = score;
+        }
+    }
+
+    private void moveWinnerToFirst(List<PlayerScore> scores, Player winner) {
+        if (winner == null) {
+            return;
+        }
+
+        UUID winnerId = winner.getUniqueId();
+        for (int index = 0; index < scores.size(); index++) {
+            if (!scores.get(index).player().getUniqueId().equals(winnerId)) {
+                continue;
+            }
+
+            if (index > 0) {
+                scores.add(0, scores.remove(index));
+            }
+            return;
+        }
+    }
+
+    private boolean isWinner(PlayerScore score, Player winner) {
+        return winner != null && score.player().getUniqueId().equals(winner.getUniqueId());
     }
 
     private void enterIdle() {

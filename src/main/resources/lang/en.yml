@@ -32,12 +32,25 @@ title:
   kill-bonus: "BORDER CONQUERED"
   border-active: "BORDER ACTIVE"
   spectator: "SPECTATOR"
+  spread-out: "SPREAD OUT!"
+  countdown: "{seconds}"
+  eliminated: "ELIMINATED!"
+  player-kill: "KILL!"
+  round-placement: "PLACE #{place}"
 
 subtitle:
   border-now: "Your border is now {size}."
   border-current: "Your border is {size}."
   border-set: "Your border was set to {size}."
   spectator: "You are not active and have no border."
+  spread-out: "The border starts in {seconds} seconds."
+  countdown: "seconds"
+  eliminated-by: "Killed by {killer}."
+  player-kill: "You eliminated {victim}: +{radius} radius."
+  round-stats: "Kills: {kills} | Deaths: {deaths} | Level: {level} | Border: {border}"
+
+unit:
+  blocks: "blocks"
 
 log:
   world-border-api-missing: "WorldBorderAPI service not found. Is the WorldBorderAPI plugin installed and loaded?"

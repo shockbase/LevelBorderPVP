@@ -136,7 +136,8 @@ final class BorderRenderer {
         }
         return notification == BorderNotification.LEVEL_UP
                 || notification == BorderNotification.LEVEL_CHANGED
-                || notification == BorderNotification.KILL_BONUS;
+                || notification == BorderNotification.KILL_BONUS
+                || notification == BorderNotification.PLAYER_KILL;
     }
 
     private void notifyPlayer(Player player, BorderNotification notification, double size, double previousSize) {

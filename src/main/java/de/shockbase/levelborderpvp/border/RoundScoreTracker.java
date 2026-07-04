@@ -4,7 +4,9 @@ import de.shockbase.levelborderpvp.config.LevelBorderSettings;
 import de.shockbase.levelborderpvp.data.PlayerBorderData;
 import org.bukkit.entity.Player;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.function.Predicate;
 
 final class RoundScoreTracker {
@@ -54,6 +56,18 @@ final class RoundScoreTracker {
         return tied ? null : best;
     }
 
+    List<PlayerScore> rankedScores(Collection<? extends Player> players, Predicate<Player> isIncluded) {
+        List<PlayerScore> scores = new ArrayList<>();
+        for (Player player : players) {
+            if (isIncluded.test(player)) {
+                scores.add(score(player));
+            }
+        }
+
+        scores.sort((first, second) -> compareScores(second, first));
+        return scores;
+    }
+
     PlayerScore score(Player player) {
         PlayerBorderData data = playerBorderDataService.updateMaxReachedLevel(player, playerBorderDataService.getOrCreate(player));
         int currentLevel = Math.max(0, player.getLevel());
@@ -67,7 +81,7 @@ final class RoundScoreTracker {
         );
     }
 
-    private int compareScores(PlayerScore first, PlayerScore second) {
+    int compareScores(PlayerScore first, PlayerScore second) {
         int borderComparison = Double.compare(first.borderSize(), second.borderSize());
         if (borderComparison != 0) {
             return borderComparison;
