@@ -41,12 +41,24 @@ public final class LevelBorderSettings {
         return Math.max(0.0D, config.getDouble("lobby-radius-blocks", 8.0D));
     }
 
+    public boolean teleportPlayersToLobbySpawn() {
+        return config.getBoolean("teleport-players-to-lobby-spawn", true);
+    }
+
     public int defaultStartCountdownSeconds() {
         return Math.max(0, config.getInt("start-countdown-seconds", 10));
     }
 
     public int maxStartCountdownSeconds() {
         return Math.max(defaultStartCountdownSeconds(), config.getInt("max-start-countdown-seconds", 3600));
+    }
+
+    public boolean resetXpOnStart() {
+        return config.getBoolean("reset-xp-on-start", true);
+    }
+
+    public boolean clearInventoryOnStart() {
+        return config.getBoolean("clear-inventory-on-start", true);
     }
 
     public boolean usesCurrentLevelMode() {

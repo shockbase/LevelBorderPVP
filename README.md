@@ -14,18 +14,19 @@ WorldBorderAPI must also be installed as a server plugin. This plugin only compi
 
 LevelBorderPvP macht aus XP-Leveln echten Spielraum.
 
-Vor dem Start sitzen alle Spieler in einer kleinen Lobby-Border am Spawn. Nach `/levelborder start [seconds]` faellt diese Grenze fuer den Countdown weg. Wenn der Countdown endet, wird die aktuelle Position jedes Online-Spielers als persoenliches Border-Zentrum gespeichert.
+Mit `/levelborder lobby` werden alle Online-Spieler optional zum Worldspawn teleportiert und in einer kleinen Lobby-Border gesperrt. Nach `/levelborder start [seconds]` faellt diese Grenze fuer den Countdown weg. Wenn der Countdown endet, wird die aktuelle Position jedes Online-Spielers als persoenliches Border-Zentrum gespeichert.
 
 Danach zaehlt jedes Level. XP erweitert die eigene Border, PvP kann optional Bonus-Level uebertragen, und die Runde kann automatisch ueber Zeitwertung, Ziel-Level, Ziel-Border oder Elimination enden.
 
 ## Rundenablauf
 
-1. Server startet: Spieler sind im Lobby-Modus am Welt-Spawn eingeschlossen.
-2. Admin fuehrt `/levelborder start [seconds]` aus.
-3. Waehrend des Countdowns haben Spieler keine persoenliche Border.
-4. Nach Ablauf wird jeder aktuelle Online-Spieler als aktiver Border-Spieler registriert.
-5. Spaetere Joiner werden bei aktivem Zuschauermodus zu Zuschauern.
-6. Getoetete aktive Spieler werden ebenfalls Zuschauer und koennen die Runde verfolgen.
+1. Admin fuehrt `/levelborder lobby` aus.
+2. Spieler werden optional zum Worldspawn teleportiert und in der Lobby-Border gehalten.
+3. Admin fuehrt `/levelborder start [seconds]` aus.
+4. Waehrend des Countdowns haben Spieler keine persoenliche Border und koennen sich verteilen.
+5. Nach Ablauf werden XP und Inventar der aktuellen Online-Spieler optional zurueckgesetzt, dann wird jeder als aktiver Border-Spieler registriert.
+6. Spaetere Joiner werden bei aktivem Zuschauermodus zu Zuschauern.
+7. Getoetete aktive Spieler werden ebenfalls Zuschauer und koennen die Runde verfolgen.
 
 Der Zuschauerstatus ist kein echter Minecraft-Spectator. Zuschauer haben keine Border und koennen sich frei bewegen, aber das Plugin blockiert Bauen, Interaktion, Inventare, XP, Item-Handling und Kampf.
 
@@ -78,17 +79,17 @@ Moegliche Werte fuer `end-condition`:
 ## Befehle
 
 ```text
+/levelborder lobby
 /levelborder start [seconds]
 /levelborder stop
-/levelborder reset
 /levelborder config list
 /levelborder config get <key>
 /levelborder config set <key> <value>
 ```
 
-- `start` startet global die Runde.
-- `stop` entfernt die persoenliche Border des ausfuehrenden Spielers.
-- `reset` setzt Mittelpunkt, hoechstes Level und Kill-Bonus des ausfuehrenden Spielers zurueck.
+- `lobby` bereitet die Lobby vor.
+- `start` startet global Countdown und Runde.
+- `stop` beendet die laufende Runde global und entfernt alle Plugin-Borders.
 - `config` kann auch aus der Server-Konsole genutzt werden und speichert Werte direkt in `config.yml`.
 
 Beispiele:
@@ -144,10 +145,13 @@ initial-size-blocks: 3.0
 growth-per-level-blocks: 2.0
 level-mode: highest
 lobby-radius-blocks: 8.0
+teleport-players-to-lobby-spawn: true
 max-size-blocks: 0.0
 border-transition-seconds: 1
 start-countdown-seconds: 10
 max-start-countdown-seconds: 3600
+reset-xp-on-start: true
+clear-inventory-on-start: true
 spectator-mode-enabled: true
 ```
 

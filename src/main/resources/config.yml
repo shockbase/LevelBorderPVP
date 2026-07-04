@@ -14,9 +14,11 @@ highest-kill-bonus-enabled: false
 # When true, the victim's own stored kill bonus is inherited too.
 highest-kill-bonus-inherits-victim-bonus: false
 
-# Before /levelborder start is used, players are kept near their world spawn.
+# /levelborder lobby keeps players near their world spawn.
 # WorldBorderAPI uses diameter, so 8.0 means a 16 block wide lobby border.
 lobby-radius-blocks: 8.0
+# /levelborder lobby teleports online players to their current world's spawn when true.
+teleport-players-to-lobby-spawn: true
 
 # Keeps the border centered in the middle of the block used as personal start position.
 center-at-block-center: true
@@ -37,6 +39,10 @@ border-transition-seconds: 1
 start-countdown-seconds: 10
 # Upper limit for /levelborder start <seconds>.
 max-start-countdown-seconds: 3600
+# When the round becomes active, reset starting active players to level 0.
+reset-xp-on-start: true
+# When the round becomes active, clear starting active players' inventories.
+clear-inventory-on-start: true
 
 # Re-sends the individual border when a player joins, respawns, or changes world.
 reapply-on-world-change: true

@@ -14,7 +14,6 @@ final class RoundPlayerTracker {
     private final Map<UUID, Integer> roundDeaths = new HashMap<>();
     private final Set<UUID> roundPlayers = new HashSet<>();
     private final Set<UUID> spectatorPlayers = new HashSet<>();
-    private final Set<UUID> manuallyStoppedPlayers = new HashSet<>();
 
     void clearRound() {
         clearPlayerStates();
@@ -25,48 +24,28 @@ final class RoundPlayerTracker {
     void clearPlayerStates() {
         roundPlayers.clear();
         spectatorPlayers.clear();
-        manuallyStoppedPlayers.clear();
     }
 
     void activate(Player player) {
         UUID playerId = player.getUniqueId();
         roundPlayers.add(playerId);
         spectatorPlayers.remove(playerId);
-        manuallyStoppedPlayers.remove(playerId);
-    }
-
-    void stop(Player player) {
-        UUID playerId = player.getUniqueId();
-        manuallyStoppedPlayers.add(playerId);
-        spectatorPlayers.remove(playerId);
-    }
-
-    void reset(Player player) {
-        UUID playerId = player.getUniqueId();
-        manuallyStoppedPlayers.remove(playerId);
-        spectatorPlayers.remove(playerId);
     }
 
     void markSpectator(Player player) {
         UUID playerId = player.getUniqueId();
         spectatorPlayers.add(playerId);
-        manuallyStoppedPlayers.remove(playerId);
     }
 
     boolean isActive(RoundState roundState, Player player) {
         UUID playerId = player.getUniqueId();
         return roundState == RoundState.ACTIVE
                 && roundPlayers.contains(playerId)
-                && !spectatorPlayers.contains(playerId)
-                && !manuallyStoppedPlayers.contains(playerId);
+                && !spectatorPlayers.contains(playerId);
     }
 
     boolean isSpectator(Player player) {
         return spectatorPlayers.contains(player.getUniqueId());
-    }
-
-    boolean isManuallyStopped(Player player) {
-        return manuallyStoppedPlayers.contains(player.getUniqueId());
     }
 
     boolean isRoundPlayer(Player player) {

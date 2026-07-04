@@ -7,7 +7,6 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
-import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -40,11 +39,14 @@ public final class BorderCommand implements CommandExecutor, TabCompleter {
         add(options, "highest-kill-bonus-enabled", ConfigValueType.BOOLEAN);
         add(options, "highest-kill-bonus-inherits-victim-bonus", ConfigValueType.BOOLEAN);
         add(options, "lobby-radius-blocks", ConfigValueType.DOUBLE);
+        add(options, "teleport-players-to-lobby-spawn", ConfigValueType.BOOLEAN);
         add(options, "center-at-block-center", ConfigValueType.BOOLEAN);
         add(options, "max-size-blocks", ConfigValueType.DOUBLE);
         add(options, "border-transition-seconds", ConfigValueType.LONG);
         add(options, "start-countdown-seconds", ConfigValueType.INT);
         add(options, "max-start-countdown-seconds", ConfigValueType.INT);
+        add(options, "reset-xp-on-start", ConfigValueType.BOOLEAN);
+        add(options, "clear-inventory-on-start", ConfigValueType.BOOLEAN);
         add(options, "reapply-on-world-change", ConfigValueType.BOOLEAN);
         add(options, "reapply-on-respawn", ConfigValueType.BOOLEAN);
         add(options, "end-condition", ConfigValueType.STRING, "timed-score", "target-level", "target-border", "elimination", "disabled");
@@ -83,7 +85,7 @@ public final class BorderCommand implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
-            return matching(List.of("start", "stop", "reset", "config"), args[0]);
+            return matching(List.of("lobby", "start", "stop", "config"), args[0]);
         }
         if ("config".equalsIgnoreCase(args[0])) {
             return tabCompleteConfig(args);
@@ -129,20 +131,31 @@ public final class BorderCommand implements CommandExecutor, TabCompleter {
     }
 
     private boolean handleCommand(CommandSender sender, String subCommand, String label, String[] args) {
+        if ("lobby".equals(subCommand)) {
+            return handleLobby(sender, label, args);
+        }
         if ("start".equals(subCommand)) {
             return handleStart(sender, label, args);
         }
         if ("stop".equals(subCommand)) {
             return handleStop(sender, label, args);
         }
-        if ("reset".equals(subCommand)) {
-            return handleReset(sender, label, args);
-        }
         if ("config".equals(subCommand)) {
             return handleConfig(sender, label, args);
         }
 
         sender.sendMessage(messages.text("command.usage", Messages.placeholder("label", label)));
+        return true;
+    }
+
+    private boolean handleLobby(CommandSender sender, String label, String[] args) {
+        if (args.length != 0) {
+            sender.sendMessage(messages.text("command.lobby-usage", Messages.placeholder("label", label)));
+            return true;
+        }
+
+        borderService.lobby();
+        sender.sendMessage(messages.text("command.lobby"));
         return true;
     }
 
@@ -183,32 +196,13 @@ public final class BorderCommand implements CommandExecutor, TabCompleter {
     }
 
     private boolean handleStop(CommandSender sender, String label, String[] args) {
-        if (!(sender instanceof Player player)) {
-            sender.sendMessage(messages.text("command.players-only"));
-            return true;
-        }
         if (args.length != 0) {
-            player.sendMessage(messages.text("command.stop-usage", Messages.placeholder("label", label)));
+            sender.sendMessage(messages.text("command.stop-usage", Messages.placeholder("label", label)));
             return true;
         }
 
-        borderService.stop(player);
-        player.sendMessage(messages.text("command.stopped"));
-        return true;
-    }
-
-    private boolean handleReset(CommandSender sender, String label, String[] args) {
-        if (!(sender instanceof Player player)) {
-            sender.sendMessage(messages.text("command.players-only"));
-            return true;
-        }
-        if (args.length != 0) {
-            player.sendMessage(messages.text("command.reset-usage", Messages.placeholder("label", label)));
-            return true;
-        }
-
-        borderService.reset(player);
-        player.sendMessage(messages.text("command.reset"));
+        borderService.stop();
+        sender.sendMessage(messages.text("command.stopped"));
         return true;
     }
 

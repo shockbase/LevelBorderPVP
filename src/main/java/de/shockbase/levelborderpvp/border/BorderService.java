@@ -7,6 +7,7 @@ import de.shockbase.levelborderpvp.data.PlayerBorderData;
 import de.shockbase.levelborderpvp.data.PlayerBorderRepository;
 import de.shockbase.levelborderpvp.i18n.Messages;
 import de.shockbase.levelborderpvp.integration.LuckPermsRoleService;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -23,7 +24,7 @@ public final class BorderService {
     private final RoundPlayerTracker roundPlayers = new RoundPlayerTracker();
     private final RoundScoreTracker roundScores;
 
-    private RoundState roundState = RoundState.LOBBY;
+    private RoundState roundState = RoundState.IDLE;
     private BukkitTask startCountdownTask;
     private BukkitTask roundEndTask;
 
@@ -212,28 +213,12 @@ public final class BorderService {
         startCountdownTask = countdown.runTaskTimer(plugin, 0L, 20L);
     }
 
-    public void stop(Player player) {
-        roundPlayers.stop(player);
-        luckPermsRoleService.clear(player);
-        borderRenderer.resetToGlobal(player);
+    public void lobby() {
+        enterLobby(true);
     }
 
-    public void reset(Player player) {
-        roundPlayers.reset(player);
-
-        PlayerBorderData data = playerBorderDataService.createInitial(player, Math.max(0, player.getLevel()));
-        playerBorderDataService.save(data);
-
-        if (roundState == RoundState.ACTIVE) {
-            roundPlayers.activate(player);
-            luckPermsRoleService.markActive(player);
-            apply(player, data, Math.max(0, player.getLevel()), BorderNotification.JOIN);
-        } else if (roundState == RoundState.LOBBY) {
-            luckPermsRoleService.clear(player);
-            borderRenderer.applyLobbyBorder(player);
-        } else {
-            borderRenderer.resetToGlobal(player);
-        }
+    public void stop() {
+        enterIdle();
     }
 
     public void shutdown() {
@@ -242,6 +227,12 @@ public final class BorderService {
     }
 
     private void applyCurrentState(Player player, BorderNotification notification) {
+        if (roundState == RoundState.IDLE) {
+            luckPermsRoleService.clear(player);
+            borderRenderer.resetToGlobal(player);
+            return;
+        }
+
         if (roundState == RoundState.LOBBY) {
             luckPermsRoleService.clear(player);
             borderRenderer.applyLobbyBorder(player);
@@ -256,11 +247,6 @@ public final class BorderService {
 
         if (roundPlayers.isSpectator(player)) {
             applySpectator(player, notification);
-            return;
-        }
-
-        if (roundPlayers.isManuallyStopped(player)) {
-            borderRenderer.resetToGlobal(player);
             return;
         }
 
@@ -279,7 +265,6 @@ public final class BorderService {
 
     private void ensureRoundPlayer(Player player) {
         if (roundState != RoundState.ACTIVE
-                || roundPlayers.isManuallyStopped(player)
                 || roundPlayers.isSpectator(player)
                 || roundPlayers.isRoundPlayer(player)) {
             return;
@@ -341,12 +326,25 @@ public final class BorderService {
             if (roundState != RoundState.ACTIVE) {
                 break;
             }
+            preparePlayerForRoundStart(player);
             activatePlayerFromCurrentPosition(player, BorderNotification.JOIN);
         }
 
         if (roundState == RoundState.ACTIVE) {
             scheduleRoundEnd();
             checkEliminationWinner();
+        }
+    }
+
+    private void preparePlayerForRoundStart(Player player) {
+        if (settings.resetXpOnStart()) {
+            player.setExp(0.0F);
+            player.setLevel(0);
+            player.setTotalExperience(0);
+        }
+
+        if (settings.clearInventoryOnStart()) {
+            player.getInventory().clear();
         }
     }
 
@@ -444,16 +442,41 @@ public final class BorderService {
     }
 
     private void finishRound() {
+        enterIdle();
+    }
+
+    private void enterIdle() {
+        cancelStartCountdown();
+        cancelRoundEndTask();
+        roundState = RoundState.IDLE;
+
+        for (Player player : plugin.getServer().getOnlinePlayers()) {
+            luckPermsRoleService.clear(player);
+            borderRenderer.resetToGlobal(player);
+        }
+
+        roundPlayers.clearRound();
+    }
+
+    private void enterLobby(boolean teleportPlayers) {
         cancelStartCountdown();
         cancelRoundEndTask();
         roundState = RoundState.LOBBY;
 
         for (Player player : plugin.getServer().getOnlinePlayers()) {
             luckPermsRoleService.clear(player);
+            if (teleportPlayers && settings.teleportPlayersToLobbySpawn()) {
+                teleportToWorldSpawn(player);
+            }
             borderRenderer.applyLobbyBorder(player);
         }
 
         roundPlayers.clearRound();
+    }
+
+    private void teleportToWorldSpawn(Player player) {
+        Location spawnLocation = player.getWorld().getSpawnLocation();
+        player.teleport(spawnLocation);
     }
 
     private void cancelStartCountdown() {
