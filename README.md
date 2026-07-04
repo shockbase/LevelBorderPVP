@@ -145,7 +145,7 @@ growth-per-level-blocks: 2.0
 level-mode: highest
 lobby-radius-blocks: 8.0
 max-size-blocks: 0.0
-border-transition-milliseconds: 1200
+border-transition-seconds: 1
 start-countdown-seconds: 10
 max-start-countdown-seconds: 3600
 spectator-mode-enabled: true

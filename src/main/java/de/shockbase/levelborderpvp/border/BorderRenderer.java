@@ -1,42 +1,32 @@
 package de.shockbase.levelborderpvp.border;
 
+import com.github.yannicklamprecht.worldborder.api.IWorldBorder;
+import com.github.yannicklamprecht.worldborder.api.WorldBorderAction;
 import com.github.yannicklamprecht.worldborder.api.WorldBorderApi;
 import de.shockbase.levelborderpvp.config.LevelBorderSettings;
 import de.shockbase.levelborderpvp.data.PlayerBorderData;
 import de.shockbase.levelborderpvp.data.PlayerBorderRepository;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.Plugin;
-import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.scheduler.BukkitTask;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
 
 final class BorderRenderer {
 
     private static final double BORDER_SIZE_EPSILON = 0.000001D;
     private static final double BORDER_SAFE_MARGIN_BLOCKS = 0.3D;
 
-    private final Plugin plugin;
     private final WorldBorderApi worldBorderApi;
     private final PlayerBorderRepository playerBorderRepository;
     private final LevelBorderSettings settings;
     private final BorderSizeCalculator sizeCalculator;
     private final BorderNotifier notifier;
-    private final Map<UUID, BukkitTask> borderAnimationTasks = new HashMap<>();
-    private final Map<UUID, Double> animatedBorderSizes = new HashMap<>();
 
     BorderRenderer(
-            Plugin plugin,
             WorldBorderApi worldBorderApi,
             PlayerBorderRepository playerBorderRepository,
             LevelBorderSettings settings,
             BorderSizeCalculator sizeCalculator,
             BorderNotifier notifier
     ) {
-        this.plugin = plugin;
         this.worldBorderApi = worldBorderApi;
         this.playerBorderRepository = playerBorderRepository;
         this.settings = settings;
@@ -50,7 +40,7 @@ final class BorderRenderer {
         }
 
         double size = sizeCalculator.calculate(borderLevel);
-        double previousSize = currentDisplayedBorderSize(player, data);
+        double previousSize = currentDisplayedBorderSize(data);
         Location center = data.toLocation(player.getWorld());
         applyBorder(player, center, previousSize, size, notification);
 
@@ -60,8 +50,6 @@ final class BorderRenderer {
     }
 
     void applyLobbyBorder(Player player) {
-        cancelAnimation(player);
-
         double lobbyRadius = settings.lobbyRadiusBlocks();
         if (lobbyRadius <= 0.0D) {
             resetToGlobal(player);
@@ -72,7 +60,6 @@ final class BorderRenderer {
     }
 
     void applySpectator(Player player, BorderNotification notification) {
-        cancelAnimation(player);
         resetToGlobal(player);
 
         if (notification == BorderNotification.SPECTATOR
@@ -86,23 +73,6 @@ final class BorderRenderer {
         worldBorderApi.resetWorldBorderToGlobal(player);
     }
 
-    void shutdown() {
-        for (BukkitTask task : borderAnimationTasks.values()) {
-            task.cancel();
-        }
-        borderAnimationTasks.clear();
-        animatedBorderSizes.clear();
-    }
-
-    void cancelAnimation(Player player) {
-        UUID playerId = player.getUniqueId();
-        BukkitTask task = borderAnimationTasks.remove(playerId);
-        if (task != null) {
-            task.cancel();
-        }
-        animatedBorderSizes.remove(playerId);
-    }
-
     private void applyBorder(
             Player player,
             Location center,
@@ -111,62 +81,20 @@ final class BorderRenderer {
             BorderNotification notification
     ) {
         if (!shouldAnimateSizeChange(notification, previousSize, size)) {
-            cancelAnimation(player);
             keepPlayerInsideShrinkingBorder(player, center, previousSize, size);
             worldBorderApi.setBorder(player, size, center);
             return;
         }
 
         keepPlayerInsideShrinkingBorder(player, center, previousSize, size);
-        animateBorder(player, center, previousSize, size);
-    }
-
-    private double currentDisplayedBorderSize(Player player, PlayerBorderData data) {
-        return animatedBorderSizes.getOrDefault(player.getUniqueId(), data.lastAppliedBorderSize());
-    }
-
-    private void animateBorder(Player player, Location center, double previousSize, double size) {
-        cancelAnimation(player);
-
-        UUID playerId = player.getUniqueId();
-        int totalTicks = Math.max(1, (int) Math.ceil(settings.borderTransitionMilliseconds() / 50.0D));
-        animatedBorderSizes.put(playerId, previousSize);
         worldBorderApi.setBorder(player, previousSize, center);
-
-        BukkitRunnable animation = new BukkitRunnable() {
-            private int elapsedTicks;
-
-            @Override
-            public void run() {
-                if (!player.isOnline()) {
-                    borderAnimationTasks.remove(playerId);
-                    animatedBorderSizes.remove(playerId);
-                    cancel();
-                    return;
-                }
-
-                elapsedTicks++;
-                double progress = Math.min(1.0D, elapsedTicks / (double) totalTicks);
-                double easedProgress = smoothStep(progress);
-                double currentSize = previousSize + ((size - previousSize) * easedProgress);
-
-                animatedBorderSizes.put(playerId, currentSize);
-                worldBorderApi.setBorder(player, currentSize, center);
-
-                if (progress >= 1.0D) {
-                    borderAnimationTasks.remove(playerId);
-                    animatedBorderSizes.remove(playerId);
-                    worldBorderApi.setBorder(player, size, center);
-                    cancel();
-                }
-            }
-        };
-
-        borderAnimationTasks.put(playerId, animation.runTaskTimer(plugin, 1L, 1L));
+        IWorldBorder border = worldBorderApi.getWorldBorder(player);
+        border.lerp(previousSize, size, settings.borderTransitionSeconds());
+        border.send(player, WorldBorderAction.LERP_SIZE);
     }
 
-    private double smoothStep(double progress) {
-        return progress * progress * (3.0D - (2.0D * progress));
+    private double currentDisplayedBorderSize(PlayerBorderData data) {
+        return data.lastAppliedBorderSize();
     }
 
     private void keepPlayerInsideShrinkingBorder(Player player, Location center, double previousSize, double size) {
@@ -200,7 +128,7 @@ final class BorderRenderer {
     }
 
     private boolean shouldAnimateSizeChange(BorderNotification notification, double previousSize, double size) {
-        if (settings.borderTransitionMilliseconds() <= 0L || previousSize <= 0.0D) {
+        if (settings.borderTransitionSeconds() <= 0L || previousSize <= 0.0D) {
             return false;
         }
         if (Math.abs(size - previousSize) <= BORDER_SIZE_EPSILON) {

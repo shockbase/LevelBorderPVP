@@ -27,9 +27,9 @@ max-size-blocks: 0.0
 # Message language. Bundled files: de, en, ru.
 language: de
 
-# Size changes caused by level changes are animated smoothly over this duration.
+# Size changes caused by level changes are animated smoothly over this duration in seconds.
 # Set to 0 to disable the transition.
-border-transition-milliseconds: 1200
+border-transition-seconds: 1
 
 # /levelborder start uses this countdown when no seconds argument is given.
 # During the countdown, personal borders are removed so players can spread out.

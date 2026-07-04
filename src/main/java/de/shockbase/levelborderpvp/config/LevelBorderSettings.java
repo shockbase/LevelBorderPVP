@@ -33,8 +33,8 @@ public final class LevelBorderSettings {
         return config.getString("language", "de");
     }
 
-    public long borderTransitionMilliseconds() {
-        return Math.max(0L, config.getLong("border-transition-milliseconds", 1200L));
+    public long borderTransitionSeconds() {
+        return Math.max(0L, config.getLong("border-transition-seconds", 1L));
     }
 
     public double lobbyRadiusBlocks() {

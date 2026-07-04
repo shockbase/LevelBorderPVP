@@ -41,7 +41,7 @@ public final class BorderService {
         this.settings = settings;
         this.messages = messages;
         this.luckPermsRoleService = luckPermsRoleService;
-        this.borderRenderer = new BorderRenderer(plugin, worldBorderApi, playerBorderRepository, settings, sizeCalculator, notifier);
+        this.borderRenderer = new BorderRenderer(worldBorderApi, playerBorderRepository, settings, sizeCalculator, notifier);
         this.playerBorderDataService = new PlayerBorderDataService(playerBorderRepository, settings, sizeCalculator);
         this.roundScores = new RoundScoreTracker(settings, sizeCalculator, playerBorderDataService, roundPlayers);
     }
@@ -177,7 +177,6 @@ public final class BorderService {
         roundPlayers.clearRound();
 
         for (Player player : plugin.getServer().getOnlinePlayers()) {
-            borderRenderer.cancelAnimation(player);
             luckPermsRoleService.clear(player);
             borderRenderer.resetToGlobal(player);
         }
@@ -214,14 +213,12 @@ public final class BorderService {
     }
 
     public void stop(Player player) {
-        borderRenderer.cancelAnimation(player);
         roundPlayers.stop(player);
         luckPermsRoleService.clear(player);
         borderRenderer.resetToGlobal(player);
     }
 
     public void reset(Player player) {
-        borderRenderer.cancelAnimation(player);
         roundPlayers.reset(player);
 
         PlayerBorderData data = playerBorderDataService.createInitial(player, Math.max(0, player.getLevel()));
@@ -242,7 +239,6 @@ public final class BorderService {
     public void shutdown() {
         cancelStartCountdown();
         cancelRoundEndTask();
-        borderRenderer.shutdown();
     }
 
     private void applyCurrentState(Player player, BorderNotification notification) {
@@ -253,7 +249,6 @@ public final class BorderService {
         }
 
         if (roundState == RoundState.COUNTDOWN) {
-            borderRenderer.cancelAnimation(player);
             luckPermsRoleService.clear(player);
             borderRenderer.resetToGlobal(player);
             return;
@@ -454,7 +449,6 @@ public final class BorderService {
         roundState = RoundState.LOBBY;
 
         for (Player player : plugin.getServer().getOnlinePlayers()) {
-            borderRenderer.cancelAnimation(player);
             luckPermsRoleService.clear(player);
             borderRenderer.applyLobbyBorder(player);
         }

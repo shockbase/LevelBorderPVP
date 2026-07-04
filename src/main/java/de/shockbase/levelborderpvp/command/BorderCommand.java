@@ -42,7 +42,7 @@ public final class BorderCommand implements CommandExecutor, TabCompleter {
         add(options, "lobby-radius-blocks", ConfigValueType.DOUBLE);
         add(options, "center-at-block-center", ConfigValueType.BOOLEAN);
         add(options, "max-size-blocks", ConfigValueType.DOUBLE);
-        add(options, "border-transition-milliseconds", ConfigValueType.LONG);
+        add(options, "border-transition-seconds", ConfigValueType.LONG);
         add(options, "start-countdown-seconds", ConfigValueType.INT);
         add(options, "max-start-countdown-seconds", ConfigValueType.INT);
         add(options, "reapply-on-world-change", ConfigValueType.BOOLEAN);
