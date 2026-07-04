@@ -1,0 +1,37 @@
+# WorldBorderAPI uses the border size as diameter, not radius.
+# Defaults therefore implement one extra block of radius per level:
+# level 0 = 3x3, level 1 = 5x5, level 2 = 7x7, ...
+initial-size-blocks: 3.0
+growth-per-level-blocks: 2.0
+
+# highest = border size is based on the highest level the player has ever reached.
+# current = border size follows the player's current level directly and can shrink.
+level-mode: highest
+
+# Optional rule for level-mode highest only.
+# When true, a player kill adds the victim's highest reached level as bonus.
+highest-kill-bonus-enabled: false
+# When true, the victim's own stored kill bonus is inherited too.
+highest-kill-bonus-inherits-victim-bonus: false
+
+# Keeps the border centered in the middle of the block the player first spawned on.
+center-at-block-center: true
+
+# Keep at or below 0 to disable an upper limit.
+max-size-blocks: 0.0
+
+# Size changes caused by level changes are animated smoothly over this duration.
+# Set to 0 to disable the transition.
+border-transition-milliseconds: 1200
+
+# When false, players must use /levelborder start before their personal border is applied.
+auto-start-on-join: true
+
+# /levelborder start uses this countdown when no seconds argument is given.
+start-countdown-seconds: 10
+# Upper limit for /levelborder start <seconds>.
+max-start-countdown-seconds: 3600
+
+# Re-sends the individual border when a player joins, respawns, or changes world.
+reapply-on-world-change: true
+reapply-on-respawn: true

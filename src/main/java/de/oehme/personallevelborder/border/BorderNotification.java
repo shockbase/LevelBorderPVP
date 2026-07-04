@@ -1,0 +1,10 @@
+package de.oehme.personallevelborder.border;
+
+public enum BorderNotification {
+    NONE,
+    LEVEL_UP,
+    LEVEL_CHANGED,
+    KILL_BONUS,
+    JOIN,
+    RESPAWN
+}

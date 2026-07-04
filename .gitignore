@@ -1,0 +1,46 @@
+# Gradle
+.gradle/
+build/
+out/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Java/JVM
+*.class
+hs_err_pid*
+replay_pid*
+
+# IDEs
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+
+# Local Minecraft/Paper server runtime
+run/
+server/
+/plugins/
+/logs/
+/crash-reports/
+/world/
+/world_nether/
+/world_the_end/
+banned-*.json
+ops.json
+usercache.json
+whitelist.json
+
+# Logs
+*.log
+*.log.gz
+
+# Local environment
+.env
+.env.*
+!.env.example
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini

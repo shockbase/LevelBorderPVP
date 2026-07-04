@@ -1,0 +1,12 @@
+name: PersonalLevelBorder
+version: '${version}'
+main: de.oehme.personallevelborder.PersonalLevelBorderPlugin
+api-version: '26.2'
+description: Per-player WorldBorderAPI borders that scale with player XP levels.
+author: Oliver Oehme
+depend:
+  - WorldBorderAPI
+commands:
+  levelborder:
+    description: Controls the personal border.
+    usage: /levelborder <start|stop|reset> [seconds]
