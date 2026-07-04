@@ -4,9 +4,11 @@ Paper plugin for individual per-player borders via WorldBorderAPI.
 
 ## Version target
 
-- Paper API: `26.2.build.+`
+- Plugin version: `1.0.0`
 - WorldBorderAPI: `26.2.0.0:dev`
-- Java toolchain: `25`
+- Minecraft/Paper API version: `26.2`
+- Paper API: `26.2.build.+` (derived from WorldBorderAPI)
+- Java toolchain: `25` (derived from WorldBorderAPI)
 
 WorldBorderAPI must also be installed as a server plugin. This plugin only compiles against the API and declares `depend: [WorldBorderAPI]`.
 

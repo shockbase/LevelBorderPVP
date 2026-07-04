@@ -1,7 +1,7 @@
 name: LevelBorderPvP
 version: '${version}'
 main: de.shockbase.levelborderpvp.LevelBorderPvPPlugin
-api-version: '26.2'
+api-version: '${apiVersion}'
 description: Per-player WorldBorderAPI borders that scale with player XP levels.
 author: Shockbase
 depend:
