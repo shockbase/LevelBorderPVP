@@ -68,6 +68,10 @@ public final class BorderService {
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> applyCurrentState(player, notification), delayTicks);
     }
 
+    public void handleWorldChange(Player player) {
+        plugin.getServer().getScheduler().runTask(plugin, () -> applyWorldChangeState(player));
+    }
+
     public void reapplyOnlinePlayers() {
         for (Player player : plugin.getServer().getOnlinePlayers()) {
             applyNextTick(player, BorderNotification.NONE);
@@ -397,6 +401,19 @@ public final class BorderService {
 
         luckPermsRoleService.markActive(player);
         apply(player, notification);
+    }
+
+    private void applyWorldChangeState(Player player) {
+        if (roundPlayers.isSpectator(player)) {
+            applySpectator(player, BorderNotification.NONE);
+            return;
+        }
+        if (!isActive(player)) {
+            return;
+        }
+
+        luckPermsRoleService.markActive(player);
+        apply(player, BorderNotification.NONE);
     }
 
     private void ensureRoundPlayer(Player player) {

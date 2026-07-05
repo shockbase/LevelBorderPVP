@@ -65,7 +65,7 @@ public final class PlayerBorderListener implements Listener {
     @EventHandler
     public void onPlayerChangedWorld(PlayerChangedWorldEvent event) {
         if (settings.reapplyOnWorldChange()) {
-            borderService.applyNextTick(event.getPlayer(), BorderNotification.NONE);
+            borderService.handleWorldChange(event.getPlayer());
         }
     }
 
