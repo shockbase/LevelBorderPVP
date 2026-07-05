@@ -22,7 +22,7 @@ public final class LevelBorderSettings {
     }
 
     public double growthPerLevelBlocks() {
-        return Math.max(0.0D, config.getDouble("growth-per-level-blocks", 2.0D));
+        return Math.max(0.0D, config.getDouble("growth-per-level-blocks", 8.0D));
     }
 
     public double maxSizeBlocks() {
@@ -55,6 +55,18 @@ public final class LevelBorderSettings {
 
     public int maxStartCountdownSeconds() {
         return Math.max(defaultStartCountdownSeconds(), config.getInt("max-start-countdown-seconds", 3600));
+    }
+
+    public StartPlacementMode startPlacementMode() {
+        return StartPlacementMode.fromConfig(config.getString("start-placement-mode", StartPlacementMode.GRID.configValue()));
+    }
+
+    public double startGridSpacingBlocks() {
+        return Math.max(1.0D, config.getDouble("start-grid-spacing-blocks", 64.0D));
+    }
+
+    public boolean startGridSkipCenter() {
+        return config.getBoolean("start-grid-skip-center", true);
     }
 
     public boolean resetXpOnStart() {
@@ -103,7 +115,7 @@ public final class LevelBorderSettings {
     }
 
     public RoundEndCondition endCondition() {
-        return RoundEndCondition.fromConfig(config.getString("end-condition", RoundEndCondition.TIMED_SCORE.configValue()));
+        return RoundEndCondition.fromConfig(config.getString("end-condition", RoundEndCondition.ELIMINATION.configValue()));
     }
 
     public int roundDurationMinutes() {

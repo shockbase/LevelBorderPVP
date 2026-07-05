@@ -11,7 +11,7 @@ command:
   max-countdown: "The countdown can be at most {seconds} seconds."
   not-enough-players: "Not enough players inside the lobby border: {players}/{required}."
   lobby: "Lobby prepared."
-  starting: "Start countdown started: {seconds} seconds."
+  starting: "Game started. Countdown: {seconds} seconds."
   stopped: "Game ended."
   rollback-started: "Rollback started: {players} players, {commands} commands, provider: {provider}."
   rollback-disabled: "Rollback integration is disabled."

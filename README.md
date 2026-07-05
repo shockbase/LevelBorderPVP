@@ -14,7 +14,7 @@ WorldBorderAPI must also be installed as a server plugin. This plugin only compi
 
 LevelBorderPvP macht aus XP-Leveln echten Spielraum.
 
-Mit `/levelborder lobby` werden alle Online-Spieler optional zum Worldspawn teleportiert und in einer kleinen Lobby-Border gesperrt. Bei `/levelborder start [seconds]` werden nur Spieler innerhalb dieser Lobby-Border fuer die Runde vorgemerkt. Nach dem Countdown wird ihre aktuelle Position als persoenliches Border-Zentrum gespeichert.
+Mit `/levelborder lobby` werden alle Online-Spieler optional zum Worldspawn teleportiert und in einer kleinen Lobby-Border gesperrt. Bei `/levelborder start [seconds]` werden nur Spieler innerhalb dieser Lobby-Border fuer die Runde vorgemerkt. Standardmaessig werden sie danach auf sichere Grid-Positionen rund um den Worldspawn verteilt und sofort in ihrer persoenlichen Border fixiert.
 
 Danach zaehlt jedes Level. XP erweitert die eigene Border, PvP kann optional Bonus-Level uebertragen, und die Runde kann automatisch ueber Zeitwertung, Ziel-Level, Ziel-Border oder Elimination enden.
 
@@ -24,11 +24,12 @@ Danach zaehlt jedes Level. XP erweitert die eigene Border, PvP kann optional Bon
 2. Spieler werden optional zum Worldspawn teleportiert und in der Lobby-Border gehalten.
 3. Admin fuehrt `/levelborder start [seconds]` aus. Dafuer muessen mindestens `minimum-start-players` Spieler in der Lobby-Border stehen.
 4. Nur Spieler innerhalb der Lobby-Border werden aktive Spieler; alle anderen werden Zuschauer.
-5. Waehrend des Countdowns haben aktive Spieler keine persoenliche Border und koennen sich verteilen.
-6. Nach Ablauf werden XP und Inventar der aktiven Startspieler optional zurueckgesetzt.
-7. Spaetere Joiner werden fuer die laufende Runde Zuschauer.
-8. Getoetete aktive Spieler respawnen weiter als aktive Spieler, ausser `end-condition: elimination` entfernt sie aus der Runde.
-9. Schafft es ein aktiver Spieler aus seiner persoenlichen Border, bekommt er `breakout-grace-seconds` Sekunden Rueckkehrzeit. Danach wird er disqualifiziert und nach 5 Sekunden per Blitz-Effekt getoetet.
+5. Im Grid-Startmodus werden aktive Spieler sofort verteilt und ihre Border wird direkt gesetzt.
+6. Im Spread-Startmodus haben aktive Spieler waehrend des Countdowns keine persoenliche Border und koennen sich verteilen.
+7. Beim Rundenstart werden XP und Inventar der aktiven Startspieler optional zurueckgesetzt.
+8. Spaetere Joiner werden fuer die laufende Runde Zuschauer.
+9. Getoetete aktive Spieler respawnen weiter als aktive Spieler, ausser `end-condition: elimination` entfernt sie aus der Runde.
+10. Schafft es ein aktiver Spieler aus seiner persoenlichen Border, bekommt er `breakout-grace-seconds` Sekunden Rueckkehrzeit. Danach wird er disqualifiziert und nach 5 Sekunden per Blitz-Effekt getoetet.
 
 Der Zuschauerstatus ist kein echter Minecraft-Spectator. Zuschauer haben keine Border und koennen sich frei bewegen, aber das Plugin blockiert Bauen, Interaktion, Inventare, XP, Item-Handling und Kampf.
 
@@ -66,7 +67,7 @@ Die Border folgt direkt dem aktuellen XP-Level und kann schrumpfen.
 ## Spielende
 
 ```yaml
-end-condition: timed-score
+end-condition: elimination
 round-duration-minutes: 60
 score-tiebreakers:
   - kills
@@ -97,7 +98,7 @@ Moegliche Werte fuer `end-condition`:
 ```
 
 - `lobby` bereitet die Lobby vor.
-- `start` startet global Countdown und Runde.
+- `start` startet die Runde; im Grid-Modus ohne Verteil-Countdown.
 - `stop` beendet die laufende Runde global und entfernt alle Plugin-Borders.
 - `rollback` setzt Aenderungen der aktiven Rundenspieler ueber CoreProtect oder Prism zurueck.
 - `config` kann auch aus der Server-Konsole genutzt werden und speichert Werte direkt in `config.yml`.
@@ -191,13 +192,16 @@ Platzhalter: `{player}`, `{uuid}`, `{world}`, `{duration}`, `{duration_seconds}`
 
 ```yaml
 initial-size-blocks: 3.0
-growth-per-level-blocks: 2.0
+growth-per-level-blocks: 8.0
 level-mode: highest
 lobby-radius-blocks: 8.0
 teleport-players-to-lobby-spawn: true
 max-size-blocks: 0.0
 border-transition-seconds: 1
-start-countdown-seconds: 10
+start-placement-mode: grid
+start-grid-spacing-blocks: 64.0
+start-grid-skip-center: true
+start-countdown-seconds: 0
 minimum-start-players: 2
 max-start-countdown-seconds: 3600
 reset-xp-on-start: true
@@ -210,6 +214,8 @@ breakout-grace-seconds: 10
 `max-size-blocks: 0.0` bedeutet: keine Obergrenze.
 
 `minimum-start-players` wird bei `/levelborder start` gegen die Spieler innerhalb der Lobby-Border geprueft. Ist die Zahl zu niedrig, startet keine Runde.
+
+`start-placement-mode: grid` verteilt Startspieler auf sichere Rasterpunkte um den Worldspawn und setzt die Border sofort. `start-grid-spacing-blocks: 64.0` bedeutet mit `growth-per-level-blocks: 8.0`, dass Nachbar-Borders etwa ab Level 8 aufeinandertreffen. Mit `spread` gilt das alte Countdown-Verteilen.
 
 `dimension-policy: safe-pve` bedeutet: Aktive Rundenspieler haben ihre persoenliche Border nur in der Overworld. Nether und End zeigen keine persoenliche Border; Portal- und PvP-Sonderregeln sollen nur aktive Rundenspieler betreffen. Mit `legacy` gilt das alte Verhalten in allen Welten.
 

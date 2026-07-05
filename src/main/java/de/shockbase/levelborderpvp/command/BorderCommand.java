@@ -53,6 +53,9 @@ public final class BorderCommand implements CommandExecutor, TabCompleter {
         add(options, "start-countdown-seconds", ConfigValueType.INT);
         add(options, "minimum-start-players", ConfigValueType.INT);
         add(options, "max-start-countdown-seconds", ConfigValueType.INT);
+        add(options, "start-placement-mode", ConfigValueType.STRING, "spread", "grid");
+        add(options, "start-grid-spacing-blocks", ConfigValueType.DOUBLE);
+        add(options, "start-grid-skip-center", ConfigValueType.BOOLEAN);
         add(options, "reset-xp-on-start", ConfigValueType.BOOLEAN);
         add(options, "clear-inventory-on-start", ConfigValueType.BOOLEAN);
         add(options, "reapply-on-world-change", ConfigValueType.BOOLEAN);
@@ -248,7 +251,7 @@ public final class BorderCommand implements CommandExecutor, TabCompleter {
 
         sender.sendMessage(messages.text(
                 "command.starting",
-                Messages.placeholder("seconds", countdownSeconds)
+                Messages.placeholder("seconds", startResult.countdownSeconds())
         ));
         return true;
     }

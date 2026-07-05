@@ -21,7 +21,7 @@ public enum RoundEndCondition {
 
     public static RoundEndCondition fromConfig(String value) {
         if (value == null || value.isBlank()) {
-            return TIMED_SCORE;
+            return ELIMINATION;
         }
 
         String normalized = value.trim().toLowerCase(Locale.ROOT);
@@ -30,6 +30,6 @@ public enum RoundEndCondition {
                 return condition;
             }
         }
-        return TIMED_SCORE;
+        return ELIMINATION;
     }
 }
