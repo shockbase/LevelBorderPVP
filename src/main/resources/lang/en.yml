@@ -16,6 +16,7 @@ command:
   config-set: "{key} was set to {value}."
   config-unknown: "Unknown setting: {key}"
   config-invalid: "Invalid value: {reason}"
+  no-permission: "No permission. Required: {permission}"
 
 service:
   countdown: "Border starts in {seconds} seconds."

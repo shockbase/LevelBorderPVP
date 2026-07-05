@@ -6,7 +6,10 @@ import de.shockbase.levelborderpvp.i18n.Messages;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.command.TabCompleter;
+import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,8 +27,10 @@ public final class BorderCommand implements CommandExecutor, TabCompleter {
     private final LevelBorderSettings settings;
     private final BorderService borderService;
     private final Messages messages;
+    private final Plugin plugin;
 
-    public BorderCommand(LevelBorderSettings settings, BorderService borderService, Messages messages) {
+    public BorderCommand(Plugin plugin, LevelBorderSettings settings, BorderService borderService, Messages messages) {
+        this.plugin = plugin;
         this.settings = settings;
         this.borderService = borderService;
         this.messages = messages;
@@ -49,6 +54,7 @@ public final class BorderCommand implements CommandExecutor, TabCompleter {
         add(options, "clear-inventory-on-start", ConfigValueType.BOOLEAN);
         add(options, "reapply-on-world-change", ConfigValueType.BOOLEAN);
         add(options, "reapply-on-respawn", ConfigValueType.BOOLEAN);
+        add(options, "command-permission", ConfigValueType.STRING);
         add(options, "end-condition", ConfigValueType.STRING, "timed-score", "target-level", "target-border", "elimination", "disabled");
         add(options, "round-duration-minutes", ConfigValueType.INT);
         add(options, "score-tiebreakers", ConfigValueType.STRING_LIST, "kills,highest-level,deaths-ascending");
@@ -72,6 +78,14 @@ public final class BorderCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (!canControlGame(sender)) {
+            sender.sendMessage(messages.text(
+                    "command.no-permission",
+                    Messages.placeholder("permission", settings.commandPermission())
+            ));
+            return true;
+        }
+
         if (args.length == 0) {
             sender.sendMessage(messages.text("command.usage", Messages.placeholder("label", label)));
             return true;
@@ -84,6 +98,10 @@ public final class BorderCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        if (!canControlGame(sender)) {
+            return Collections.emptyList();
+        }
+
         if (args.length == 1) {
             return matching(List.of("lobby", "start", "stop", "config"), args[0]);
         }
@@ -117,6 +135,23 @@ public final class BorderCommand implements CommandExecutor, TabCompleter {
             return matching(option.valueSuggestions(), args[3]);
         }
         return Collections.emptyList();
+    }
+
+    private boolean canControlGame(CommandSender sender) {
+        if (sender instanceof ConsoleCommandSender) {
+            return true;
+        }
+
+        if (isLuckPermsEnabled()) {
+            return sender.hasPermission(settings.commandPermission());
+        }
+
+        return sender instanceof Player && sender.isOp();
+    }
+
+    private boolean isLuckPermsEnabled() {
+        Plugin luckPerms = plugin.getServer().getPluginManager().getPlugin("LuckPerms");
+        return luckPerms != null && luckPerms.isEnabled();
     }
 
     private List<String> matching(List<String> suggestions, String currentArgument) {

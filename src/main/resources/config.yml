@@ -49,6 +49,11 @@ clear-inventory-on-start: true
 reapply-on-world-change: true
 reapply-on-respawn: true
 
+# Admin command protection for /levelborder.
+# If LuckPerms is installed, grant this permission to admins.
+# Without LuckPerms, only OP players and the server console can control the game.
+command-permission: levelborderpvp.admin
+
 # Game end criteria:
 # disabled = no automatic winner.
 # timed-score = after round-duration-minutes, the largest active border wins.

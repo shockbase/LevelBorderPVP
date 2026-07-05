@@ -62,7 +62,7 @@ public final class LevelBorderPvPPlugin extends JavaPlugin {
                 this
         );
 
-        BorderCommand borderCommand = new BorderCommand(settings, borderService, messages);
+        BorderCommand borderCommand = new BorderCommand(this, settings, borderService, messages);
         registerCommand("levelborder", borderCommand, messages);
 
         for (Player player : Bukkit.getOnlinePlayers()) {

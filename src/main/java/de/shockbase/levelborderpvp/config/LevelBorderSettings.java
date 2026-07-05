@@ -86,6 +86,14 @@ public final class LevelBorderSettings {
         return config.getBoolean("reapply-on-respawn", true);
     }
 
+    public String commandPermission() {
+        String permission = config.getString("command-permission", "levelborderpvp.admin");
+        if (permission == null || permission.isBlank()) {
+            return "levelborderpvp.admin";
+        }
+        return permission.trim();
+    }
+
     public RoundEndCondition endCondition() {
         return RoundEndCondition.fromConfig(config.getString("end-condition", RoundEndCondition.TIMED_SCORE.configValue()));
     }

@@ -92,6 +92,7 @@ Moegliche Werte fuer `end-condition`:
 - `start` startet global Countdown und Runde.
 - `stop` beendet die laufende Runde global und entfernt alle Plugin-Borders.
 - `config` kann auch aus der Server-Konsole genutzt werden und speichert Werte direkt in `config.yml`.
+- Alle `/levelborder`-Befehle sind geschuetzt. Mit LuckPerms braucht der Nutzer `levelborderpvp.admin`; ohne LuckPerms duerfen nur OP-Spieler und die Server-Konsole steuern.
 
 Beispiele:
 
@@ -101,9 +102,29 @@ Beispiele:
 /levelborder config set spectator-mode-enabled true
 ```
 
+## Admin-Rechte
+
+```yaml
+command-permission: levelborderpvp.admin
+```
+
+Wenn LuckPerms installiert ist, prueft LevelBorderPvP diese Permission ueber Bukkit/LuckPerms:
+
+```text
+lp group admin permission set levelborderpvp.admin true
+```
+
+Der Permission-Name kann in `config.yml` geaendert werden. Ohne LuckPerms greift der interne Fallback: Nur OP-Spieler und die Server-Konsole koennen `/levelborder` verwenden.
+
 ## LuckPerms
 
 LuckPerms ist optional und wird ohne harte API-Abhaengigkeit ueber Console-Kommandos angebunden.
+
+Fuer Admins:
+
+```text
+lp group admin permission set levelborderpvp.admin true
+```
 
 Empfohlene Gruppen:
 
@@ -153,6 +174,7 @@ start-countdown-seconds: 10
 max-start-countdown-seconds: 3600
 reset-xp-on-start: true
 clear-inventory-on-start: true
+command-permission: levelborderpvp.admin
 spectator-mode-enabled: true
 ```
 
