@@ -5,6 +5,7 @@ import de.shockbase.levelborderpvp.data.PlayerBorderData;
 import de.shockbase.levelborderpvp.data.PlayerBorderRepository;
 import de.shockbase.levelborderpvp.data.PortalLocationData;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 
 final class PlayerBorderDataService {
@@ -81,6 +82,15 @@ final class PlayerBorderDataService {
 
         playerBorderRepository.save(data.withOverworldPortal(PortalLocationData.fromLocation(portalLocation)));
         return true;
+    }
+
+    Location findOverworldPortal(Player player, World fallbackWorld) {
+        PlayerBorderData data = findExisting(player);
+        if (data == null || data.overworldPortal() == null) {
+            return null;
+        }
+
+        return data.overworldPortal().toLocation(fallbackWorld);
     }
 
     PlayerBorderData updateMaxReachedLevel(Player player, PlayerBorderData data) {

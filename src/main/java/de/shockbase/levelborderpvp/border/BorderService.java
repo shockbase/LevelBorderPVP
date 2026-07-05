@@ -141,6 +141,32 @@ public final class BorderService {
         return playerBorderDataService.saveFirstOverworldPortal(player, portalLocation);
     }
 
+    public Location resolveOverworldPortalReturn(Player player, Location targetLocation) {
+        if (targetLocation == null
+                || targetLocation.getWorld() == null
+                || targetLocation.getWorld().getEnvironment() != World.Environment.NORMAL
+                || !shouldApplyPortalRules(player)) {
+            return null;
+        }
+
+        if (isInsidePersonalBorder(player, targetLocation)) {
+            return targetLocation;
+        }
+
+        Location storedPortal = playerBorderDataService.findOverworldPortal(player, targetLocation.getWorld());
+        if (storedPortal == null || storedPortal.getWorld() == null) {
+            return null;
+        }
+        if (storedPortal.getWorld().getEnvironment() != World.Environment.NORMAL) {
+            return null;
+        }
+        if (!isInsidePersonalBorder(player, storedPortal)) {
+            return null;
+        }
+
+        return storedPortal;
+    }
+
     public void handleLevelChange(Player player, int newLevel) {
         if (!isActive(player)) {
             return;

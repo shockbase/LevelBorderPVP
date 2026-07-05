@@ -70,11 +70,26 @@ public final class PlayerBorderListener implements Listener {
     @EventHandler
     public void onPlayerPortal(PlayerPortalEvent event) {
         Player player = event.getPlayer();
-        if (!borderService.shouldApplyPortalRules(player) || !isOverworldToSecondaryDimension(event.getFrom(), event.getTo())) {
+        if (!borderService.shouldApplyPortalRules(player)) {
             return;
         }
 
-        borderService.rememberFirstOverworldPortal(player, event.getFrom());
+        if (isOverworldToSecondaryDimension(event.getFrom(), event.getTo())) {
+            borderService.rememberFirstOverworldPortal(player, event.getFrom());
+            return;
+        }
+
+        if (!isSecondaryDimensionToOverworld(event.getFrom(), event.getTo())) {
+            return;
+        }
+
+        Location targetLocation = borderService.resolveOverworldPortalReturn(player, event.getTo());
+        if (targetLocation == null) {
+            event.setCancelled(true);
+            return;
+        }
+
+        event.setTo(targetLocation);
     }
 
     @EventHandler
@@ -201,5 +216,17 @@ public final class PlayerBorderListener implements Listener {
         World.Environment toEnvironment = to.getWorld().getEnvironment();
         return fromEnvironment == World.Environment.NORMAL
                 && (toEnvironment == World.Environment.NETHER || toEnvironment == World.Environment.THE_END);
+    }
+
+    private boolean isSecondaryDimensionToOverworld(Location from, Location to) {
+        if (from.getWorld() == null) {
+            return false;
+        }
+
+        World.Environment fromEnvironment = from.getWorld().getEnvironment();
+        if (fromEnvironment != World.Environment.NETHER && fromEnvironment != World.Environment.THE_END) {
+            return false;
+        }
+        return to == null || (to.getWorld() != null && to.getWorld().getEnvironment() == World.Environment.NORMAL);
     }
 }
