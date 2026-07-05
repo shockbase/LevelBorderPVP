@@ -159,6 +159,30 @@ public final class LevelBorderSettings {
         return config.getString("luckperms-command-remove-spectator", "lp user {player} parent remove {spectator_group}");
     }
 
+    public boolean rollbackIntegrationEnabled() {
+        return config.getBoolean("rollback-integration-enabled", false);
+    }
+
+    public String rollbackProvider() {
+        String provider = config.getString("rollback-provider", "auto");
+        if (provider == null || provider.isBlank()) {
+            return "auto";
+        }
+        return provider.trim();
+    }
+
+    public boolean rollbackOnRoundEnd() {
+        return config.getBoolean("rollback-on-round-end", false);
+    }
+
+    public String coreProtectRollbackCommand() {
+        return config.getString("coreprotect-rollback-command", "co rollback u:{player} t:{duration} r:#global");
+    }
+
+    public String prismRollbackCommand() {
+        return config.getString("prism-rollback-command", "prism rollback player:{player} since:{duration}");
+    }
+
     public Object configValue(String path) {
         return config.get(path);
     }

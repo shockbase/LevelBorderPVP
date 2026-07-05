@@ -90,6 +90,7 @@ Moegliche Werte fuer `end-condition`:
 /levelborder lobby
 /levelborder start [seconds]
 /levelborder stop
+/levelborder rollback [auto|coreprotect|prism]
 /levelborder config list
 /levelborder config get <key>
 /levelborder config set <key> <value>
@@ -98,6 +99,7 @@ Moegliche Werte fuer `end-condition`:
 - `lobby` bereitet die Lobby vor.
 - `start` startet global Countdown und Runde.
 - `stop` beendet die laufende Runde global und entfernt alle Plugin-Borders.
+- `rollback` setzt Aenderungen der aktiven Rundenspieler ueber CoreProtect oder Prism zurueck.
 - `config` kann auch aus der Server-Konsole genutzt werden und speichert Werte direkt in `config.yml`.
 - Alle `/levelborder`-Befehle sind geschuetzt. Mit LuckPerms braucht der Nutzer `levelborderpvp.admin`; ohne LuckPerms duerfen nur OP-Spieler und die Server-Konsole steuern.
 
@@ -108,6 +110,8 @@ Beispiele:
 /levelborder config set round-duration-minutes 45
 /levelborder config set spectator-mode-enabled true
 /levelborder config set breakout-grace-seconds 10
+/levelborder config set rollback-integration-enabled true
+/levelborder rollback coreprotect
 ```
 
 ## Admin-Rechte
@@ -167,6 +171,22 @@ luckperms-command-remove-spectator: "lp user {player} parent remove {spectator_g
 Platzhalter: `{player}`, `{uuid}`, `{active_group}`, `{spectator_group}`.
 
 Die Plugin-eigenen Zuschauer-Sperren bleiben aktiv. LuckPerms ist zusaetzlich fuer Serverrechte, Commands und andere Plugins gedacht.
+
+## CoreProtect / Prism Rollback
+
+CoreProtect und Prism sind optional. LevelBorderPvP ruft nur konfigurierbare Console-Kommandos auf und speichert dafuer die aktiven Startspieler einer Runde.
+
+```yaml
+rollback-integration-enabled: false
+rollback-provider: auto
+rollback-on-round-end: false
+coreprotect-rollback-command: "co rollback u:{player} t:{duration} r:#global"
+prism-rollback-command: "prism rollback player:{player} since:{duration}"
+```
+
+`rollback-provider` kann `auto`, `coreprotect` oder `prism` sein. `rollback-on-round-end: true` fuehrt den Rollback beim Ende einer aktiven Runde aus. Manuell geht es mit `/levelborder rollback [auto|coreprotect|prism]`.
+
+Platzhalter: `{player}`, `{uuid}`, `{world}`, `{duration}`, `{duration_seconds}`, `{round_duration}`, `{round_duration_seconds}`, `{provider}`.
 
 ## Wichtige Konfiguration
 

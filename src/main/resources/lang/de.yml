@@ -1,9 +1,10 @@
 command:
   players-only: "Nur Spieler koennen diesen Befehl nutzen."
-  usage: "Nutzung: /{label} <lobby|start|stop|config> [argumente]"
+  usage: "Nutzung: /{label} <lobby|start|stop|rollback|config> [argumente]"
   lobby-usage: "Nutzung: /{label} lobby"
   start-usage: "Nutzung: /{label} start [sekunden]"
   stop-usage: "Nutzung: /{label} stop"
+  rollback-usage: "Nutzung: /{label} rollback [auto|coreprotect|prism]"
   config-usage: "Nutzung: /{label} config [list|get <key>|set <key> <wert>]"
   invalid-seconds: "Bitte Sekunden als ganze Zahl angeben."
   negative-countdown: "Der Countdown darf nicht negativ sein."
@@ -11,6 +12,12 @@ command:
   lobby: "Lobby vorbereitet."
   starting: "Startcountdown gestartet: {seconds} Sekunden."
   stopped: "Spiel beendet."
+  rollback-started: "Rollback gestartet: {players} Spieler, {commands} Befehle, Provider: {provider}."
+  rollback-disabled: "Rollback-Integration ist deaktiviert."
+  rollback-no-players: "Keine aktiven Rundenspieler fuer Rollback gespeichert."
+  rollback-provider-missing: "Rollback-Provider nicht gefunden: {provider}"
+  rollback-provider-unknown: "Unbekannter Rollback-Provider: {provider}"
+  rollback-command-missing: "Kein Rollback-Kommando fuer {provider} konfiguriert."
   config-list-header: "LevelBorderPvP Einstellungen:"
   config-entry: "{key}: {value}"
   config-set: "{key} wurde auf {value} gesetzt."
@@ -31,6 +38,7 @@ service:
   portal-return-redirected: "Rueckkehr wurde zu deinem Overworld-Einstiegsportal umgeleitet."
   portal-missing: "Kein gueltiges Overworld-Portal gefunden. Rueckkehr blockiert."
   player-disqualified: "{player} wurde wegen Breakout disqualifiziert."
+  rollback-started: "Rollback gestartet: {players} Spieler, {commands} Befehle, Provider: {provider}."
 
 title:
   level-up: "LEVEL UP!"
@@ -68,3 +76,5 @@ log:
   players-save-failed: "players.yml konnte nicht gespeichert werden"
   language-file-missing: "Sprachdatei lang/{language}.yml nicht gefunden. Nutze {fallback}."
   luckperms-command-failed: "LuckPerms-Kommando fehlgeschlagen: {command}"
+  rollback-command-failed: "Rollback-Kommando fehlgeschlagen: {command}"
+  rollback-skipped: "Rollback uebersprungen: {status} {provider}"

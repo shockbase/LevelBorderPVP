@@ -11,6 +11,7 @@ import de.shockbase.levelborderpvp.config.LevelBorderSettings;
 import de.shockbase.levelborderpvp.data.PlayerBorderRepository;
 import de.shockbase.levelborderpvp.i18n.Messages;
 import de.shockbase.levelborderpvp.integration.LuckPermsRoleService;
+import de.shockbase.levelborderpvp.integration.PlayerRollbackService;
 import de.shockbase.levelborderpvp.listener.PlayerBorderListener;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -42,6 +43,7 @@ public final class LevelBorderPvPPlugin extends JavaPlugin {
         BorderSizeFormatter sizeFormatter = new BorderSizeFormatter();
         BorderNotifier notifier = new BorderNotifier(sizeFormatter, messages);
         LuckPermsRoleService luckPermsRoleService = new LuckPermsRoleService(this, settings, messages);
+        PlayerRollbackService rollbackService = new PlayerRollbackService(this, settings, messages);
 
         playerBorderRepository = new PlayerBorderRepository(getDataFolder(), getLogger(), messages);
         playerBorderRepository.load();
@@ -54,7 +56,8 @@ public final class LevelBorderPvPPlugin extends JavaPlugin {
                 sizeCalculator,
                 notifier,
                 messages,
-                luckPermsRoleService
+                luckPermsRoleService,
+                rollbackService
         );
 
         getServer().getPluginManager().registerEvents(

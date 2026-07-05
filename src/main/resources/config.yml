@@ -94,3 +94,16 @@ luckperms-command-add-active: "lp user {player} parent add {active_group}"
 luckperms-command-remove-active: "lp user {player} parent remove {active_group}"
 luckperms-command-add-spectator: "lp user {player} parent add {spectator_group}"
 luckperms-command-remove-spectator: "lp user {player} parent remove {spectator_group}"
+
+# Optional rollback support through CoreProtect or Prism console commands.
+# The plugin has no hard dependency on either plugin.
+# provider: auto, coreprotect, prism
+rollback-integration-enabled: false
+rollback-provider: auto
+# When true, the plugin runs rollback commands when an active round ends.
+rollback-on-round-end: false
+# Commands run once per active round player.
+# Placeholders: {player}, {uuid}, {world}, {duration}, {duration_seconds},
+# {round_duration}, {round_duration_seconds}, {provider}
+coreprotect-rollback-command: "co rollback u:{player} t:{duration} r:#global"
+prism-rollback-command: "prism rollback player:{player} since:{duration}"

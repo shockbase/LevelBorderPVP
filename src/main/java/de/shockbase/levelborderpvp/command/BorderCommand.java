@@ -3,6 +3,7 @@ package de.shockbase.levelborderpvp.command;
 import de.shockbase.levelborderpvp.border.BorderService;
 import de.shockbase.levelborderpvp.config.LevelBorderSettings;
 import de.shockbase.levelborderpvp.i18n.Messages;
+import de.shockbase.levelborderpvp.integration.PlayerRollbackService;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -71,6 +72,11 @@ public final class BorderCommand implements CommandExecutor, TabCompleter {
         add(options, "luckperms-command-remove-active", ConfigValueType.STRING);
         add(options, "luckperms-command-add-spectator", ConfigValueType.STRING);
         add(options, "luckperms-command-remove-spectator", ConfigValueType.STRING);
+        add(options, "rollback-integration-enabled", ConfigValueType.BOOLEAN);
+        add(options, "rollback-provider", ConfigValueType.STRING, "auto", "coreprotect", "prism");
+        add(options, "rollback-on-round-end", ConfigValueType.BOOLEAN);
+        add(options, "coreprotect-rollback-command", ConfigValueType.STRING);
+        add(options, "prism-rollback-command", ConfigValueType.STRING);
         return Collections.unmodifiableMap(options);
     }
 
@@ -105,10 +111,13 @@ public final class BorderCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args.length == 1) {
-            return matching(List.of("lobby", "start", "stop", "config"), args[0]);
+            return matching(List.of("lobby", "start", "stop", "rollback", "config"), args[0]);
         }
         if ("config".equalsIgnoreCase(args[0])) {
             return tabCompleteConfig(args);
+        }
+        if (args.length == 2 && "rollback".equalsIgnoreCase(args[0])) {
+            return matching(List.of("auto", "coreprotect", "prism"), args[1]);
         }
         if (args.length != 2 || !"start".equalsIgnoreCase(args[0])) {
             return Collections.emptyList();
@@ -177,6 +186,9 @@ public final class BorderCommand implements CommandExecutor, TabCompleter {
         if ("stop".equals(subCommand)) {
             return handleStop(sender, label, args);
         }
+        if ("rollback".equals(subCommand)) {
+            return handleRollback(sender, label, args);
+        }
         if ("config".equals(subCommand)) {
             return handleConfig(sender, label, args);
         }
@@ -241,6 +253,43 @@ public final class BorderCommand implements CommandExecutor, TabCompleter {
         borderService.stop();
         sender.sendMessage(messages.text("command.stopped"));
         return true;
+    }
+
+    private boolean handleRollback(CommandSender sender, String label, String[] args) {
+        if (args.length > 1) {
+            sender.sendMessage(messages.text("command.rollback-usage", Messages.placeholder("label", label)));
+            return true;
+        }
+
+        String provider = args.length == 1 ? args[0] : null;
+        PlayerRollbackService.RollbackResult result = borderService.rollbackRoundChanges(provider);
+        sender.sendMessage(rollbackMessage(result));
+        return true;
+    }
+
+    private String rollbackMessage(PlayerRollbackService.RollbackResult result) {
+        return switch (result.status()) {
+            case STARTED -> messages.text(
+                    "command.rollback-started",
+                    Messages.placeholder("provider", result.provider()),
+                    Messages.placeholder("players", result.players()),
+                    Messages.placeholder("commands", result.commands())
+            );
+            case DISABLED -> messages.text("command.rollback-disabled");
+            case NO_PLAYERS -> messages.text("command.rollback-no-players");
+            case PROVIDER_MISSING -> messages.text(
+                    "command.rollback-provider-missing",
+                    Messages.placeholder("provider", result.provider())
+            );
+            case UNKNOWN_PROVIDER -> messages.text(
+                    "command.rollback-provider-unknown",
+                    Messages.placeholder("provider", result.provider())
+            );
+            case COMMAND_MISSING -> messages.text(
+                    "command.rollback-command-missing",
+                    Messages.placeholder("provider", result.provider())
+            );
+        };
     }
 
     private boolean handleConfig(CommandSender sender, String label, String[] args) {

@@ -1,9 +1,10 @@
 command:
   players-only: "Only players can use this command."
-  usage: "Usage: /{label} <lobby|start|stop|config> [arguments]"
+  usage: "Usage: /{label} <lobby|start|stop|rollback|config> [arguments]"
   lobby-usage: "Usage: /{label} lobby"
   start-usage: "Usage: /{label} start [seconds]"
   stop-usage: "Usage: /{label} stop"
+  rollback-usage: "Usage: /{label} rollback [auto|coreprotect|prism]"
   config-usage: "Usage: /{label} config [list|get <key>|set <key> <value>]"
   invalid-seconds: "Please enter seconds as a whole number."
   negative-countdown: "The countdown cannot be negative."
@@ -11,6 +12,12 @@ command:
   lobby: "Lobby prepared."
   starting: "Start countdown started: {seconds} seconds."
   stopped: "Game ended."
+  rollback-started: "Rollback started: {players} players, {commands} commands, provider: {provider}."
+  rollback-disabled: "Rollback integration is disabled."
+  rollback-no-players: "No active round players are stored for rollback."
+  rollback-provider-missing: "Rollback provider not found: {provider}"
+  rollback-provider-unknown: "Unknown rollback provider: {provider}"
+  rollback-command-missing: "No rollback command configured for {provider}."
   config-list-header: "LevelBorderPvP settings:"
   config-entry: "{key}: {value}"
   config-set: "{key} was set to {value}."
@@ -31,6 +38,7 @@ service:
   portal-return-redirected: "Return was redirected to your overworld entry portal."
   portal-missing: "No valid overworld portal found. Return blocked."
   player-disqualified: "{player} was disqualified for breakout."
+  rollback-started: "Rollback started: {players} players, {commands} commands, provider: {provider}."
 
 title:
   level-up: "LEVEL UP!"
@@ -68,3 +76,5 @@ log:
   players-save-failed: "Could not save players.yml"
   language-file-missing: "Language file lang/{language}.yml not found. Falling back to {fallback}."
   luckperms-command-failed: "LuckPerms command failed: {command}"
+  rollback-command-failed: "Rollback command failed: {command}"
+  rollback-skipped: "Rollback skipped: {status} {provider}"

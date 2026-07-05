@@ -8,10 +8,12 @@ depend:
   - WorldBorderAPI
 softdepend:
   - LuckPerms
+  - CoreProtect
+  - Prism
 commands:
   levelborder:
     description: Controls the level border round.
-    usage: /levelborder <lobby|start|stop|config> [arguments]
+    usage: /levelborder <lobby|start|stop|rollback|config> [arguments]
 permissions:
   levelborderpvp.admin:
     description: Allows controlling LevelBorderPvP rounds and configuration.

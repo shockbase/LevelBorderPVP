@@ -8,6 +8,7 @@ import de.shockbase.levelborderpvp.data.PlayerBorderData;
 import de.shockbase.levelborderpvp.data.PlayerBorderRepository;
 import de.shockbase.levelborderpvp.i18n.Messages;
 import de.shockbase.levelborderpvp.integration.LuckPermsRoleService;
+import de.shockbase.levelborderpvp.integration.PlayerRollbackService;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
@@ -15,6 +16,7 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -29,6 +31,7 @@ public final class BorderService {
     private final LevelBorderSettings settings;
     private final Messages messages;
     private final LuckPermsRoleService luckPermsRoleService;
+    private final PlayerRollbackService rollbackService;
     private final BorderRenderer borderRenderer;
     private final PlayerBorderDataService playerBorderDataService;
     private final BorderSizeCalculator sizeCalculator;
@@ -50,12 +53,14 @@ public final class BorderService {
             BorderSizeCalculator sizeCalculator,
             BorderNotifier notifier,
             Messages messages,
-            LuckPermsRoleService luckPermsRoleService
+            LuckPermsRoleService luckPermsRoleService,
+            PlayerRollbackService rollbackService
     ) {
         this.plugin = plugin;
         this.settings = settings;
         this.messages = messages;
         this.luckPermsRoleService = luckPermsRoleService;
+        this.rollbackService = rollbackService;
         this.sizeCalculator = sizeCalculator;
         this.notifier = notifier;
         this.borderRenderer = new BorderRenderer(worldBorderApi, playerBorderRepository, settings, sizeCalculator, notifier);
@@ -328,6 +333,7 @@ public final class BorderService {
     }
 
     public void start(int countdownSeconds) {
+        markRoundEndedIfActive();
         cancelStartCountdown();
         cancelRoundEndTask();
         cancelAllBreakoutTasks();
@@ -385,7 +391,15 @@ public final class BorderService {
     }
 
     public void stop() {
+        if (roundState == RoundState.ACTIVE && settings.rollbackOnRoundEnd()) {
+            rollbackService.markRoundEnded();
+            announceAutomaticRollback(rollbackService.rollbackConfiguredProvider());
+        }
         enterIdle();
+    }
+
+    public PlayerRollbackService.RollbackResult rollbackRoundChanges(String requestedProvider) {
+        return rollbackService.rollback(requestedProvider);
     }
 
     public void shutdown() {
@@ -524,6 +538,14 @@ public final class BorderService {
     private void activateRound() {
         roundState = RoundState.ACTIVE;
         roundPlayers.clearPlayerStates();
+
+        List<Player> activeStartPlayers = new ArrayList<>();
+        for (Player player : plugin.getServer().getOnlinePlayers()) {
+            if (startCandidateIds.contains(player.getUniqueId())) {
+                activeStartPlayers.add(player);
+            }
+        }
+        rollbackService.beginRound(activeStartPlayers);
 
         for (Player player : plugin.getServer().getOnlinePlayers()) {
             if (roundState != RoundState.ACTIVE) {
@@ -778,7 +800,29 @@ public final class BorderService {
     }
 
     private void finishRound() {
+        rollbackService.markRoundEnded();
+        if (settings.rollbackOnRoundEnd()) {
+            announceAutomaticRollback(rollbackService.rollbackConfiguredProvider());
+        }
         enterIdle();
+    }
+
+    private void announceAutomaticRollback(PlayerRollbackService.RollbackResult result) {
+        if (result.status() == PlayerRollbackService.RollbackStatus.STARTED) {
+            plugin.getServer().broadcastMessage(messages.text(
+                    "service.rollback-started",
+                    Messages.placeholder("provider", result.provider()),
+                    Messages.placeholder("players", result.players()),
+                    Messages.placeholder("commands", result.commands())
+            ));
+            return;
+        }
+
+        plugin.getLogger().warning(messages.text(
+                "log.rollback-skipped",
+                Messages.placeholder("status", result.status()),
+                Messages.placeholder("provider", result.provider())
+        ));
     }
 
     private String joinPlayerNames(List<PlayerScore> scores) {
@@ -837,6 +881,7 @@ public final class BorderService {
     }
 
     private void enterIdle() {
+        markRoundEndedIfActive();
         cancelStartCountdown();
         cancelRoundEndTask();
         cancelAllBreakoutTasks();
@@ -852,6 +897,7 @@ public final class BorderService {
     }
 
     private void enterLobby(boolean teleportPlayers) {
+        markRoundEndedIfActive();
         cancelStartCountdown();
         cancelRoundEndTask();
         cancelAllBreakoutTasks();
@@ -885,6 +931,12 @@ public final class BorderService {
         if (roundEndTask != null) {
             roundEndTask.cancel();
             roundEndTask = null;
+        }
+    }
+
+    private void markRoundEndedIfActive() {
+        if (roundState == RoundState.ACTIVE) {
+            rollbackService.markRoundEnded();
         }
     }
 
