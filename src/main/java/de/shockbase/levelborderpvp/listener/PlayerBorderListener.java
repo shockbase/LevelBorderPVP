@@ -212,6 +212,11 @@ public final class PlayerBorderListener implements Listener {
     public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
         if (isSpectatorActor(event.getDamager()) || isSpectatorTarget(event.getEntity())) {
             event.setCancelled(true);
+            return;
+        }
+
+        if (shouldCancelDimensionPvp(event.getDamager(), event.getEntity())) {
+            event.setCancelled(true);
         }
     }
 
@@ -220,16 +225,37 @@ public final class PlayerBorderListener implements Listener {
     }
 
     private boolean isSpectatorActor(Entity entity) {
-        if (entity instanceof Player player) {
-            return borderService.isSpectator(player);
-        }
+        Player player = playerActor(entity);
+        return player != null && borderService.isSpectator(player);
+    }
 
-        if (!(entity instanceof Projectile projectile)) {
+    private boolean shouldCancelDimensionPvp(Entity damager, Entity target) {
+        if (!(target instanceof Player targetPlayer)) {
             return false;
         }
 
+        Player actor = playerActor(damager);
+        if (actor == null) {
+            return false;
+        }
+
+        return isActiveInSecondaryDimension(actor) || isActiveInSecondaryDimension(targetPlayer);
+    }
+
+    private Player playerActor(Entity entity) {
+        if (entity instanceof Player player) {
+            return player;
+        }
+        if (!(entity instanceof Projectile projectile)) {
+            return null;
+        }
+
         ProjectileSource shooter = projectile.getShooter();
-        return shooter instanceof Player player && borderService.isSpectator(player);
+        return shooter instanceof Player player ? player : null;
+    }
+
+    private boolean isActiveInSecondaryDimension(Player player) {
+        return borderService.shouldApplyDimensionPvpRules(player) && isSecondaryDimension(player.getWorld());
     }
 
     private boolean isOverworldToSecondaryDimension(Location from, Location to) {
@@ -253,6 +279,15 @@ public final class PlayerBorderListener implements Listener {
             return false;
         }
         return to == null || (to.getWorld() != null && to.getWorld().getEnvironment() == World.Environment.NORMAL);
+    }
+
+    private boolean isSecondaryDimension(World world) {
+        if (world == null) {
+            return false;
+        }
+
+        World.Environment environment = world.getEnvironment();
+        return environment == World.Environment.NETHER || environment == World.Environment.THE_END;
     }
 
     private boolean sameBlockLocation(Location first, Location second) {
