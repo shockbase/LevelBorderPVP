@@ -3,6 +3,7 @@ package de.shockbase.levelborderpvp.border;
 import de.shockbase.levelborderpvp.config.LevelBorderSettings;
 import de.shockbase.levelborderpvp.data.PlayerBorderData;
 import de.shockbase.levelborderpvp.data.PlayerBorderRepository;
+import de.shockbase.levelborderpvp.data.PortalLocationData;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
@@ -67,8 +68,19 @@ final class PlayerBorderDataService {
                 z,
                 currentLevel,
                 0,
-                sizeCalculator.calculate(currentLevel)
+                sizeCalculator.calculate(currentLevel),
+                null
         );
+    }
+
+    boolean saveFirstOverworldPortal(Player player, Location portalLocation) {
+        PlayerBorderData data = findExisting(player);
+        if (data == null || data.overworldPortal() != null) {
+            return false;
+        }
+
+        playerBorderRepository.save(data.withOverworldPortal(PortalLocationData.fromLocation(portalLocation)));
+        return true;
     }
 
     PlayerBorderData updateMaxReachedLevel(Player player, PlayerBorderData data) {

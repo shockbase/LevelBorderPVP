@@ -3,6 +3,8 @@ package de.shockbase.levelborderpvp.listener;
 import de.shockbase.levelborderpvp.border.BorderNotification;
 import de.shockbase.levelborderpvp.border.BorderService;
 import de.shockbase.levelborderpvp.config.LevelBorderSettings;
+import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
@@ -25,6 +27,7 @@ import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerLevelChangeEvent;
+import org.bukkit.event.player.PlayerPortalEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.projectiles.ProjectileSource;
 
@@ -62,6 +65,16 @@ public final class PlayerBorderListener implements Listener {
         if (settings.reapplyOnWorldChange()) {
             borderService.applyNextTick(event.getPlayer(), BorderNotification.NONE);
         }
+    }
+
+    @EventHandler
+    public void onPlayerPortal(PlayerPortalEvent event) {
+        Player player = event.getPlayer();
+        if (!borderService.shouldApplyPortalRules(player) || !isOverworldToSecondaryDimension(event.getFrom(), event.getTo())) {
+            return;
+        }
+
+        borderService.rememberFirstOverworldPortal(player, event.getFrom());
     }
 
     @EventHandler
@@ -177,5 +190,16 @@ public final class PlayerBorderListener implements Listener {
 
         ProjectileSource shooter = projectile.getShooter();
         return shooter instanceof Player player && borderService.isSpectator(player);
+    }
+
+    private boolean isOverworldToSecondaryDimension(Location from, Location to) {
+        if (from.getWorld() == null || to == null || to.getWorld() == null) {
+            return false;
+        }
+
+        World.Environment fromEnvironment = from.getWorld().getEnvironment();
+        World.Environment toEnvironment = to.getWorld().getEnvironment();
+        return fromEnvironment == World.Environment.NORMAL
+                && (toEnvironment == World.Environment.NETHER || toEnvironment == World.Environment.THE_END);
     }
 }

@@ -56,7 +56,8 @@ public final class PlayerBorderRepository {
                 playerData.getDouble(basePath + ".center.z"),
                 maxReachedLevel,
                 killBonusLevels,
-                Math.max(0.0D, playerData.getDouble(basePath + ".last-applied-size", fallbackLastAppliedBorderSize))
+                Math.max(0.0D, playerData.getDouble(basePath + ".last-applied-size", fallbackLastAppliedBorderSize)),
+                parsePortal(basePath + ".overworld-portal")
         );
     }
 
@@ -70,6 +71,7 @@ public final class PlayerBorderRepository {
         playerData.set(basePath + ".max-reached-level", data.maxReachedLevel());
         playerData.set(basePath + ".kill-bonus-levels", data.killBonusLevels());
         playerData.set(basePath + ".last-applied-size", data.lastAppliedBorderSize());
+        savePortal(basePath + ".overworld-portal", data.overworldPortal());
         save();
     }
 
@@ -104,5 +106,42 @@ public final class PlayerBorderRepository {
         } catch (IllegalArgumentException exception) {
             return fallback;
         }
+    }
+
+    private PortalLocationData parsePortal(String path) {
+        if (!playerData.contains(path + ".x")) {
+            return null;
+        }
+
+        UUID worldId = parseUuid(playerData.getString(path + ".world-id"), null);
+        String worldName = playerData.getString(path + ".world-name");
+        if (worldId == null && (worldName == null || worldName.isBlank())) {
+            return null;
+        }
+
+        return new PortalLocationData(
+                worldId,
+                worldName,
+                playerData.getDouble(path + ".x"),
+                playerData.getDouble(path + ".y"),
+                playerData.getDouble(path + ".z"),
+                (float) playerData.getDouble(path + ".yaw", 0.0D),
+                (float) playerData.getDouble(path + ".pitch", 0.0D)
+        );
+    }
+
+    private void savePortal(String path, PortalLocationData portal) {
+        if (portal == null) {
+            playerData.set(path, null);
+            return;
+        }
+
+        playerData.set(path + ".world-id", portal.worldId() == null ? null : portal.worldId().toString());
+        playerData.set(path + ".world-name", portal.worldName());
+        playerData.set(path + ".x", portal.x());
+        playerData.set(path + ".y", portal.y());
+        playerData.set(path + ".z", portal.z());
+        playerData.set(path + ".yaw", portal.yaw());
+        playerData.set(path + ".pitch", portal.pitch());
     }
 }

@@ -129,6 +129,18 @@ public final class BorderService {
                 && Math.abs(location.getZ() - data.z()) <= maxOffset;
     }
 
+    public boolean rememberFirstOverworldPortal(Player player, Location portalLocation) {
+        if (portalLocation == null
+                || portalLocation.getWorld() == null
+                || portalLocation.getWorld().getEnvironment() != World.Environment.NORMAL
+                || !shouldApplyPortalRules(player)
+                || !isInsidePersonalBorder(player, portalLocation)) {
+            return false;
+        }
+
+        return playerBorderDataService.saveFirstOverworldPortal(player, portalLocation);
+    }
+
     public void handleLevelChange(Player player, int newLevel) {
         if (!isActive(player)) {
             return;

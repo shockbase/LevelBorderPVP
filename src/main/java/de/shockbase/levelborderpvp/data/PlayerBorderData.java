@@ -15,19 +15,68 @@ public record PlayerBorderData(
         double z,
         int maxReachedLevel,
         int killBonusLevels,
-        double lastAppliedBorderSize
+        double lastAppliedBorderSize,
+        PortalLocationData overworldPortal
 ) {
 
     public PlayerBorderData withMaxReachedLevel(int newMaxReachedLevel) {
-        return new PlayerBorderData(playerId, worldId, worldName, x, y, z, newMaxReachedLevel, killBonusLevels, lastAppliedBorderSize);
+        return new PlayerBorderData(
+                playerId,
+                worldId,
+                worldName,
+                x,
+                y,
+                z,
+                newMaxReachedLevel,
+                killBonusLevels,
+                lastAppliedBorderSize,
+                overworldPortal
+        );
     }
 
     public PlayerBorderData withKillBonusLevels(int newKillBonusLevels) {
-        return new PlayerBorderData(playerId, worldId, worldName, x, y, z, maxReachedLevel, newKillBonusLevels, lastAppliedBorderSize);
+        return new PlayerBorderData(
+                playerId,
+                worldId,
+                worldName,
+                x,
+                y,
+                z,
+                maxReachedLevel,
+                newKillBonusLevels,
+                lastAppliedBorderSize,
+                overworldPortal
+        );
     }
 
     public PlayerBorderData withLastAppliedBorderSize(double newLastAppliedBorderSize) {
-        return new PlayerBorderData(playerId, worldId, worldName, x, y, z, maxReachedLevel, killBonusLevels, newLastAppliedBorderSize);
+        return new PlayerBorderData(
+                playerId,
+                worldId,
+                worldName,
+                x,
+                y,
+                z,
+                maxReachedLevel,
+                killBonusLevels,
+                newLastAppliedBorderSize,
+                overworldPortal
+        );
+    }
+
+    public PlayerBorderData withOverworldPortal(PortalLocationData newOverworldPortal) {
+        return new PlayerBorderData(
+                playerId,
+                worldId,
+                worldName,
+                x,
+                y,
+                z,
+                maxReachedLevel,
+                killBonusLevels,
+                lastAppliedBorderSize,
+                newOverworldPortal
+        );
     }
 
     public Location toLocation(World fallbackWorld) {
