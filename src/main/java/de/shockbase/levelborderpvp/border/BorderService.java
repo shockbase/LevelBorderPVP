@@ -167,6 +167,24 @@ public final class BorderService {
         return storedPortal;
     }
 
+    public int limitPortalRadiusInsidePersonalBorder(Player player, Location center, int requestedRadius) {
+        if (requestedRadius <= 0 || center == null || center.getWorld() == null || !isActiveRoundPlayer(player)) {
+            return 0;
+        }
+
+        PlayerBorderData data = playerBorderDataService.findExisting(player);
+        if (data == null || !isSameWorld(data, center.getWorld())) {
+            return 0;
+        }
+
+        double borderSize = borderSize(data, Math.max(0, player.getLevel()));
+        double halfSize = Math.max(0.0D, borderSize / 2.0D);
+        double maxXRadius = halfSize - Math.abs(center.getX() - data.x());
+        double maxZRadius = halfSize - Math.abs(center.getZ() - data.z());
+        int allowedRadius = (int) Math.floor(Math.max(0.0D, Math.min(maxXRadius, maxZRadius)));
+        return Math.max(0, Math.min(requestedRadius, allowedRadius));
+    }
+
     public void handleLevelChange(Player player, int newLevel) {
         if (!isActive(player)) {
             return;

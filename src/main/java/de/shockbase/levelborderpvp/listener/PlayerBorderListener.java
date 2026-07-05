@@ -5,6 +5,7 @@ import de.shockbase.levelborderpvp.border.BorderService;
 import de.shockbase.levelborderpvp.config.LevelBorderSettings;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.block.BlockState;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
@@ -19,6 +20,7 @@ import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
+import org.bukkit.event.world.PortalCreateEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerExpChangeEvent;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
@@ -83,13 +85,36 @@ public final class PlayerBorderListener implements Listener {
             return;
         }
 
-        Location targetLocation = borderService.resolveOverworldPortalReturn(player, event.getTo());
+        Location originalTarget = event.getTo();
+        Location targetLocation = borderService.resolveOverworldPortalReturn(player, originalTarget);
         if (targetLocation == null) {
+            event.setCanCreatePortal(false);
             event.setCancelled(true);
             return;
         }
 
         event.setTo(targetLocation);
+        event.setSearchRadius(borderService.limitPortalRadiusInsidePersonalBorder(player, targetLocation, event.getSearchRadius()));
+        event.setCreationRadius(borderService.limitPortalRadiusInsidePersonalBorder(player, targetLocation, event.getCreationRadius()));
+        if (originalTarget == null || !sameBlockLocation(originalTarget, targetLocation)) {
+            event.setCanCreatePortal(false);
+        }
+    }
+
+    @EventHandler
+    public void onPortalCreate(PortalCreateEvent event) {
+        if (!(event.getEntity() instanceof Player player)
+                || !borderService.shouldApplyPortalRules(player)
+                || event.getWorld().getEnvironment() != World.Environment.NORMAL) {
+            return;
+        }
+
+        for (BlockState block : event.getBlocks()) {
+            if (!borderService.isInsidePersonalBorder(player, block.getLocation())) {
+                event.setCancelled(true);
+                return;
+            }
+        }
     }
 
     @EventHandler
@@ -228,5 +253,16 @@ public final class PlayerBorderListener implements Listener {
             return false;
         }
         return to == null || (to.getWorld() != null && to.getWorld().getEnvironment() == World.Environment.NORMAL);
+    }
+
+    private boolean sameBlockLocation(Location first, Location second) {
+        return first != null
+                && second != null
+                && first.getWorld() != null
+                && second.getWorld() != null
+                && first.getWorld().getUID().equals(second.getWorld().getUID())
+                && first.getBlockX() == second.getBlockX()
+                && first.getBlockY() == second.getBlockY()
+                && first.getBlockZ() == second.getBlockZ();
     }
 }
