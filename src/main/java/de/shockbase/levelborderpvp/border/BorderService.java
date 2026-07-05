@@ -1,6 +1,7 @@
 package de.shockbase.levelborderpvp.border;
 
 import com.github.yannicklamprecht.worldborder.api.WorldBorderApi;
+import de.shockbase.levelborderpvp.config.DimensionPolicy;
 import de.shockbase.levelborderpvp.config.LevelBorderSettings;
 import de.shockbase.levelborderpvp.config.RoundEndCondition;
 import de.shockbase.levelborderpvp.data.PlayerBorderData;
@@ -97,6 +98,18 @@ public final class BorderService {
 
     public boolean isSpectator(Player player) {
         return roundPlayers.isSpectator(player);
+    }
+
+    public boolean isActiveRoundPlayer(Player player) {
+        return isActive(player);
+    }
+
+    public boolean shouldApplyPortalRules(Player player) {
+        return settings.dimensionPolicy().usesSafePveDimensionRules() && isActiveRoundPlayer(player);
+    }
+
+    public boolean shouldApplyDimensionPvpRules(Player player) {
+        return settings.dimensionPolicy().usesSafePveDimensionRules() && isActiveRoundPlayer(player);
     }
 
     public void handleLevelChange(Player player, int newLevel) {
@@ -334,10 +347,21 @@ public final class BorderService {
 
     private void apply(Player player, PlayerBorderData data, int currentLevel, BorderNotification notification) {
         int borderLevel = playerBorderDataService.resolveLevelForBorder(data, currentLevel);
-        double size = borderRenderer.apply(player, data, borderLevel, notification);
+        double size = sizeCalculator.calculate(borderLevel);
+        if (allowsPersonalBorder(player)) {
+            size = borderRenderer.apply(player, data, borderLevel, notification);
+        } else {
+            borderRenderer.resetToGlobal(player);
+            playerBorderDataService.save(data.withLastAppliedBorderSize(size));
+        }
         if (!Double.isNaN(size)) {
             checkTargetBorder(player, size);
         }
+    }
+
+    private boolean allowsPersonalBorder(Player player) {
+        DimensionPolicy policy = settings.dimensionPolicy();
+        return policy.allowsPersonalBorder(player.getWorld());
     }
 
     private void applySpectator(Player player, BorderNotification notification) {

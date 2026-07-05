@@ -23,6 +23,12 @@ teleport-players-to-lobby-spawn: true
 # Keeps the border centered in the middle of the block used as personal start position.
 center-at-block-center: true
 
+# Dimension rules for active round players.
+# safe-pve = personal borders only in the overworld; Nether and End have no personal border.
+# Portal and dimension-PvP rules are intended to affect active round players only.
+# legacy = old behavior; personal border is reapplied in every world.
+dimension-policy: safe-pve
+
 # Keep at or below 0 to disable an upper limit.
 max-size-blocks: 0.0
 

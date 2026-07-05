@@ -46,6 +46,7 @@ public final class BorderCommand implements CommandExecutor, TabCompleter {
         add(options, "lobby-radius-blocks", ConfigValueType.DOUBLE);
         add(options, "teleport-players-to-lobby-spawn", ConfigValueType.BOOLEAN);
         add(options, "center-at-block-center", ConfigValueType.BOOLEAN);
+        add(options, "dimension-policy", ConfigValueType.STRING, "safe-pve", "legacy");
         add(options, "max-size-blocks", ConfigValueType.DOUBLE);
         add(options, "border-transition-seconds", ConfigValueType.LONG);
         add(options, "start-countdown-seconds", ConfigValueType.INT);

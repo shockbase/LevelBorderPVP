@@ -78,6 +78,10 @@ public final class LevelBorderSettings {
         return config.getBoolean("center-at-block-center", true);
     }
 
+    public DimensionPolicy dimensionPolicy() {
+        return DimensionPolicy.fromConfig(config.getString("dimension-policy", DimensionPolicy.SAFE_PVE.configValue()));
+    }
+
     public boolean reapplyOnWorldChange() {
         return config.getBoolean("reapply-on-world-change", true);
     }

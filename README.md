@@ -181,10 +181,13 @@ max-start-countdown-seconds: 3600
 reset-xp-on-start: true
 clear-inventory-on-start: true
 command-permission: levelborderpvp.admin
+dimension-policy: safe-pve
 spectator-mode-enabled: true
 ```
 
 `max-size-blocks: 0.0` bedeutet: keine Obergrenze.
+
+`dimension-policy: safe-pve` bedeutet: Aktive Rundenspieler haben ihre persoenliche Border nur in der Overworld. Nether und End zeigen keine persoenliche Border; Portal- und PvP-Sonderregeln sollen nur aktive Rundenspieler betreffen. Mit `legacy` gilt das alte Verhalten in allen Welten.
 
 ## Technische Notizen
 
