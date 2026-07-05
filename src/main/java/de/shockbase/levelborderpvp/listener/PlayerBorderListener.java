@@ -136,6 +136,17 @@ public final class PlayerBorderListener implements Listener {
 
     @EventHandler
     public void onPlayerRespawn(PlayerRespawnEvent event) {
+        if (event.getRespawnReason() == PlayerRespawnEvent.RespawnReason.DEATH) {
+            Location safeRespawnLocation = borderService.resolveSafeRespawnLocation(
+                    event.getPlayer(),
+                    event.getRespawnLocation(),
+                    event.isBedSpawn() || event.isAnchorSpawn(),
+                    event.isMissingRespawnBlock()
+            );
+            if (safeRespawnLocation != null) {
+                event.setRespawnLocation(safeRespawnLocation);
+            }
+        }
         if (settings.reapplyOnRespawn()) {
             borderService.applyLater(event.getPlayer(), BorderNotification.RESPAWN, 1L);
         }
