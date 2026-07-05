@@ -56,6 +56,11 @@ level-mode: current
 
 Die Border folgt direkt dem aktuellen XP-Level und kann schrumpfen.
 
+## Spielregeln / Verhalten
+
+- PvP-Kills zaehlen weiter fuer Score und Tie-Breaker, solange Killer und Opfer aktive Rundenspieler sind.
+- Wenn `highest-kill-bonus-enabled` aktiv ist, kann jeder Spieler nur einmal pro Runde als Bonusquelle dienen. Weitere Kills desselben Opfers geben keinen Border-Bonus, zaehlen aber weiter als Kill.
+
 ## Spielende
 
 ```yaml

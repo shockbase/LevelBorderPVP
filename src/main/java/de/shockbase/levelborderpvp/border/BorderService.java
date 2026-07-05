@@ -163,11 +163,14 @@ public final class BorderService {
     }
 
     private double applyPlayerKillBonus(Player killer, Player killed) {
-        double previousBorderSize = currentBorderSize(killer);
         if (settings.usesCurrentLevelMode() || !settings.highestKillBonusEnabled()) {
             return 0.0D;
         }
+        if (!roundPlayers.claimKillBonus(killed)) {
+            return 0.0D;
+        }
 
+        double previousBorderSize = currentBorderSize(killer);
         PlayerBorderData killedData = playerBorderDataService.updateMaxReachedLevel(killed, playerBorderDataService.getOrCreate(killed));
         int bonusLevels = Math.max(0, killedData.maxReachedLevel());
         if (settings.highestKillBonusInheritsVictimBonus()) {

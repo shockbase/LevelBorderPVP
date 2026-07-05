@@ -14,11 +14,13 @@ final class RoundPlayerTracker {
     private final Map<UUID, Integer> roundDeaths = new HashMap<>();
     private final Set<UUID> roundPlayers = new HashSet<>();
     private final Set<UUID> spectatorPlayers = new HashSet<>();
+    private final Set<UUID> killBonusClaimedVictims = new HashSet<>();
 
     void clearRound() {
         clearPlayerStates();
         roundKills.clear();
         roundDeaths.clear();
+        killBonusClaimedVictims.clear();
     }
 
     void clearPlayerStates() {
@@ -58,6 +60,10 @@ final class RoundPlayerTracker {
 
     void recordDeath(Player player) {
         roundDeaths.merge(player.getUniqueId(), 1, Integer::sum);
+    }
+
+    boolean claimKillBonus(Player player) {
+        return killBonusClaimedVictims.add(player.getUniqueId());
     }
 
     int kills(Player player) {
