@@ -77,11 +77,10 @@ score-tiebreakers:
 win-target-level: 30
 win-target-border-size-blocks: 63.0
 
-# Players outside the lobby border at /levelborder start and later joiners are always viewers.
-# When true, active players who die after round start also become viewers.
+# Players outside the lobby border at /levelborder start, later joiners, disqualified players
+# and players eliminated by elimination mode are viewers.
 # This is not Minecraft spectator mode: viewers have no border and can move,
 # but plugin events block building, interaction, inventory, XP, item handling and combat.
-spectator-mode-enabled: true
 # Seconds an active player may stay outside their personal border before disqualification.
 # Set to 0 for immediate disqualification.
 breakout-grace-seconds: 10

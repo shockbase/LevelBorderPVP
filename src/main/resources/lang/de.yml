@@ -35,6 +35,7 @@ service:
   end-reason-target-level: "Ziel-Level erreicht"
   end-reason-target-border: "Ziel-Border erreicht"
   end-reason-elimination: "Letzter aktiver Spieler"
+  end-reason-no-active-players: "Keine aktiven Spieler mehr"
   end-reason-all-disqualified: "Alle aktiven Spieler disqualifiziert"
   portal-blocked: "Portal blockiert: Ziel liegt ausserhalb deiner Border."
   portal-return-redirected: "Rueckkehr wurde zu deinem Overworld-Einstiegsportal umgeleitet."

@@ -86,6 +86,9 @@ public final class BorderNotifier {
         Component subtitle = Component.text(messages.text("subtitle.disqualified"), NamedTextColor.WHITE);
 
         player.showTitle(Title.title(title, subtitle, TITLE_TIMES));
+    }
+
+    public void playDisqualificationLightning(Player player) {
         player.playSound(player.getLocation(), Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 1.0F, 1.0F);
     }
 

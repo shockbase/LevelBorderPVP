@@ -54,6 +54,20 @@ final class RoundPlayerTracker {
         return roundPlayers.contains(player.getUniqueId());
     }
 
+    int activeCount(RoundState roundState) {
+        if (roundState != RoundState.ACTIVE) {
+            return 0;
+        }
+
+        int activePlayers = 0;
+        for (UUID playerId : roundPlayers) {
+            if (!spectatorPlayers.contains(playerId)) {
+                activePlayers++;
+            }
+        }
+        return activePlayers;
+    }
+
     void recordKill(Player player) {
         roundKills.merge(player.getUniqueId(), 1, Integer::sum);
     }

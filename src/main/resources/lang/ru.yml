@@ -35,6 +35,7 @@ service:
   end-reason-target-level: "достигнут целевой уровень"
   end-reason-target-border: "достигнута целевая граница"
   end-reason-elimination: "последний активный игрок"
+  end-reason-no-active-players: "активных игроков больше нет"
   end-reason-all-disqualified: "все активные игроки дисквалифицированы"
   portal-blocked: "Портал заблокирован: точка назначения вне твоей границы."
   portal-return-redirected: "Возврат перенаправлен к твоему входному порталу в обычном мире."

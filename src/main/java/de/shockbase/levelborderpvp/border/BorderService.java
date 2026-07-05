@@ -277,7 +277,7 @@ public final class BorderService {
         }
 
         roundPlayers.recordDeath(player);
-        if (!settings.spectatorModeEnabled() && settings.endCondition() != RoundEndCondition.ELIMINATION) {
+        if (settings.endCondition() != RoundEndCondition.ELIMINATION) {
             return;
         }
 
@@ -286,7 +286,7 @@ public final class BorderService {
         if (eliminatedByPlayer) {
             notifier.showEliminated(player, killer.getName());
         }
-        checkEliminationWinner();
+        checkRoundEndAfterActivePlayerRemoval("service.end-reason-no-active-players");
     }
 
     private double applyPlayerKillBonus(Player killer, Player killed) {
@@ -577,7 +577,7 @@ public final class BorderService {
 
         if (roundState == RoundState.ACTIVE) {
             scheduleRoundEnd();
-            checkEliminationWinner();
+            checkRoundEndAfterActivePlayerRemoval("service.end-reason-no-active-players");
         }
     }
 
@@ -677,20 +677,25 @@ public final class BorderService {
             return;
         }
 
+        int activePlayers = countActivePlayers();
+        if (activePlayers == 0) {
+            finishRoundWithoutWinner("service.end-reason-elimination");
+            return;
+        }
+        if (activePlayers != 1) {
+            return;
+        }
+
         Player remaining = null;
-        int activePlayers = 0;
         for (Player player : plugin.getServer().getOnlinePlayers()) {
             if (!isActive(player)) {
                 continue;
             }
             remaining = player;
-            activePlayers++;
         }
 
-        if (activePlayers == 1) {
+        if (remaining != null) {
             finishRoundWithWinner(remaining, "service.end-reason-elimination");
-        } else if (activePlayers == 0) {
-            finishRoundWithoutWinner("service.end-reason-elimination");
         }
     }
 
@@ -777,21 +782,22 @@ public final class BorderService {
             if (location.getWorld() != null) {
                 location.getWorld().strikeLightningEffect(location);
             }
+            notifier.playDisqualificationLightning(player);
             if (!player.isDead() && player.getHealth() > 0.0D) {
                 player.setHealth(0.0D);
             }
         }
 
-        checkRoundEndAfterDisqualification();
+        checkRoundEndAfterActivePlayerRemoval("service.end-reason-all-disqualified");
     }
 
-    private void checkRoundEndAfterDisqualification() {
+    private void checkRoundEndAfterActivePlayerRemoval(String noActivePlayersReasonKey) {
         if (roundState != RoundState.ACTIVE) {
             return;
         }
 
         if (countActivePlayers() == 0) {
-            finishRoundWithoutWinner("service.end-reason-all-disqualified");
+            finishRoundWithoutWinner(noActivePlayersReasonKey);
             return;
         }
 
@@ -799,13 +805,7 @@ public final class BorderService {
     }
 
     private int countActivePlayers() {
-        int activePlayers = 0;
-        for (Player player : plugin.getServer().getOnlinePlayers()) {
-            if (isActive(player)) {
-                activePlayers++;
-            }
-        }
-        return activePlayers;
+        return roundPlayers.activeCount(roundState);
     }
 
     private void cancelBreakoutTask(Player player) {

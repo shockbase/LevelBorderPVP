@@ -123,10 +123,6 @@ public final class LevelBorderSettings {
         return Math.max(1.0D, config.getDouble("win-target-border-size-blocks", 63.0D));
     }
 
-    public boolean spectatorModeEnabled() {
-        return config.getBoolean("spectator-mode-enabled", true);
-    }
-
     public int breakoutGraceSeconds() {
         return Math.max(0, config.getInt("breakout-grace-seconds", 10));
     }
