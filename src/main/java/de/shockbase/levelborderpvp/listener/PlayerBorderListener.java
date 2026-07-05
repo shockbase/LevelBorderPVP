@@ -29,8 +29,10 @@ import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerLevelChangeEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerPortalEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
+import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.projectiles.ProjectileSource;
 
 public final class PlayerBorderListener implements Listener {
@@ -67,6 +69,18 @@ public final class PlayerBorderListener implements Listener {
         if (settings.reapplyOnWorldChange()) {
             borderService.handleWorldChange(event.getPlayer());
         }
+    }
+
+    @EventHandler
+    public void onPlayerMove(PlayerMoveEvent event) {
+        if (movedHorizontally(event.getFrom(), event.getTo())) {
+            borderService.handlePotentialBreakout(event.getPlayer(), event.getTo());
+        }
+    }
+
+    @EventHandler
+    public void onPlayerTeleport(PlayerTeleportEvent event) {
+        borderService.handlePotentialBreakout(event.getPlayer(), event.getTo());
     }
 
     @EventHandler
@@ -302,5 +316,14 @@ public final class PlayerBorderListener implements Listener {
                 && first.getBlockX() == second.getBlockX()
                 && first.getBlockY() == second.getBlockY()
                 && first.getBlockZ() == second.getBlockZ();
+    }
+
+    private boolean movedHorizontally(Location first, Location second) {
+        if (first == null || second == null || first.getWorld() == null || second.getWorld() == null) {
+            return true;
+        }
+        return !first.getWorld().getUID().equals(second.getWorld().getUID())
+                || Double.compare(first.getX(), second.getX()) != 0
+                || Double.compare(first.getZ(), second.getZ()) != 0;
     }
 }

@@ -30,6 +30,7 @@ service:
   portal-blocked: "Portal blockiert: Ziel liegt ausserhalb deiner Border."
   portal-return-redirected: "Rueckkehr wurde zu deinem Overworld-Einstiegsportal umgeleitet."
   portal-missing: "Kein gueltiges Overworld-Portal gefunden. Rueckkehr blockiert."
+  player-disqualified: "{player} wurde wegen Breakout disqualifiziert."
 
 title:
   level-up: "LEVEL UP!"
@@ -38,6 +39,8 @@ title:
   spectator: "ZUSCHAUER"
   spread-out: "VERTEILT EUCH!"
   countdown: "{seconds}"
+  breakout: "BREAKOUT!"
+  disqualified: "DISQUALIFIED!"
   eliminated: "RAUS!"
   player-kill: "KILL!"
   round-placement: "PLATZ #{place}"
@@ -49,6 +52,8 @@ subtitle:
   spectator: "Du spielst nicht aktiv mit und hast keine Border."
   spread-out: "Die Border startet in {seconds} Sekunden."
   countdown: "Sekunden"
+  breakout: "Zurueck in deine Border: {seconds}s"
+  disqualified: "Zu lange ausserhalb deiner Border."
   eliminated-by: "Getoetet von {killer}."
   player-kill: "Du hast {victim} eliminiert: +{radius} Radius."
   player-kill-no-bonus: "Du hast {victim} eliminiert."

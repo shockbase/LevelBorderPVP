@@ -123,6 +123,10 @@ public final class LevelBorderSettings {
         return config.getBoolean("spectator-mode-enabled", true);
     }
 
+    public int breakoutGraceSeconds() {
+        return Math.max(0, config.getInt("breakout-grace-seconds", 10));
+    }
+
     public boolean luckPermsIntegrationEnabled() {
         return config.getBoolean("luckperms-integration-enabled", false);
     }

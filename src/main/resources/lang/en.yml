@@ -30,6 +30,7 @@ service:
   portal-blocked: "Portal blocked: destination is outside your border."
   portal-return-redirected: "Return was redirected to your overworld entry portal."
   portal-missing: "No valid overworld portal found. Return blocked."
+  player-disqualified: "{player} was disqualified for breakout."
 
 title:
   level-up: "LEVEL UP!"
@@ -38,6 +39,8 @@ title:
   spectator: "SPECTATOR"
   spread-out: "SPREAD OUT!"
   countdown: "{seconds}"
+  breakout: "BREAKOUT!"
+  disqualified: "DISQUALIFIED!"
   eliminated: "ELIMINATED!"
   player-kill: "KILL!"
   round-placement: "PLACE #{place}"
@@ -49,6 +52,8 @@ subtitle:
   spectator: "You are not active and have no border."
   spread-out: "The border starts in {seconds} seconds."
   countdown: "seconds"
+  breakout: "Return to your border: {seconds}s"
+  disqualified: "Outside your border too long."
   eliminated-by: "Killed by {killer}."
   player-kill: "You eliminated {victim}: +{radius} radius."
   player-kill-no-bonus: "You eliminated {victim}."

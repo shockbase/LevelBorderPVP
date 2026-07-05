@@ -62,6 +62,7 @@ public final class BorderCommand implements CommandExecutor, TabCompleter {
         add(options, "win-target-level", ConfigValueType.INT);
         add(options, "win-target-border-size-blocks", ConfigValueType.DOUBLE);
         add(options, "spectator-mode-enabled", ConfigValueType.BOOLEAN);
+        add(options, "breakout-grace-seconds", ConfigValueType.INT);
         add(options, "luckperms-integration-enabled", ConfigValueType.BOOLEAN);
         add(options, "luckperms-active-group", ConfigValueType.STRING);
         add(options, "luckperms-spectator-group", ConfigValueType.STRING);

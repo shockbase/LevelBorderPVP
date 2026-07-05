@@ -28,6 +28,7 @@ Danach zaehlt jedes Level. XP erweitert die eigene Border, PvP kann optional Bon
 6. Nach Ablauf werden XP und Inventar der aktiven Startspieler optional zurueckgesetzt.
 7. Spaetere Joiner werden fuer die laufende Runde Zuschauer.
 8. Getoetete aktive Spieler werden bei aktivem Zuschauermodus ebenfalls Zuschauer und koennen die Runde verfolgen.
+9. Schafft es ein aktiver Spieler aus seiner persoenlichen Border, bekommt er `breakout-grace-seconds` Sekunden Rueckkehrzeit. Danach wird er per Blitz-Effekt getoetet und disqualifiziert.
 
 Der Zuschauerstatus ist kein echter Minecraft-Spectator. Zuschauer haben keine Border und koennen sich frei bewegen, aber das Plugin blockiert Bauen, Interaktion, Inventare, XP, Item-Handling und Kampf.
 
@@ -106,6 +107,7 @@ Beispiele:
 /levelborder config set end-condition elimination
 /levelborder config set round-duration-minutes 45
 /levelborder config set spectator-mode-enabled true
+/levelborder config set breakout-grace-seconds 10
 ```
 
 ## Admin-Rechte
@@ -183,11 +185,14 @@ clear-inventory-on-start: true
 command-permission: levelborderpvp.admin
 dimension-policy: safe-pve
 spectator-mode-enabled: true
+breakout-grace-seconds: 10
 ```
 
 `max-size-blocks: 0.0` bedeutet: keine Obergrenze.
 
 `dimension-policy: safe-pve` bedeutet: Aktive Rundenspieler haben ihre persoenliche Border nur in der Overworld. Nether und End zeigen keine persoenliche Border; Portal- und PvP-Sonderregeln sollen nur aktive Rundenspieler betreffen. Mit `legacy` gilt das alte Verhalten in allen Welten.
+
+`breakout-grace-seconds` bestimmt, wie lange ein aktiver Spieler nach einem Border-Ausbruch zurueckkehren darf. `0` disqualifiziert sofort.
 
 ## Technische Notizen
 

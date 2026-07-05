@@ -80,6 +80,9 @@ win-target-border-size-blocks: 63.0
 # This is not Minecraft spectator mode: viewers have no border and can move,
 # but plugin events block building, interaction, inventory, XP, item handling and combat.
 spectator-mode-enabled: true
+# Seconds an active player may stay outside their personal border before disqualification.
+# Set to 0 for immediate disqualification.
+breakout-grace-seconds: 10
 
 # Optional LuckPerms support through console commands.
 # The plugin has no hard LuckPerms dependency; create these groups yourself.

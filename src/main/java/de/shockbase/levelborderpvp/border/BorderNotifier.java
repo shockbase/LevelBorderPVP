@@ -22,6 +22,11 @@ public final class BorderNotifier {
             Duration.ofMillis(900L),
             Duration.ofMillis(100L)
     );
+    private static final Title.Times WARNING_TITLE_TIMES = Title.Times.times(
+            Duration.ZERO,
+            Duration.ofMillis(1100L),
+            Duration.ofMillis(200L)
+    );
 
     private final BorderSizeFormatter sizeFormatter;
     private final Messages messages;
@@ -64,6 +69,24 @@ public final class BorderNotifier {
         Component subtitle = Component.text(messages.text("subtitle.countdown"), NamedTextColor.WHITE);
 
         player.showTitle(Title.title(title, subtitle, COUNTDOWN_TITLE_TIMES));
+    }
+
+    public void showBreakoutWarning(Player player, int remainingSeconds) {
+        Component title = Component.text(messages.text("title.breakout"), NamedTextColor.RED);
+        Component subtitle = Component.text(
+                messages.text("subtitle.breakout", Messages.placeholder("seconds", remainingSeconds)),
+                NamedTextColor.GOLD
+        );
+
+        player.showTitle(Title.title(title, subtitle, WARNING_TITLE_TIMES));
+    }
+
+    public void showDisqualified(Player player) {
+        Component title = Component.text(messages.text("title.disqualified"), NamedTextColor.DARK_RED);
+        Component subtitle = Component.text(messages.text("subtitle.disqualified"), NamedTextColor.WHITE);
+
+        player.showTitle(Title.title(title, subtitle, TITLE_TIMES));
+        player.playSound(player.getLocation(), Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 1.0F, 1.0F);
     }
 
     public void showEliminated(Player player, String killerName) {
