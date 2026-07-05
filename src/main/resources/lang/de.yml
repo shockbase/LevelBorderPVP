@@ -27,6 +27,9 @@ service:
   end-reason-target-level: "Ziel-Level erreicht"
   end-reason-target-border: "Ziel-Border erreicht"
   end-reason-elimination: "Letzter aktiver Spieler"
+  portal-blocked: "Portal blockiert: Ziel liegt ausserhalb deiner Border."
+  portal-return-redirected: "Rueckkehr wurde zu deinem Overworld-Einstiegsportal umgeleitet."
+  portal-missing: "Kein gueltiges Overworld-Portal gefunden. Rueckkehr blockiert."
 
 title:
   level-up: "LEVEL UP!"

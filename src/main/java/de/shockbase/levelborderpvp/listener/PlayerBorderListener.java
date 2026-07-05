@@ -90,6 +90,7 @@ public final class PlayerBorderListener implements Listener {
         if (targetLocation == null) {
             event.setCanCreatePortal(false);
             event.setCancelled(true);
+            borderService.showPortalMissing(player);
             return;
         }
 
@@ -98,6 +99,7 @@ public final class PlayerBorderListener implements Listener {
         event.setCreationRadius(borderService.limitPortalRadiusInsidePersonalBorder(player, targetLocation, event.getCreationRadius()));
         if (originalTarget == null || !sameBlockLocation(originalTarget, targetLocation)) {
             event.setCanCreatePortal(false);
+            borderService.showPortalReturnRedirected(player);
         }
     }
 
@@ -112,6 +114,7 @@ public final class PlayerBorderListener implements Listener {
         for (BlockState block : event.getBlocks()) {
             if (!borderService.isInsidePersonalBorder(player, block.getLocation())) {
                 event.setCancelled(true);
+                borderService.showPortalBlocked(player);
                 return;
             }
         }

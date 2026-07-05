@@ -189,6 +189,18 @@ public final class BorderService {
         return Math.max(0, Math.min(requestedRadius, allowedRadius));
     }
 
+    public void showPortalBlocked(Player player) {
+        player.sendMessage(messages.text("service.portal-blocked"));
+    }
+
+    public void showPortalReturnRedirected(Player player) {
+        player.sendMessage(messages.text("service.portal-return-redirected"));
+    }
+
+    public void showPortalMissing(Player player) {
+        player.sendMessage(messages.text("service.portal-missing"));
+    }
+
     public void handleLevelChange(Player player, int newLevel) {
         if (!isActive(player)) {
             return;
