@@ -136,7 +136,6 @@ final class BorderRenderer {
         }
         return notification == BorderNotification.LEVEL_UP
                 || notification == BorderNotification.LEVEL_CHANGED
-                || notification == BorderNotification.KILL_BONUS
                 || notification == BorderNotification.PLAYER_KILL;
     }
 
@@ -149,8 +148,6 @@ final class BorderRenderer {
             } else if (size < previousSize - BORDER_SIZE_EPSILON) {
                 notifier.showBorderChanged(player, size);
             }
-        } else if (notification == BorderNotification.KILL_BONUS && size > previousSize + BORDER_SIZE_EPSILON) {
-            notifier.showKillBonus(player, size);
         } else if (notification == BorderNotification.JOIN) {
             notifier.showJoined(player, size);
         } else if (notification == BorderNotification.RESPAWN) {

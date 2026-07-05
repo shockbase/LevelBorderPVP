@@ -30,7 +30,6 @@ service:
 title:
   level-up: "LEVEL UP!"
   border-changed: "BORDER UPDATED"
-  kill-bonus: "BORDER CONQUERED"
   border-active: "BORDER ACTIVE"
   spectator: "SPECTATOR"
   spread-out: "SPREAD OUT!"
@@ -48,6 +47,7 @@ subtitle:
   countdown: "seconds"
   eliminated-by: "Killed by {killer}."
   player-kill: "You eliminated {victim}: +{radius} radius."
+  player-kill-no-bonus: "You eliminated {victim}."
   round-stats: "Kills: {kills} | Deaths: {deaths} | Level: {level} | Border: {border}"
 
 unit:

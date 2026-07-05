@@ -29,7 +29,6 @@ service:
 title:
   level-up: "УРОВЕНЬ ПОВЫШЕН!"
   border-changed: "ГРАНИЦА ОБНОВЛЕНА"
-  kill-bonus: "ГРАНИЦА ЗАХВАЧЕНА"
   border-active: "ГРАНИЦА АКТИВНА"
   spectator: "НАБЛЮДАТЕЛЬ"
   spread-out: "РАЗБЕГАЙТЕСЬ!"
@@ -47,6 +46,7 @@ subtitle:
   countdown: "сек."
   eliminated-by: "Тебя убил {killer}."
   player-kill: "Ты выбил {victim}: +{radius} к радиусу."
+  player-kill-no-bonus: "Ты выбил {victim}."
   round-stats: "Убийства: {kills} | Смерти: {deaths} | Уровень: {level} | Граница: {border}"
 
 unit:

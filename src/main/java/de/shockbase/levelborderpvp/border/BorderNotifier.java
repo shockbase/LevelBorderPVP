@@ -46,10 +46,6 @@ public final class BorderNotifier {
         showStatus(player, "title.border-changed", "subtitle.border-now", borderSize);
     }
 
-    public void showKillBonus(Player player, double borderSize) {
-        showStatus(player, "title.kill-bonus", "subtitle.border-now", borderSize);
-    }
-
     public void showSpreadOut(Player player, int countdownSeconds) {
         Component title = Component.text(messages.text("title.spread-out"), NamedTextColor.GOLD);
         Component subtitle = Component.text(
@@ -82,9 +78,12 @@ public final class BorderNotifier {
 
     public void showPlayerKill(Player player, String victimName, double radiusGainedBlocks) {
         Component title = Component.text(messages.text("title.player-kill"), NamedTextColor.GREEN);
+        String subtitleKey = radiusGainedBlocks > NUMBER_EPSILON
+                ? "subtitle.player-kill"
+                : "subtitle.player-kill-no-bonus";
         Component subtitle = Component.text(
                 messages.text(
-                        "subtitle.player-kill",
+                        subtitleKey,
                         Messages.placeholder("victim", victimName),
                         Messages.placeholder("radius", formatBlockAmount(radiusGainedBlocks))
                 ),
