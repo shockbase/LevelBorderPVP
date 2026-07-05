@@ -26,13 +26,17 @@ final class PlayerBorderDataService {
         playerBorderRepository.save(data);
     }
 
-    PlayerBorderData getOrCreate(Player player) {
-        int currentLevel = Math.max(0, player.getLevel());
-        PlayerBorderData existing = playerBorderRepository.find(
+    PlayerBorderData findExisting(Player player) {
+        return playerBorderRepository.find(
                 player,
                 settings.usesCurrentLevelMode(),
                 sizeCalculator::calculate
         );
+    }
+
+    PlayerBorderData getOrCreate(Player player) {
+        int currentLevel = Math.max(0, player.getLevel());
+        PlayerBorderData existing = findExisting(player);
         if (existing != null) {
             return existing;
         }

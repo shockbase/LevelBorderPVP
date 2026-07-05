@@ -9,6 +9,7 @@ import de.shockbase.levelborderpvp.data.PlayerBorderRepository;
 import de.shockbase.levelborderpvp.i18n.Messages;
 import de.shockbase.levelborderpvp.integration.LuckPermsRoleService;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -110,6 +111,22 @@ public final class BorderService {
 
     public boolean shouldApplyDimensionPvpRules(Player player) {
         return settings.dimensionPolicy().usesSafePveDimensionRules() && isActiveRoundPlayer(player);
+    }
+
+    public boolean isInsidePersonalBorder(Player player, Location location) {
+        if (player == null || location == null || location.getWorld() == null || !isActiveRoundPlayer(player)) {
+            return false;
+        }
+
+        PlayerBorderData data = playerBorderDataService.findExisting(player);
+        if (data == null || !isSameWorld(data, location.getWorld())) {
+            return false;
+        }
+
+        double borderSize = borderSize(data, Math.max(0, player.getLevel()));
+        double maxOffset = Math.max(0.0D, borderSize / 2.0D);
+        return Math.abs(location.getX() - data.x()) <= maxOffset
+                && Math.abs(location.getZ() - data.z()) <= maxOffset;
     }
 
     public void handleLevelChange(Player player, int newLevel) {
@@ -362,6 +379,13 @@ public final class BorderService {
     private boolean allowsPersonalBorder(Player player) {
         DimensionPolicy policy = settings.dimensionPolicy();
         return policy.allowsPersonalBorder(player.getWorld());
+    }
+
+    private boolean isSameWorld(PlayerBorderData data, World world) {
+        if (data.worldId().equals(world.getUID())) {
+            return true;
+        }
+        return data.worldName() != null && data.worldName().equals(world.getName());
     }
 
     private void applySpectator(Player player, BorderNotification notification) {
