@@ -13,6 +13,8 @@ import de.shockbase.levelborderpvp.integration.PlayerRollbackService;
 import org.bukkit.HeightMap;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Particle;
+import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
@@ -423,18 +425,20 @@ public final class BorderService {
         for (Player player : plugin.getServer().getOnlinePlayers()) {
             luckPermsRoleService.clear(player);
             if (startCandidateIds.contains(player.getUniqueId())) {
-                borderRenderer.resetToGlobal(player);
+                applyCountdownBorder(player);
             } else {
                 enterSpectator(player, BorderNotification.SPECTATOR);
             }
         }
 
-        if (settings.startPlacementMode() == StartPlacementMode.GRID || boundedCountdownSeconds <= 0) {
+        if (boundedCountdownSeconds <= 0) {
             activateRound();
             return new StartResult(true, selectedStartPlayers.size(), minimumStartPlayers, 0);
         }
 
-        showSpreadOutToStartCandidates(boundedCountdownSeconds);
+        if (settings.startPlacementMode() != StartPlacementMode.GRID) {
+            showSpreadOutToStartCandidates(boundedCountdownSeconds);
+        }
 
         BukkitRunnable countdown = new BukkitRunnable() {
             private int remainingSeconds = boundedCountdownSeconds;
@@ -504,7 +508,7 @@ public final class BorderService {
                 return;
             }
             luckPermsRoleService.clear(player);
-            borderRenderer.resetToGlobal(player);
+            applyCountdownBorder(player);
             return;
         }
 
@@ -833,9 +837,36 @@ public final class BorderService {
                 Location target = locations.get(index);
                 target.setYaw(player.getLocation().getYaw());
                 target.setPitch(player.getLocation().getPitch());
+                Location source = player.getLocation().clone();
+                borderRenderer.resetToGlobal(player);
                 player.teleport(target);
+                showGridTeleportEffects(source, target);
             }
         }
+    }
+
+    private void applyCountdownBorder(Player player) {
+        if (settings.startPlacementMode() == StartPlacementMode.GRID) {
+            borderRenderer.applyLobbyBorder(player);
+            return;
+        }
+
+        borderRenderer.resetToGlobal(player);
+    }
+
+    private void showGridTeleportEffects(Location source, Location target) {
+        spawnEnderTeleportEffects(source);
+        spawnEnderTeleportEffects(target);
+    }
+
+    private void spawnEnderTeleportEffects(Location location) {
+        World world = location.getWorld();
+        if (world == null) {
+            return;
+        }
+
+        world.spawnParticle(Particle.PORTAL, location, 64, 0.45D, 0.8D, 0.45D, 0.25D);
+        world.playSound(location, Sound.ENTITY_ENDERMAN_TELEPORT, 0.8F, 1.1F);
     }
 
     private List<Location> findStartGridLocations(World world, int playerCount) {

@@ -42,12 +42,12 @@ border-transition-seconds: 1
 # /levelborder start uses this countdown when no seconds argument is given.
 # At command execution, only players inside the lobby border are selected as active players.
 # start-placement-mode spread keeps the old behavior: players spread out during the countdown.
-# start-placement-mode grid teleports players to safe grid slots around their world spawn and
-# sets their personal borders immediately. In grid mode, the start countdown is skipped.
+# start-placement-mode grid keeps the lobby border during the countdown, then teleports players
+# to safe grid slots around their world spawn and sets their personal borders immediately.
 start-placement-mode: grid
 start-grid-spacing-blocks: 64.0
 start-grid-skip-center: true
-start-countdown-seconds: 0
+start-countdown-seconds: 10
 # Minimum number of online players inside the lobby border required for /levelborder start.
 minimum-start-players: 2
 # Upper limit for /levelborder start <seconds>.
