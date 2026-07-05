@@ -49,6 +49,10 @@ public final class LevelBorderSettings {
         return Math.max(0, config.getInt("start-countdown-seconds", 10));
     }
 
+    public int minimumStartPlayers() {
+        return Math.max(1, config.getInt("minimum-start-players", 2));
+    }
+
     public int maxStartCountdownSeconds() {
         return Math.max(defaultStartCountdownSeconds(), config.getInt("max-start-countdown-seconds", 3600));
     }

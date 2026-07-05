@@ -44,6 +44,8 @@ border-transition-seconds: 1
 # During the countdown, their personal borders are removed so they can spread out.
 # When the countdown ends, each selected player's current position becomes their border center.
 start-countdown-seconds: 10
+# Minimum number of online players inside the lobby border required for /levelborder start.
+minimum-start-players: 2
 # Upper limit for /levelborder start <seconds>.
 max-start-countdown-seconds: 3600
 # When the round becomes active, reset starting active players to level 0.

@@ -22,13 +22,13 @@ Danach zaehlt jedes Level. XP erweitert die eigene Border, PvP kann optional Bon
 
 1. Admin fuehrt `/levelborder lobby` aus.
 2. Spieler werden optional zum Worldspawn teleportiert und in der Lobby-Border gehalten.
-3. Admin fuehrt `/levelborder start [seconds]` aus.
+3. Admin fuehrt `/levelborder start [seconds]` aus. Dafuer muessen mindestens `minimum-start-players` Spieler in der Lobby-Border stehen.
 4. Nur Spieler innerhalb der Lobby-Border werden aktive Spieler; alle anderen werden Zuschauer.
 5. Waehrend des Countdowns haben aktive Spieler keine persoenliche Border und koennen sich verteilen.
 6. Nach Ablauf werden XP und Inventar der aktiven Startspieler optional zurueckgesetzt.
 7. Spaetere Joiner werden fuer die laufende Runde Zuschauer.
 8. Getoetete aktive Spieler werden bei aktivem Zuschauermodus ebenfalls Zuschauer und koennen die Runde verfolgen.
-9. Schafft es ein aktiver Spieler aus seiner persoenlichen Border, bekommt er `breakout-grace-seconds` Sekunden Rueckkehrzeit. Danach wird er per Blitz-Effekt getoetet und disqualifiziert.
+9. Schafft es ein aktiver Spieler aus seiner persoenlichen Border, bekommt er `breakout-grace-seconds` Sekunden Rueckkehrzeit. Danach wird er disqualifiziert und nach 5 Sekunden per Blitz-Effekt getoetet.
 
 Der Zuschauerstatus ist kein echter Minecraft-Spectator. Zuschauer haben keine Border und koennen sich frei bewegen, aber das Plugin blockiert Bauen, Interaktion, Inventare, XP, Item-Handling und Kampf.
 
@@ -199,6 +199,7 @@ teleport-players-to-lobby-spawn: true
 max-size-blocks: 0.0
 border-transition-seconds: 1
 start-countdown-seconds: 10
+minimum-start-players: 2
 max-start-countdown-seconds: 3600
 reset-xp-on-start: true
 clear-inventory-on-start: true
@@ -209,6 +210,8 @@ breakout-grace-seconds: 10
 ```
 
 `max-size-blocks: 0.0` bedeutet: keine Obergrenze.
+
+`minimum-start-players` wird bei `/levelborder start` gegen die Spieler innerhalb der Lobby-Border geprueft. Ist die Zahl zu niedrig, startet keine Runde.
 
 `dimension-policy: safe-pve` bedeutet: Aktive Rundenspieler haben ihre persoenliche Border nur in der Overworld. Nether und End zeigen keine persoenliche Border; Portal- und PvP-Sonderregeln sollen nur aktive Rundenspieler betreffen. Mit `legacy` gilt das alte Verhalten in allen Welten.
 

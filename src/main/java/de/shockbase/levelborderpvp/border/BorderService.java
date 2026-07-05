@@ -27,6 +27,8 @@ import java.util.UUID;
 
 public final class BorderService {
 
+    private static final long DISQUALIFICATION_DEATH_DELAY_TICKS = 5L * 20L;
+
     private final Plugin plugin;
     private final LevelBorderSettings settings;
     private final Messages messages;
@@ -44,6 +46,9 @@ public final class BorderService {
     private RoundState roundState = RoundState.IDLE;
     private BukkitTask startCountdownTask;
     private BukkitTask roundEndTask;
+
+    public record StartResult(boolean started, int eligiblePlayers, int requiredPlayers) {
+    }
 
     public BorderService(
             Plugin plugin,
@@ -332,7 +337,13 @@ public final class BorderService {
                 && isActive(killer);
     }
 
-    public void start(int countdownSeconds) {
+    public StartResult start(int countdownSeconds) {
+        List<Player> selectedStartPlayers = findStartCandidates();
+        int minimumStartPlayers = settings.minimumStartPlayers();
+        if (selectedStartPlayers.size() < minimumStartPlayers) {
+            return new StartResult(false, selectedStartPlayers.size(), minimumStartPlayers);
+        }
+
         markRoundEndedIfActive();
         cancelStartCountdown();
         cancelRoundEndTask();
@@ -342,11 +353,13 @@ public final class BorderService {
         roundState = RoundState.COUNTDOWN;
         roundPlayers.clearRound();
         startCandidateIds.clear();
+        for (Player player : selectedStartPlayers) {
+            startCandidateIds.add(player.getUniqueId());
+        }
 
         for (Player player : plugin.getServer().getOnlinePlayers()) {
             luckPermsRoleService.clear(player);
-            if (isInsideLobbyBorder(player)) {
-                startCandidateIds.add(player.getUniqueId());
+            if (startCandidateIds.contains(player.getUniqueId())) {
                 borderRenderer.resetToGlobal(player);
             } else {
                 enterSpectator(player, BorderNotification.SPECTATOR);
@@ -355,7 +368,7 @@ public final class BorderService {
 
         if (boundedCountdownSeconds <= 0) {
             activateRound();
-            return;
+            return new StartResult(true, selectedStartPlayers.size(), minimumStartPlayers);
         }
 
         showSpreadOutToStartCandidates(boundedCountdownSeconds);
@@ -384,6 +397,7 @@ public final class BorderService {
         };
 
         startCountdownTask = countdown.runTaskTimer(plugin, 0L, 20L);
+        return new StartResult(true, selectedStartPlayers.size(), minimumStartPlayers);
     }
 
     public void lobby() {
@@ -599,6 +613,16 @@ public final class BorderService {
                 && Math.abs(playerLocation.getZ() - lobbyCenter.getZ()) <= lobbyRadius;
     }
 
+    private List<Player> findStartCandidates() {
+        List<Player> players = new ArrayList<>();
+        for (Player player : plugin.getServer().getOnlinePlayers()) {
+            if (isInsideLobbyBorder(player)) {
+                players.add(player);
+            }
+        }
+        return players;
+    }
+
     private void scheduleRoundEnd() {
         cancelRoundEndTask();
         if (settings.endCondition() != RoundEndCondition.TIMED_SCORE) {
@@ -742,14 +766,46 @@ public final class BorderService {
                 Messages.placeholder("player", player.getName())
         ));
 
-        Location location = player.getLocation();
-        if (location.getWorld() != null) {
-            location.getWorld().strikeLightningEffect(location);
+        UUID playerId = player.getUniqueId();
+        plugin.getServer().getScheduler().runTaskLater(plugin, () -> finishDisqualification(playerId), DISQUALIFICATION_DEATH_DELAY_TICKS);
+    }
+
+    private void finishDisqualification(UUID playerId) {
+        Player player = plugin.getServer().getPlayer(playerId);
+        if (player != null && roundPlayers.isSpectator(player)) {
+            Location location = player.getLocation();
+            if (location.getWorld() != null) {
+                location.getWorld().strikeLightningEffect(location);
+            }
+            if (!player.isDead() && player.getHealth() > 0.0D) {
+                player.setHealth(0.0D);
+            }
         }
-        if (!player.isDead() && player.getHealth() > 0.0D) {
-            player.setHealth(0.0D);
+
+        checkRoundEndAfterDisqualification();
+    }
+
+    private void checkRoundEndAfterDisqualification() {
+        if (roundState != RoundState.ACTIVE) {
+            return;
         }
+
+        if (countActivePlayers() == 0) {
+            finishRoundWithoutWinner("service.end-reason-all-disqualified");
+            return;
+        }
+
         checkEliminationWinner();
+    }
+
+    private int countActivePlayers() {
+        int activePlayers = 0;
+        for (Player player : plugin.getServer().getOnlinePlayers()) {
+            if (isActive(player)) {
+                activePlayers++;
+            }
+        }
+        return activePlayers;
     }
 
     private void cancelBreakoutTask(Player player) {

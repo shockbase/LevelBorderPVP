@@ -51,6 +51,7 @@ public final class BorderCommand implements CommandExecutor, TabCompleter {
         add(options, "max-size-blocks", ConfigValueType.DOUBLE);
         add(options, "border-transition-seconds", ConfigValueType.LONG);
         add(options, "start-countdown-seconds", ConfigValueType.INT);
+        add(options, "minimum-start-players", ConfigValueType.INT);
         add(options, "max-start-countdown-seconds", ConfigValueType.INT);
         add(options, "reset-xp-on-start", ConfigValueType.BOOLEAN);
         add(options, "clear-inventory-on-start", ConfigValueType.BOOLEAN);
@@ -236,7 +237,16 @@ public final class BorderCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        borderService.start(countdownSeconds);
+        BorderService.StartResult startResult = borderService.start(countdownSeconds);
+        if (!startResult.started()) {
+            sender.sendMessage(messages.text(
+                    "command.not-enough-players",
+                    Messages.placeholder("players", startResult.eligiblePlayers()),
+                    Messages.placeholder("required", startResult.requiredPlayers())
+            ));
+            return true;
+        }
+
         sender.sendMessage(messages.text(
                 "command.starting",
                 Messages.placeholder("seconds", countdownSeconds)
