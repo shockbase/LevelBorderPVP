@@ -776,10 +776,24 @@ public final class BorderService {
         );
         for (Player player : plugin.getServer().getOnlinePlayers()) {
             player.sendMessage(message);
-            if (remainingSeconds <= 3) {
+            if (shouldShowRoundRuleCountdown(player)) {
+                notifier.showRoundRuleCountdown(
+                        player,
+                        settings.endCondition(),
+                        remainingSeconds,
+                        settings.roundDurationMinutes(),
+                        settings.winTargetLevel(),
+                        settings.winTargetBorderSizeBlocks()
+                );
+            } else if (remainingSeconds <= 3) {
                 notifier.showCountdown(player, remainingSeconds);
             }
         }
+    }
+
+    private boolean shouldShowRoundRuleCountdown(Player player) {
+        return settings.startPlacementMode() == StartPlacementMode.GRID
+                && startCandidateIds.contains(player.getUniqueId());
     }
 
     private void activateRound() {

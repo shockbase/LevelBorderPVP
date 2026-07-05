@@ -55,6 +55,11 @@ title:
   eliminated: "RAUS!"
   player-kill: "KILL!"
   round-placement: "PLATZ #{place}"
+  round-rule-timed-score: "BORDER SCORE"
+  round-rule-target-level: "LEVEL JAGD"
+  round-rule-target-border: "BORDER RENNEN"
+  round-rule-elimination: "ELIMINATION"
+  round-rule-disabled: "FREIES SPIEL"
 
 subtitle:
   border-now: "Deine Border ist jetzt {size} gross."
@@ -63,6 +68,11 @@ subtitle:
   spectator: "Du spielst nicht aktiv mit und hast keine Border."
   spread-out: "Die Border startet in {seconds} Sekunden."
   countdown: "Sekunden"
+  round-rule-timed-score: "Start in {seconds}s | Nach {minutes} Min. gewinnt die groesste Border."
+  round-rule-target-level: "Start in {seconds}s | Erreiche Level {level}, bevor es jemand anderes schafft."
+  round-rule-target-border: "Start in {seconds}s | Vergroessere deine Border auf {border}, um zu gewinnen."
+  round-rule-elimination: "Start in {seconds}s | Schalte alle anderen Spieler aus und bleibe uebrig."
+  round-rule-disabled: "Start in {seconds}s | Keine automatische Wertung, der Admin beendet die Runde."
   breakout: "Zurueck in deine Border: {seconds}s"
   disqualified: "Zu lange ausserhalb deiner Border."
   eliminated-by: "Getoetet von {killer}."

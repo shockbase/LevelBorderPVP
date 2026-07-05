@@ -55,6 +55,11 @@ title:
   eliminated: "ELIMINATED!"
   player-kill: "KILL!"
   round-placement: "PLACE #{place}"
+  round-rule-timed-score: "BORDER SCORE"
+  round-rule-target-level: "LEVEL HUNT"
+  round-rule-target-border: "BORDER RACE"
+  round-rule-elimination: "ELIMINATION"
+  round-rule-disabled: "FREE PLAY"
 
 subtitle:
   border-now: "Your border is now {size}."
@@ -63,6 +68,11 @@ subtitle:
   spectator: "You are not active and have no border."
   spread-out: "The border starts in {seconds} seconds."
   countdown: "seconds"
+  round-rule-timed-score: "Start in {seconds}s | Biggest border wins after {minutes} min."
+  round-rule-target-level: "Start in {seconds}s | Reach level {level} before anyone else."
+  round-rule-target-border: "Start in {seconds}s | Grow your border to {border} to win."
+  round-rule-elimination: "Start in {seconds}s | Take out every other player and be the last one standing."
+  round-rule-disabled: "Start in {seconds}s | No automatic scoring, an admin ends the round."
   breakout: "Return to your border: {seconds}s"
   disqualified: "Outside your border too long."
   eliminated-by: "Killed by {killer}."

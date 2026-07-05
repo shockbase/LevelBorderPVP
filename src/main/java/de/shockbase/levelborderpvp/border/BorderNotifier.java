@@ -1,5 +1,6 @@
 package de.shockbase.levelborderpvp.border;
 
+import de.shockbase.levelborderpvp.config.RoundEndCondition;
 import de.shockbase.levelborderpvp.i18n.Messages;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -69,6 +70,49 @@ public final class BorderNotifier {
         Component subtitle = Component.text(messages.text("subtitle.countdown"), NamedTextColor.WHITE);
 
         player.showTitle(Title.title(title, subtitle, COUNTDOWN_TITLE_TIMES));
+    }
+
+    public void showRoundRuleCountdown(
+            Player player,
+            RoundEndCondition condition,
+            int remainingSeconds,
+            int roundDurationMinutes,
+            int winTargetLevel,
+            double winTargetBorderSize
+    ) {
+        Component title = Component.text(messages.text(roundRuleTitleKey(condition)), NamedTextColor.GOLD);
+        Component subtitle = Component.text(
+                messages.text(
+                        roundRuleSubtitleKey(condition),
+                        Messages.placeholder("seconds", remainingSeconds),
+                        Messages.placeholder("minutes", roundDurationMinutes),
+                        Messages.placeholder("level", winTargetLevel),
+                        Messages.placeholder("border", sizeFormatter.format(winTargetBorderSize))
+                ),
+                NamedTextColor.WHITE
+        );
+
+        player.showTitle(Title.title(title, subtitle, COUNTDOWN_TITLE_TIMES));
+    }
+
+    private String roundRuleTitleKey(RoundEndCondition condition) {
+        return switch (condition) {
+            case TIMED_SCORE -> "title.round-rule-timed-score";
+            case TARGET_LEVEL -> "title.round-rule-target-level";
+            case TARGET_BORDER -> "title.round-rule-target-border";
+            case ELIMINATION -> "title.round-rule-elimination";
+            case DISABLED -> "title.round-rule-disabled";
+        };
+    }
+
+    private String roundRuleSubtitleKey(RoundEndCondition condition) {
+        return switch (condition) {
+            case TIMED_SCORE -> "subtitle.round-rule-timed-score";
+            case TARGET_LEVEL -> "subtitle.round-rule-target-level";
+            case TARGET_BORDER -> "subtitle.round-rule-target-border";
+            case ELIMINATION -> "subtitle.round-rule-elimination";
+            case DISABLED -> "subtitle.round-rule-disabled";
+        };
     }
 
     public void showBreakoutWarning(Player player, int remainingSeconds) {

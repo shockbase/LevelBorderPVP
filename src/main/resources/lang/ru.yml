@@ -55,6 +55,11 @@ title:
   eliminated: "ВЫБЫЛ!"
   player-kill: "УБИЙСТВО!"
   round-placement: "МЕСТО #{place}"
+  round-rule-timed-score: "БИТВА ГРАНИЦ"
+  round-rule-target-level: "ОХОТА ЗА УРОВНЕМ"
+  round-rule-target-border: "ГОНКА ГРАНИЦ"
+  round-rule-elimination: "ВЫБЫВАНИЕ"
+  round-rule-disabled: "СВОБОДНАЯ ИГРА"
 
 subtitle:
   border-now: "Твоя граница теперь {size}."
@@ -63,6 +68,11 @@ subtitle:
   spectator: "Ты не активный игрок и не имеешь своей границы."
   spread-out: "Граница запустится через {seconds} сек."
   countdown: "сек."
+  round-rule-timed-score: "Старт через {seconds}с | Через {minutes} мин. побеждает самая большая граница."
+  round-rule-target-level: "Старт через {seconds}с | Достигни уровня {level} раньше остальных."
+  round-rule-target-border: "Старт через {seconds}с | Увеличь границу до {border}, чтобы победить."
+  round-rule-elimination: "Старт через {seconds}с | Устрани всех остальных игроков и останься последним."
+  round-rule-disabled: "Старт через {seconds}с | Автоматического подсчета нет, раунд завершает админ."
   breakout: "Вернись в свою границу: {seconds}с"
   disqualified: "Слишком долго вне своей границы."
   eliminated-by: "Тебя убил {killer}."
