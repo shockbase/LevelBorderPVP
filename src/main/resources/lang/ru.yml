@@ -20,6 +20,7 @@ command:
 service:
   countdown: "Граница запустится через {seconds} сек."
   round-ended-winner: "Игра окончена: победил {winner}. Причина: {reason}"
+  round-ended-shared-winners: "Игра окончена: ничья между {winners}. Причина: {reason}"
   round-ended-no-winner: "Игра окончена без победителя. Причина: {reason}"
   end-reason-time: "истекло время"
   end-reason-target-level: "достигнут целевой уровень"

@@ -28,9 +28,9 @@ final class RoundScoreTracker {
         this.roundPlayers = roundPlayers;
     }
 
-    PlayerScore findWinner(Collection<? extends Player> players, Predicate<Player> isActive) {
+    List<PlayerScore> findWinners(Collection<? extends Player> players, Predicate<Player> isActive) {
         PlayerScore best = null;
-        boolean tied = false;
+        List<PlayerScore> winners = new ArrayList<>();
 
         for (Player player : players) {
             if (!isActive.test(player)) {
@@ -40,20 +40,21 @@ final class RoundScoreTracker {
             PlayerScore candidate = score(player);
             if (best == null) {
                 best = candidate;
-                tied = false;
+                winners.add(candidate);
                 continue;
             }
 
             int comparison = compareScores(candidate, best);
             if (comparison > 0) {
                 best = candidate;
-                tied = false;
+                winners.clear();
+                winners.add(candidate);
             } else if (comparison == 0) {
-                tied = true;
+                winners.add(candidate);
             }
         }
 
-        return tied ? null : best;
+        return winners;
     }
 
     List<PlayerScore> rankedScores(Collection<? extends Player> players, Predicate<Player> isIncluded) {

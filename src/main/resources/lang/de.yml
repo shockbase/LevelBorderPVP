@@ -21,6 +21,7 @@ command:
 service:
   countdown: "Border startet in {seconds} Sekunden."
   round-ended-winner: "Spiel beendet: {winner} gewinnt. Grund: {reason}"
+  round-ended-shared-winners: "Spiel beendet: Gleichstand zwischen {winners}. Grund: {reason}"
   round-ended-no-winner: "Spiel beendet ohne Gewinner. Grund: {reason}"
   end-reason-time: "Zeitlimit erreicht"
   end-reason-target-level: "Ziel-Level erreicht"

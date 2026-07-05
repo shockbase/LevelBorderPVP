@@ -16,6 +16,7 @@ import org.bukkit.scheduler.BukkitTask;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.StringJoiner;
 import java.util.UUID;
 
 public final class BorderService {
@@ -441,13 +442,18 @@ public final class BorderService {
             return;
         }
 
-        PlayerScore winner = roundScores.findWinner(plugin.getServer().getOnlinePlayers(), this::isActive);
-        if (winner == null) {
+        List<PlayerScore> winners = roundScores.findWinners(plugin.getServer().getOnlinePlayers(), this::isActive);
+        if (winners.isEmpty()) {
             finishRoundWithoutWinner("service.end-reason-time");
             return;
         }
 
-        finishRoundWithWinner(winner.player(), "service.end-reason-time");
+        if (winners.size() == 1) {
+            finishRoundWithWinner(winners.getFirst().player(), "service.end-reason-time");
+            return;
+        }
+
+        finishRoundWithSharedWinners(winners, "service.end-reason-time");
     }
 
     private void checkTargetLevel(Player player, int reachedLevel) {
@@ -503,6 +509,18 @@ public final class BorderService {
         finishRound();
     }
 
+    private void finishRoundWithSharedWinners(List<PlayerScore> winners, String reasonKey) {
+        winners.sort((first, second) -> first.player().getName().compareToIgnoreCase(second.player().getName()));
+        String reason = messages.text(reasonKey);
+        plugin.getServer().broadcastMessage(messages.text(
+                "service.round-ended-shared-winners",
+                Messages.placeholder("winners", joinPlayerNames(winners)),
+                Messages.placeholder("reason", reason)
+        ));
+        showRoundPlacements(null);
+        finishRound();
+    }
+
     private void finishRoundWithoutWinner(String reasonKey) {
         String reason = messages.text(reasonKey);
         plugin.getServer().broadcastMessage(messages.text(
@@ -515,6 +533,14 @@ public final class BorderService {
 
     private void finishRound() {
         enterIdle();
+    }
+
+    private String joinPlayerNames(List<PlayerScore> scores) {
+        StringJoiner joiner = new StringJoiner(", ");
+        for (PlayerScore score : scores) {
+            joiner.add(score.player().getName());
+        }
+        return joiner.toString();
     }
 
     private void showRoundPlacements(Player winner) {
