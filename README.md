@@ -213,6 +213,8 @@ breakout-grace-seconds: 10
 
 `max-size-blocks: 0.0` bedeutet: keine Obergrenze.
 
+Persoenliche Border-Groessen werden im Spiel auf volle Blockgrenzen aufgerundet. Bei `center-at-block-center: true` werden gerade Durchmesser auf den naechsten ungeraden Wert erhoeht, z. B. `initial-size-blocks: 4.0` wirkt als `5.0`.
+
 `minimum-start-players` wird bei `/levelborder start` gegen die Spieler innerhalb der Lobby-Border geprueft. Ist die Zahl zu niedrig, startet keine Runde.
 
 `start-placement-mode: grid` haelt Startspieler waehrend des Countdowns in der Lobby-Border, verteilt sie danach auf sichere Rasterpunkte um den Worldspawn und setzt die Border sofort. `start-grid-spacing-blocks: 64.0` bedeutet mit `growth-per-level-blocks: 8.0`, dass Nachbar-Borders etwa ab Level 8 aufeinandertreffen. Mit `spread` gilt das alte Countdown-Verteilen.

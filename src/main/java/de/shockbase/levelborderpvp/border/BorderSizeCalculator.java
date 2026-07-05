@@ -11,12 +11,20 @@ public final class BorderSizeCalculator {
     }
 
     public double calculate(int level) {
-        double size = settings.initialSizeBlocks() + (Math.max(0, level) * settings.growthPerLevelBlocks());
+        double size = wholeBlockSize(settings.initialSizeBlocks() + (Math.max(0, level) * settings.growthPerLevelBlocks()));
 
         if (settings.maxSizeBlocks() > 0.0D) {
-            size = Math.min(size, settings.maxSizeBlocks());
+            size = Math.min(size, wholeBlockSize(settings.maxSizeBlocks()));
         }
 
         return size;
+    }
+
+    private double wholeBlockSize(double size) {
+        long roundedSize = (long) Math.ceil(Math.max(1.0D, size));
+        if (settings.centerAtBlockCenter() && roundedSize % 2L == 0L) {
+            roundedSize++;
+        }
+        return roundedSize;
     }
 }

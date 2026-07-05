@@ -1,6 +1,8 @@
 # WorldBorderAPI uses the border size as diameter, not radius.
 # Defaults therefore implement four extra blocks of radius per level:
 # level 0 = 3x3, level 1 = 11x11, level 2 = 19x19, ...
+# Effective personal border sizes are rounded up to full-block borders.
+# With center-at-block-center true, even sizes like 4.0 become 5.0.
 initial-size-blocks: 3.0
 growth-per-level-blocks: 8.0
 
