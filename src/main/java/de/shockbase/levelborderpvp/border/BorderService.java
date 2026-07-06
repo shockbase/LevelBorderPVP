@@ -10,6 +10,7 @@ import de.shockbase.levelborderpvp.data.PlayerBorderRepository;
 import de.shockbase.levelborderpvp.i18n.Messages;
 import de.shockbase.levelborderpvp.integration.LuckPermsRoleService;
 import de.shockbase.levelborderpvp.integration.PlayerRollbackService;
+import de.shockbase.levelborderpvp.starter.StarterProvisionService;
 import org.bukkit.HeightMap;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -50,6 +51,7 @@ public final class BorderService {
     private final PlayerBorderDataService playerBorderDataService;
     private final BorderSizeCalculator sizeCalculator;
     private final BorderNotifier notifier;
+    private final StarterProvisionService starterProvisionService;
     private final RoundPlayerTracker roundPlayers = new RoundPlayerTracker();
     private final Set<UUID> startCandidateIds = new HashSet<>();
     private final Map<UUID, BukkitTask> breakoutTasks = new HashMap<>();
@@ -85,6 +87,7 @@ public final class BorderService {
         this.notifier = notifier;
         this.borderRenderer = new BorderRenderer(worldBorderApi, playerBorderRepository, settings, sizeCalculator, notifier);
         this.playerBorderDataService = new PlayerBorderDataService(playerBorderRepository, settings, sizeCalculator);
+        this.starterProvisionService = new StarterProvisionService(settings);
         this.roundScores = new RoundScoreTracker(settings, sizeCalculator, playerBorderDataService, roundPlayers);
     }
 
@@ -410,6 +413,7 @@ public final class BorderService {
         }
 
         markRoundEndedIfActive();
+        starterProvisionService.cleanupPlacedBlocks();
         cancelStartCountdown();
         cancelRoundEndTask();
         cancelAllBreakoutTasks();
@@ -489,6 +493,7 @@ public final class BorderService {
         cancelStartCountdown();
         cancelRoundEndTask();
         cancelAllBreakoutTasks();
+        starterProvisionService.cleanupPlacedBlocks();
     }
 
     private void applyCurrentState(Player player, BorderNotification notification) {
@@ -824,6 +829,7 @@ public final class BorderService {
                 continue;
             }
             preparePlayerForRoundStart(player);
+            starterProvisionService.provide(player);
             activatePlayerFromCurrentPosition(player, BorderNotification.JOIN);
         }
 
@@ -1354,6 +1360,7 @@ public final class BorderService {
         cancelStartCountdown();
         cancelRoundEndTask();
         cancelAllBreakoutTasks();
+        starterProvisionService.cleanupPlacedBlocks();
         roundState = RoundState.IDLE;
         startCandidateIds.clear();
 
@@ -1370,6 +1377,7 @@ public final class BorderService {
         cancelStartCountdown();
         cancelRoundEndTask();
         cancelAllBreakoutTasks();
+        starterProvisionService.cleanupPlacedBlocks();
         roundState = RoundState.LOBBY;
         startCandidateIds.clear();
 

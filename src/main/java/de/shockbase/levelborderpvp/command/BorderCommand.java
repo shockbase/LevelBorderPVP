@@ -58,6 +58,16 @@ public final class BorderCommand implements CommandExecutor, TabCompleter {
         add(options, "start-grid-skip-center", ConfigValueType.BOOLEAN);
         add(options, "reset-xp-on-start", ConfigValueType.BOOLEAN);
         add(options, "clear-inventory-on-start", ConfigValueType.BOOLEAN);
+        add(options, "starter.mode", ConfigValueType.STRING, "none", "chest", "tree", "both");
+        add(options, "starter.chest.offset-x", ConfigValueType.INT);
+        add(options, "starter.chest.offset-z", ConfigValueType.INT);
+        add(options, "starter.chest.items", ConfigValueType.STRING_LIST, "STONE_AXE:1,STONE_PICKAXE:1,STONE_SHOVEL:1,STONE_HOE:1,STONE_SWORD:1");
+        add(options, "starter.tree.type", ConfigValueType.STRING, "auto", "oak", "spruce", "birch", "jungle", "acacia", "dark_oak", "mangrove", "cherry");
+        add(options, "starter.tree.fallback-type", ConfigValueType.STRING, "oak", "spruce", "birch", "jungle", "acacia", "dark_oak", "mangrove", "cherry");
+        add(options, "starter.tree.offset-x", ConfigValueType.INT);
+        add(options, "starter.tree.offset-z", ConfigValueType.INT);
+        add(options, "starter.tree.logs", ConfigValueType.INT);
+        add(options, "starter.tree.leaves", ConfigValueType.BOOLEAN);
         add(options, "reapply-on-world-change", ConfigValueType.BOOLEAN);
         add(options, "reapply-on-respawn", ConfigValueType.BOOLEAN);
         add(options, "command-permission", ConfigValueType.STRING);

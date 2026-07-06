@@ -206,6 +206,24 @@ minimum-start-players: 2
 max-start-countdown-seconds: 3600
 reset-xp-on-start: true
 clear-inventory-on-start: true
+starter:
+  mode: none
+  chest:
+    offset-x: 1
+    offset-z: 0
+    items:
+      - STONE_AXE:1
+      - STONE_PICKAXE:1
+      - STONE_SHOVEL:1
+      - STONE_HOE:1
+      - STONE_SWORD:1
+  tree:
+    type: auto
+    fallback-type: oak
+    offset-x: -1
+    offset-z: 0
+    logs: 4
+    leaves: true
 command-permission: levelborderpvp.admin
 dimension-policy: safe-pve
 breakout-grace-seconds: 10
@@ -218,6 +236,8 @@ Persoenliche Border-Groessen werden im Spiel auf volle Blockgrenzen aufgerundet.
 `minimum-start-players` wird bei `/levelborder start` gegen die Spieler innerhalb der Lobby-Border geprueft. Ist die Zahl zu niedrig, startet keine Runde.
 
 `start-placement-mode: grid` haelt Startspieler waehrend des Countdowns in der Lobby-Border, verteilt sie danach auf sichere Rasterpunkte um den Worldspawn und setzt die Border sofort. `start-grid-spacing-blocks: 64.0` bedeutet mit `growth-per-level-blocks: 8.0`, dass Nachbar-Borders etwa ab Level 8 aufeinandertreffen. Mit `spread` gilt das alte Countdown-Verteilen.
+
+`starter.mode` kann `none`, `chest`, `tree` oder `both` sein. `starter.chest.items` nutzt `MATERIAL:anzahl`. Bei `starter.tree.type: auto` wird der Holztyp aus dem Startbiom abgeleitet; `fallback-type` greift, wenn kein passender Typ erkannt wird. Wenn am Startblock kein Platz ist, landen die Ressourcen direkt im Inventar.
 
 `dimension-policy: safe-pve` bedeutet: Aktive Rundenspieler haben ihre persoenliche Border nur in der Overworld. Nether und End zeigen keine persoenliche Border; Portal- und PvP-Sonderregeln sollen nur aktive Rundenspieler betreffen. Mit `legacy` gilt das alte Verhalten in allen Welten.
 

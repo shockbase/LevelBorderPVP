@@ -77,6 +77,47 @@ public final class LevelBorderSettings {
         return config.getBoolean("clear-inventory-on-start", true);
     }
 
+    public StarterMode starterMode() {
+        return StarterMode.fromConfig(config.getString("starter.mode", StarterMode.NONE.configValue()));
+    }
+
+    public int starterChestOffsetX() {
+        return config.getInt("starter.chest.offset-x", 1);
+    }
+
+    public int starterChestOffsetZ() {
+        return config.getInt("starter.chest.offset-z", 0);
+    }
+
+    public List<String> starterChestItems() {
+        return config.getStringList("starter.chest.items");
+    }
+
+    public StarterTreeType starterTreeType() {
+        return StarterTreeType.fromConfig(config.getString("starter.tree.type", StarterTreeType.AUTO.configValue()));
+    }
+
+    public StarterTreeType starterTreeFallbackType() {
+        StarterTreeType fallbackType = StarterTreeType.fromConfig(config.getString("starter.tree.fallback-type", StarterTreeType.OAK.configValue()));
+        return fallbackType == StarterTreeType.AUTO ? StarterTreeType.OAK : fallbackType;
+    }
+
+    public int starterTreeOffsetX() {
+        return config.getInt("starter.tree.offset-x", -1);
+    }
+
+    public int starterTreeOffsetZ() {
+        return config.getInt("starter.tree.offset-z", 0);
+    }
+
+    public int starterTreeLogs() {
+        return Math.max(1, config.getInt("starter.tree.logs", 4));
+    }
+
+    public boolean starterTreeLeaves() {
+        return config.getBoolean("starter.tree.leaves", true);
+    }
+
     public boolean usesCurrentLevelMode() {
         String configuredMode = config.getString("level-mode", "highest");
         return configuredMode != null && "current".equalsIgnoreCase(configuredMode.trim());

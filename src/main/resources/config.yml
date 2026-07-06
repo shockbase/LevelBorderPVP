@@ -59,6 +59,30 @@ reset-xp-on-start: true
 # When the round becomes active, clear starting active players' inventories.
 clear-inventory-on-start: true
 
+# Optional starter resources for active players after inventory reset.
+# mode: none, chest, tree, both
+starter:
+  mode: none
+  chest:
+    offset-x: 1
+    offset-z: 0
+    # Format: MATERIAL:amount
+    items:
+      - STONE_AXE:1
+      - STONE_PICKAXE:1
+      - STONE_SHOVEL:1
+      - STONE_HOE:1
+      - STONE_SWORD:1
+  tree:
+    # type: auto, oak, spruce, birch, jungle, acacia, dark_oak, mangrove, cherry
+    # auto chooses a fitting wood type from the start biome.
+    type: auto
+    fallback-type: oak
+    offset-x: -1
+    offset-z: 0
+    logs: 4
+    leaves: true
+
 # Re-sends the individual border when a player joins, respawns, or changes world.
 reapply-on-world-change: true
 reapply-on-respawn: true
