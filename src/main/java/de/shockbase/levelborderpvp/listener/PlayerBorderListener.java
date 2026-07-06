@@ -21,6 +21,7 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.world.PortalCreateEvent;
+import org.bukkit.event.player.PlayerAdvancementDoneEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerExpChangeEvent;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
@@ -47,7 +48,12 @@ public final class PlayerBorderListener implements Listener {
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
-        borderService.applyNextTick(event.getPlayer(), BorderNotification.JOIN);
+        borderService.handlePlayerJoin(event.getPlayer());
+    }
+
+    @EventHandler
+    public void onPlayerAdvancementDone(PlayerAdvancementDoneEvent event) {
+        borderService.handleAdvancementDone(event.getPlayer(), event.getAdvancement());
     }
 
     @EventHandler

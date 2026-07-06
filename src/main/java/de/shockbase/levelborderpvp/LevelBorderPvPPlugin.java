@@ -1,7 +1,6 @@
 package de.shockbase.levelborderpvp;
 
 import com.github.yannicklamprecht.worldborder.api.WorldBorderApi;
-import de.shockbase.levelborderpvp.border.BorderNotification;
 import de.shockbase.levelborderpvp.border.BorderNotifier;
 import de.shockbase.levelborderpvp.border.BorderService;
 import de.shockbase.levelborderpvp.border.BorderSizeCalculator;
@@ -69,7 +68,7 @@ public final class LevelBorderPvPPlugin extends JavaPlugin {
         registerCommand("levelborder", borderCommand, messages);
 
         for (Player player : Bukkit.getOnlinePlayers()) {
-            borderService.applyNextTick(player, BorderNotification.NONE);
+            borderService.handlePlayerJoin(player);
         }
     }
 

@@ -44,7 +44,9 @@ public final class PlayerBorderRepository {
 
         int maxReachedLevel = Math.max(0, playerData.getInt(basePath + ".max-reached-level", player.getLevel()));
         int killBonusLevels = Math.max(0, playerData.getInt(basePath + ".kill-bonus-levels", 0));
-        int borderLevel = usesCurrentLevelMode ? Math.max(0, player.getLevel()) : addLevels(maxReachedLevel, killBonusLevels);
+        int borderLevel = usesCurrentLevelMode
+                ? addLevels(Math.max(0, player.getLevel()), killBonusLevels)
+                : addLevels(maxReachedLevel, killBonusLevels);
         double fallbackLastAppliedBorderSize = fallbackSizeCalculator.applyAsDouble(borderLevel);
 
         return new PlayerBorderData(

@@ -44,6 +44,9 @@ public final class BorderCommand implements CommandExecutor, TabCompleter {
         add(options, "level-mode", ConfigValueType.STRING, "highest", "current");
         add(options, "highest-kill-bonus-enabled", ConfigValueType.BOOLEAN);
         add(options, "highest-kill-bonus-inherits-victim-bonus", ConfigValueType.BOOLEAN);
+        add(options, "advancement-bonus-enabled", ConfigValueType.BOOLEAN);
+        add(options, "advancement-bonus-levels", ConfigValueType.INT);
+        add(options, "advancement-excluded-prefixes", ConfigValueType.STRING_LIST, "minecraft:recipes/");
         add(options, "lobby-radius-blocks", ConfigValueType.DOUBLE);
         add(options, "teleport-players-to-lobby-spawn", ConfigValueType.BOOLEAN);
         add(options, "center-at-block-center", ConfigValueType.BOOLEAN);

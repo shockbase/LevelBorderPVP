@@ -136,12 +136,15 @@ final class BorderRenderer {
         }
         return notification == BorderNotification.LEVEL_UP
                 || notification == BorderNotification.LEVEL_CHANGED
-                || notification == BorderNotification.PLAYER_KILL;
+                || notification == BorderNotification.PLAYER_KILL
+                || notification == BorderNotification.ADVANCEMENT_BONUS;
     }
 
     private void notifyPlayer(Player player, BorderNotification notification, double size, double previousSize) {
         if (notification == BorderNotification.LEVEL_UP && size > previousSize + BORDER_SIZE_EPSILON) {
             notifier.showLevelUp(player, size);
+        } else if (notification == BorderNotification.ADVANCEMENT_BONUS && size > previousSize + BORDER_SIZE_EPSILON) {
+            notifier.showAdvancementBonus(player, size);
         } else if (notification == BorderNotification.LEVEL_CHANGED) {
             if (size > previousSize + BORDER_SIZE_EPSILON) {
                 notifier.showLevelUp(player, size);

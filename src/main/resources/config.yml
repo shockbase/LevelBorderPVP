@@ -16,6 +16,15 @@ highest-kill-bonus-enabled: false
 # When true, the victim's own stored kill bonus is inherited too.
 highest-kill-bonus-inherits-victim-bonus: false
 
+# Optional advancement round mode.
+# When enabled, active players' current advancements are saved at round start,
+# wiped for the round, used as bonus-level triggers, and restored at round end.
+advancement-bonus-enabled: false
+advancement-bonus-levels: 1
+# Prefixes excluded from wiping and scoring. Recipes are internal unlocks, not real achievements.
+advancement-excluded-prefixes:
+  - minecraft:recipes/
+
 # /levelborder lobby keeps players near their world spawn.
 # WorldBorderAPI uses diameter, so 8.0 means a 16 block wide lobby border.
 lobby-radius-blocks: 8.0

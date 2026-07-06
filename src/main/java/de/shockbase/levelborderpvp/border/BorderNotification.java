@@ -5,6 +5,7 @@ public enum BorderNotification {
     LEVEL_UP,
     LEVEL_CHANGED,
     PLAYER_KILL,
+    ADVANCEMENT_BONUS,
     JOIN,
     RESPAWN,
     SPECTATOR

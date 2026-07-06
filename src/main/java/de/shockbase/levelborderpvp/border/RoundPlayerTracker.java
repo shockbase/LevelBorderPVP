@@ -15,12 +15,14 @@ final class RoundPlayerTracker {
     private final Set<UUID> roundPlayers = new HashSet<>();
     private final Set<UUID> spectatorPlayers = new HashSet<>();
     private final Set<UUID> killBonusClaimedVictims = new HashSet<>();
+    private final Set<String> advancementBonusClaims = new HashSet<>();
 
     void clearRound() {
         clearPlayerStates();
         roundKills.clear();
         roundDeaths.clear();
         killBonusClaimedVictims.clear();
+        advancementBonusClaims.clear();
     }
 
     void clearPlayerStates() {
@@ -78,6 +80,10 @@ final class RoundPlayerTracker {
 
     boolean claimKillBonus(Player player) {
         return killBonusClaimedVictims.add(player.getUniqueId());
+    }
+
+    boolean claimAdvancementBonus(Player player, String advancementKey) {
+        return advancementBonusClaims.add(player.getUniqueId() + ":" + advancementKey);
     }
 
     int kills(Player player) {

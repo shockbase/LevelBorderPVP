@@ -169,6 +169,11 @@ public final class BorderNotifier {
         player.showTitle(Title.title(title, subtitle, TITLE_TIMES));
     }
 
+    public void showAdvancementBonus(Player player, double borderSize) {
+        showStatus(player, "title.advancement-bonus", "subtitle.border-now", borderSize);
+        player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0F, 1.0F);
+    }
+
     public void showJoined(Player player, double borderSize) {
         showStatus(player, "title.border-active", "subtitle.border-current", borderSize);
     }

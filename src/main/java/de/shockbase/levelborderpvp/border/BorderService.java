@@ -8,6 +8,7 @@ import de.shockbase.levelborderpvp.config.StartPlacementMode;
 import de.shockbase.levelborderpvp.data.PlayerBorderData;
 import de.shockbase.levelborderpvp.data.PlayerBorderRepository;
 import de.shockbase.levelborderpvp.i18n.Messages;
+import de.shockbase.levelborderpvp.integration.AdvancementSnapshotService;
 import de.shockbase.levelborderpvp.integration.LuckPermsRoleService;
 import de.shockbase.levelborderpvp.integration.PlayerRollbackService;
 import de.shockbase.levelborderpvp.starter.StarterProvisionService;
@@ -17,6 +18,7 @@ import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.World;
+import org.bukkit.advancement.Advancement;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
@@ -52,6 +54,7 @@ public final class BorderService {
     private final BorderSizeCalculator sizeCalculator;
     private final BorderNotifier notifier;
     private final StarterProvisionService starterProvisionService;
+    private final AdvancementSnapshotService advancementSnapshotService;
     private final RoundPlayerTracker roundPlayers = new RoundPlayerTracker();
     private final Set<UUID> startCandidateIds = new HashSet<>();
     private final Map<UUID, BukkitTask> breakoutTasks = new HashMap<>();
@@ -88,7 +91,13 @@ public final class BorderService {
         this.borderRenderer = new BorderRenderer(worldBorderApi, playerBorderRepository, settings, sizeCalculator, notifier);
         this.playerBorderDataService = new PlayerBorderDataService(playerBorderRepository, settings, sizeCalculator);
         this.starterProvisionService = new StarterProvisionService(settings);
+        this.advancementSnapshotService = new AdvancementSnapshotService(plugin, settings, messages);
         this.roundScores = new RoundScoreTracker(settings, sizeCalculator, playerBorderDataService, roundPlayers);
+    }
+
+    public void handlePlayerJoin(Player player) {
+        advancementSnapshotService.restoreIfPending(player);
+        applyNextTick(player, BorderNotification.JOIN);
     }
 
     public void applyNextTick(Player player, BorderNotification notification) {
@@ -357,6 +366,32 @@ public final class BorderService {
         checkRoundEndAfterActivePlayerRemoval("service.end-reason-no-active-players");
     }
 
+    public void handleAdvancementDone(Player player, Advancement advancement) {
+        if (!settings.advancementBonusEnabled()
+                || advancement == null
+                || advancementSnapshotService.isRestoring(player)
+                || !isActive(player)
+                || !advancementSnapshotService.isManagedAdvancement(advancement)
+                || !roundPlayers.claimAdvancementBonus(player, advancement.getKey().toString())) {
+            return;
+        }
+
+        int bonusLevels = settings.advancementBonusLevels();
+        if (bonusLevels <= 0) {
+            return;
+        }
+
+        PlayerBorderData data = playerBorderDataService.updateMaxReachedLevel(player, playerBorderDataService.getOrCreate(player));
+        int newBonusLevels = playerBorderDataService.addLevels(data.killBonusLevels(), bonusLevels);
+        if (newBonusLevels == data.killBonusLevels()) {
+            return;
+        }
+
+        data = data.withKillBonusLevels(newBonusLevels);
+        playerBorderDataService.save(data);
+        apply(player, data, Math.max(0, player.getLevel()), BorderNotification.ADVANCEMENT_BONUS);
+    }
+
     private double applyPlayerKillBonus(Player killer, Player killed) {
         if (settings.usesCurrentLevelMode() || !settings.highestKillBonusEnabled()) {
             return 0.0D;
@@ -413,6 +448,7 @@ public final class BorderService {
         }
 
         markRoundEndedIfActive();
+        advancementSnapshotService.restoreOnlinePlayers();
         starterProvisionService.cleanupPlacedBlocks();
         cancelStartCountdown();
         cancelRoundEndTask();
@@ -494,6 +530,7 @@ public final class BorderService {
         cancelRoundEndTask();
         cancelAllBreakoutTasks();
         starterProvisionService.cleanupPlacedBlocks();
+        advancementSnapshotService.restoreOnlinePlayers();
     }
 
     private void applyCurrentState(Player player, BorderNotification notification) {
@@ -818,6 +855,7 @@ public final class BorderService {
             }
         }
         rollbackService.beginRound(activeStartPlayers);
+        advancementSnapshotService.beginRound(activeStartPlayers);
         placeStartPlayers(activeStartPlayers);
 
         for (Player player : plugin.getServer().getOnlinePlayers()) {
@@ -1279,6 +1317,7 @@ public final class BorderService {
         if (settings.rollbackOnRoundEnd()) {
             announceAutomaticRollback(rollbackService.rollbackConfiguredProvider());
         }
+        advancementSnapshotService.restoreOnlinePlayers();
         enterIdle();
     }
 
@@ -1357,6 +1396,7 @@ public final class BorderService {
 
     private void enterIdle() {
         markRoundEndedIfActive();
+        advancementSnapshotService.restoreOnlinePlayers();
         cancelStartCountdown();
         cancelRoundEndTask();
         cancelAllBreakoutTasks();
@@ -1374,6 +1414,7 @@ public final class BorderService {
 
     private void enterLobby(boolean teleportPlayers) {
         markRoundEndedIfActive();
+        advancementSnapshotService.restoreOnlinePlayers();
         cancelStartCountdown();
         cancelRoundEndTask();
         cancelAllBreakoutTasks();

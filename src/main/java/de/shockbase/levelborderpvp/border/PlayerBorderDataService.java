@@ -106,7 +106,7 @@ final class PlayerBorderDataService {
 
     int resolveLevelForBorder(PlayerBorderData data, int currentLevel) {
         if (settings.usesCurrentLevelMode()) {
-            return Math.max(0, currentLevel);
+            return addLevels(Math.max(0, currentLevel), data.killBonusLevels());
         }
         return addLevels(data.maxReachedLevel(), data.killBonusLevels());
     }

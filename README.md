@@ -50,6 +50,17 @@ highest-kill-bonus-enabled: true
 highest-kill-bonus-inherits-victim-bonus: false
 ```
 
+Optional koennen Advancements als Runden-Trigger dienen:
+
+```yaml
+advancement-bonus-enabled: true
+advancement-bonus-levels: 1
+advancement-excluded-prefixes:
+  - minecraft:recipes/
+```
+
+Beim Rundenstart werden die aktuellen Advancements aktiver Spieler in `plugins/LevelBorderPvP/advancements.yml` gesichert und fuer die Runde gewiped. Jedes neu erreichte Advancement gibt `advancement-bonus-levels` Bonus-Level fuer die Border. Beim Rundenende oder naechsten Join werden die urspruenglichen Advancements wiederhergestellt.
+
 ### Current
 
 ```yaml
@@ -62,6 +73,7 @@ Die Border folgt direkt dem aktuellen XP-Level und kann schrumpfen.
 
 - PvP-Kills zaehlen weiter fuer Score und Tie-Breaker, solange Killer und Opfer aktive Rundenspieler sind.
 - Wenn `highest-kill-bonus-enabled` aktiv ist, kann jeder Spieler nur einmal pro Runde als Bonusquelle dienen. Weitere Kills desselben Opfers geben keinen Border-Bonus, zaehlen aber weiter als Kill.
+- Wenn `advancement-bonus-enabled` aktiv ist, zaehlt jedes Advancement pro Spieler einmal pro Runde. Rezept-Advancements sind standardmaessig ausgeschlossen.
 - Bei `timed-score` ist ein Gleichstand nach allen Tie-Breakern ein geteilter Sieg.
 
 ## Spielende
@@ -194,6 +206,10 @@ Platzhalter: `{player}`, `{uuid}`, `{world}`, `{duration}`, `{duration_seconds}`
 initial-size-blocks: 3.0
 growth-per-level-blocks: 8.0
 level-mode: highest
+advancement-bonus-enabled: false
+advancement-bonus-levels: 1
+advancement-excluded-prefixes:
+  - minecraft:recipes/
 lobby-radius-blocks: 8.0
 teleport-players-to-lobby-spawn: true
 max-size-blocks: 0.0
@@ -247,5 +263,6 @@ Persoenliche Border-Groessen werden im Spiel auf volle Blockgrenzen aufgerundet.
 
 - Die echte Server-World-Border wird nicht veraendert.
 - Spieler-Daten werden in `plugins/LevelBorderPvP/players.yml` gespeichert.
+- Advancement-Snapshots werden bei aktivierter Advancement-Wertung in `plugins/LevelBorderPvP/advancements.yml` gespeichert.
 - Bei schrumpfenden Borders werden Spieler knapp innerhalb der neuen Border platziert.
 - Die individuelle Border wird bei Join, Respawn und Weltwechsel passend zum Rundenstatus erneut angewendet.

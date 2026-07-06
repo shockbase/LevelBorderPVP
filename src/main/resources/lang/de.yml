@@ -54,6 +54,7 @@ title:
   disqualified: "DISQUALIFIED!"
   eliminated: "RAUS!"
   player-kill: "KILL!"
+  advancement-bonus: "FORTSCHRITT!"
   round-placement: "PLATZ #{place}"
   round-rule-timed-score: "BORDER SCORE"
   round-rule-target-level: "LEVEL JAGD"
@@ -91,3 +92,4 @@ log:
   luckperms-command-failed: "LuckPerms-Kommando fehlgeschlagen: {command}"
   rollback-command-failed: "Rollback-Kommando fehlgeschlagen: {command}"
   rollback-skipped: "Rollback uebersprungen: {status} {provider}"
+  advancement-snapshots-save-failed: "advancements.yml konnte nicht gespeichert werden"

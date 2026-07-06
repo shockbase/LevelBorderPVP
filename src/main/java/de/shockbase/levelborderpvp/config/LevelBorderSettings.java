@@ -131,6 +131,19 @@ public final class LevelBorderSettings {
         return config.getBoolean("highest-kill-bonus-inherits-victim-bonus", false);
     }
 
+    public boolean advancementBonusEnabled() {
+        return config.getBoolean("advancement-bonus-enabled", false);
+    }
+
+    public int advancementBonusLevels() {
+        return Math.max(0, config.getInt("advancement-bonus-levels", 1));
+    }
+
+    public List<String> advancementExcludedPrefixes() {
+        List<String> configured = config.getStringList("advancement-excluded-prefixes");
+        return configured.isEmpty() ? List.of("minecraft:recipes/") : configured;
+    }
+
     public boolean centerAtBlockCenter() {
         return config.getBoolean("center-at-block-center", true);
     }
