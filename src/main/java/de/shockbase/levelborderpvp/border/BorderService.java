@@ -438,6 +438,8 @@ public final class BorderService {
 
         if (settings.startPlacementMode() != StartPlacementMode.GRID) {
             showSpreadOutToStartCandidates(boundedCountdownSeconds);
+        } else {
+            showRoundRulesToStartCandidates(boundedCountdownSeconds);
         }
 
         BukkitRunnable countdown = new BukkitRunnable() {
@@ -776,24 +778,28 @@ public final class BorderService {
         );
         for (Player player : plugin.getServer().getOnlinePlayers()) {
             player.sendMessage(message);
-            if (shouldShowRoundRuleCountdown(player)) {
-                notifier.showRoundRuleCountdown(
-                        player,
-                        settings.endCondition(),
-                        remainingSeconds,
-                        settings.roundDurationMinutes(),
-                        settings.winTargetLevel(),
-                        settings.winTargetBorderSizeBlocks()
-                );
-            } else if (remainingSeconds <= 3) {
+            if (remainingSeconds <= 3) {
                 notifier.showCountdown(player, remainingSeconds);
             }
         }
     }
 
-    private boolean shouldShowRoundRuleCountdown(Player player) {
-        return settings.startPlacementMode() == StartPlacementMode.GRID
-                && startCandidateIds.contains(player.getUniqueId());
+    private void showRoundRulesToStartCandidates(int countdownSeconds) {
+        int displaySeconds = Math.max(1, countdownSeconds - 3);
+        for (Player player : plugin.getServer().getOnlinePlayers()) {
+            if (!startCandidateIds.contains(player.getUniqueId())) {
+                continue;
+            }
+
+            notifier.showRoundRuleSummary(
+                    player,
+                    settings.endCondition(),
+                    displaySeconds,
+                    settings.roundDurationMinutes(),
+                    settings.winTargetLevel(),
+                    settings.winTargetBorderSizeBlocks()
+            );
+        }
     }
 
     private void activateRound() {

@@ -67,15 +67,14 @@ public final class BorderNotifier {
                 messages.text("title.countdown", Messages.placeholder("seconds", remainingSeconds)),
                 NamedTextColor.RED
         );
-        Component subtitle = Component.text(messages.text("subtitle.countdown"), NamedTextColor.WHITE);
 
-        player.showTitle(Title.title(title, subtitle, COUNTDOWN_TITLE_TIMES));
+        player.showTitle(Title.title(title, Component.empty(), COUNTDOWN_TITLE_TIMES));
     }
 
-    public void showRoundRuleCountdown(
+    public void showRoundRuleSummary(
             Player player,
             RoundEndCondition condition,
-            int remainingSeconds,
+            int displaySeconds,
             int roundDurationMinutes,
             int winTargetLevel,
             double winTargetBorderSize
@@ -84,7 +83,6 @@ public final class BorderNotifier {
         Component subtitle = Component.text(
                 messages.text(
                         roundRuleSubtitleKey(condition),
-                        Messages.placeholder("seconds", remainingSeconds),
                         Messages.placeholder("minutes", roundDurationMinutes),
                         Messages.placeholder("level", winTargetLevel),
                         Messages.placeholder("border", sizeFormatter.format(winTargetBorderSize))
@@ -92,7 +90,15 @@ public final class BorderNotifier {
                 NamedTextColor.WHITE
         );
 
-        player.showTitle(Title.title(title, subtitle, COUNTDOWN_TITLE_TIMES));
+        player.showTitle(Title.title(title, subtitle, roundRuleTitleTimes(displaySeconds)));
+    }
+
+    private Title.Times roundRuleTitleTimes(int displaySeconds) {
+        return Title.Times.times(
+                Duration.ofMillis(300L),
+                Duration.ofSeconds(Math.max(1, displaySeconds)),
+                Duration.ofMillis(300L)
+        );
     }
 
     private String roundRuleTitleKey(RoundEndCondition condition) {
