@@ -210,7 +210,10 @@ public final class PlayerBorderListener implements Listener {
     public void onPlayerExpChange(PlayerExpChangeEvent event) {
         if (borderService.isSpectator(event.getPlayer())) {
             event.setAmount(0);
+            return;
         }
+
+        borderService.syncExperienceDisplayLater(event.getPlayer());
     }
 
     @EventHandler

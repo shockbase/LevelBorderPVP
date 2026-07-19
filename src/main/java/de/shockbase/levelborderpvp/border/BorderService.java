@@ -60,6 +60,7 @@ public final class BorderService {
     private final Set<UUID> startCandidateIds = new HashSet<>();
     private final Map<UUID, BukkitTask> breakoutTasks = new HashMap<>();
     private final Map<UUID, PendingDisconnect> pendingDisconnects = new HashMap<>();
+    private final Set<UUID> pendingExperienceDisplaySyncs = new HashSet<>();
     private final RoundScoreTracker roundScores;
 
     private RoundState roundState = RoundState.IDLE;
@@ -146,6 +147,20 @@ public final class BorderService {
 
     public void handleWorldChange(Player player) {
         plugin.getServer().getScheduler().runTask(plugin, () -> applyWorldChangeState(player));
+    }
+
+    public void syncExperienceDisplayLater(Player player) {
+        UUID playerId = player.getUniqueId();
+        if (!isActive(player) || !pendingExperienceDisplaySyncs.add(playerId)) {
+            return;
+        }
+
+        plugin.getServer().getScheduler().runTask(plugin, () -> {
+            pendingExperienceDisplaySyncs.remove(playerId);
+            if (player.isOnline() && isActive(player)) {
+                player.sendExperienceChange(player.getExp(), player.getLevel());
+            }
+        });
     }
 
     public void reapplyOnlinePlayers() {
@@ -571,6 +586,7 @@ public final class BorderService {
         cancelRoundEndTask();
         cancelAllBreakoutTasks();
         cancelAllPendingDisconnects();
+        pendingExperienceDisplaySyncs.clear();
         starterProvisionService.cleanupPlacedBlocks();
         advancementSnapshotService.restoreOnlinePlayers();
     }
