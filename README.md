@@ -29,7 +29,8 @@ Danach zaehlt jedes Level. XP erweitert die eigene Border, PvP kann optional Bon
 7. Beim Rundenstart werden XP und Inventar der aktiven Startspieler optional zurueckgesetzt.
 8. Spaetere Joiner werden fuer die laufende Runde Zuschauer.
 9. Getoetete aktive Spieler respawnen weiter als aktive Spieler, ausser `end-condition: elimination` entfernt sie aus der Runde.
-10. Schafft es ein aktiver Spieler aus seiner persoenlichen Border, bekommt er `breakout-grace-seconds` Sekunden Rueckkehrzeit. Danach wird er disqualifiziert und nach 5 Sekunden per Blitz-Effekt getoetet.
+10. Verlaesst ein aktiver Spieler eine Eliminationsrunde, wird er sofort eliminiert oder erhaelt – je nach Konfiguration – eine Reconnect-Frist.
+11. Schafft es ein aktiver Spieler aus seiner persoenlichen Border, bekommt er `breakout-grace-seconds` Sekunden Rueckkehrzeit. Danach wird er disqualifiziert und nach 5 Sekunden per Blitz-Effekt getoetet.
 
 Der Zuschauerstatus ist kein echter Minecraft-Spectator. Zuschauer haben keine Border und koennen sich frei bewegen, aber das Plugin blockiert Bauen, Interaktion, Inventare, XP, Item-Handling und Kampf.
 
@@ -87,6 +88,8 @@ score-tiebreakers:
   - deaths-ascending
 win-target-level: 30
 win-target-border-size-blocks: 63.0
+elimination-disconnect-policy: eliminate
+elimination-reconnect-grace-seconds: 60
 ```
 
 Moegliche Werte fuer `end-condition`:
@@ -96,6 +99,8 @@ Moegliche Werte fuer `end-condition`:
 - `target-border`: Wer zuerst `win-target-border-size-blocks` erreicht, gewinnt.
 - `elimination`: Getoetete aktive Spieler scheiden aus. Der letzte aktive Spieler gewinnt.
 - `disabled`: Kein automatisches Spielende.
+
+`elimination-disconnect-policy: eliminate` wertet einen Logout sofort als Eliminierung. `grace-period` wartet stattdessen `elimination-reconnect-grace-seconds`; ein rechtzeitiger Rejoin setzt die Runde normal fort.
 
 ## Befehle
 
@@ -242,6 +247,8 @@ starter:
     leaves: true
 command-permission: levelborderpvp.admin
 dimension-policy: safe-pve
+elimination-disconnect-policy: eliminate
+elimination-reconnect-grace-seconds: 60
 breakout-grace-seconds: 10
 ```
 

@@ -116,6 +116,12 @@ score-tiebreakers:
 win-target-level: 30
 win-target-border-size-blocks: 63.0
 
+# Handling of active players who disconnect during an elimination round:
+# eliminate = immediate elimination.
+# grace-period = eliminate only if the player does not reconnect in time.
+elimination-disconnect-policy: eliminate
+elimination-reconnect-grace-seconds: 60
+
 # Players outside the lobby border at /levelborder start, later joiners, disqualified players
 # and players eliminated by elimination mode are viewers.
 # This is not Minecraft spectator mode: viewers have no border and can move,

@@ -189,6 +189,17 @@ public final class LevelBorderSettings {
         return Math.max(1.0D, config.getDouble("win-target-border-size-blocks", 63.0D));
     }
 
+    public EliminationDisconnectPolicy eliminationDisconnectPolicy() {
+        return EliminationDisconnectPolicy.fromConfig(config.getString(
+                "elimination-disconnect-policy",
+                EliminationDisconnectPolicy.ELIMINATE.configValue()
+        ));
+    }
+
+    public int eliminationReconnectGraceSeconds() {
+        return Math.max(0, config.getInt("elimination-reconnect-grace-seconds", 60));
+    }
+
     public int breakoutGraceSeconds() {
         return Math.max(0, config.getInt("breakout-grace-seconds", 10));
     }

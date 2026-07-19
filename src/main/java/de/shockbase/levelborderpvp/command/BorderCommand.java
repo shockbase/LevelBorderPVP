@@ -79,6 +79,8 @@ public final class BorderCommand implements CommandExecutor, TabCompleter {
         add(options, "score-tiebreakers", ConfigValueType.STRING_LIST, "kills,highest-level,deaths-ascending");
         add(options, "win-target-level", ConfigValueType.INT);
         add(options, "win-target-border-size-blocks", ConfigValueType.DOUBLE);
+        add(options, "elimination-disconnect-policy", ConfigValueType.STRING, "eliminate", "grace-period");
+        add(options, "elimination-reconnect-grace-seconds", ConfigValueType.INT);
         add(options, "breakout-grace-seconds", ConfigValueType.INT);
         add(options, "luckperms-integration-enabled", ConfigValueType.BOOLEAN);
         add(options, "luckperms-active-group", ConfigValueType.STRING);

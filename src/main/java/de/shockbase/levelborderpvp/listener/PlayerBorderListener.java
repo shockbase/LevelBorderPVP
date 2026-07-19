@@ -32,6 +32,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerLevelChangeEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerPortalEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.projectiles.ProjectileSource;
@@ -49,6 +50,11 @@ public final class PlayerBorderListener implements Listener {
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         borderService.handlePlayerJoin(event.getPlayer());
+    }
+
+    @EventHandler
+    public void onPlayerQuit(PlayerQuitEvent event) {
+        borderService.handlePlayerQuit(event.getPlayer());
     }
 
     @EventHandler

@@ -37,12 +37,18 @@ final class RoundPlayerTracker {
     }
 
     void markSpectator(Player player) {
-        UUID playerId = player.getUniqueId();
+        markSpectator(player.getUniqueId());
+    }
+
+    void markSpectator(UUID playerId) {
         spectatorPlayers.add(playerId);
     }
 
     boolean isActive(RoundState roundState, Player player) {
-        UUID playerId = player.getUniqueId();
+        return isActive(roundState, player.getUniqueId());
+    }
+
+    boolean isActive(RoundState roundState, UUID playerId) {
         return roundState == RoundState.ACTIVE
                 && roundPlayers.contains(playerId)
                 && !spectatorPlayers.contains(playerId);
@@ -75,7 +81,11 @@ final class RoundPlayerTracker {
     }
 
     void recordDeath(Player player) {
-        roundDeaths.merge(player.getUniqueId(), 1, Integer::sum);
+        recordDeath(player.getUniqueId());
+    }
+
+    void recordDeath(UUID playerId) {
+        roundDeaths.merge(playerId, 1, Integer::sum);
     }
 
     boolean claimKillBonus(Player player) {

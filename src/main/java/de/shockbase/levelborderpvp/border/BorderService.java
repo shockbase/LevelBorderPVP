@@ -2,6 +2,7 @@ package de.shockbase.levelborderpvp.border;
 
 import com.github.yannicklamprecht.worldborder.api.WorldBorderApi;
 import de.shockbase.levelborderpvp.config.DimensionPolicy;
+import de.shockbase.levelborderpvp.config.EliminationDisconnectPolicy;
 import de.shockbase.levelborderpvp.config.LevelBorderSettings;
 import de.shockbase.levelborderpvp.config.RoundEndCondition;
 import de.shockbase.levelborderpvp.config.StartPlacementMode;
@@ -58,6 +59,7 @@ public final class BorderService {
     private final RoundPlayerTracker roundPlayers = new RoundPlayerTracker();
     private final Set<UUID> startCandidateIds = new HashSet<>();
     private final Map<UUID, BukkitTask> breakoutTasks = new HashMap<>();
+    private final Map<UUID, PendingDisconnect> pendingDisconnects = new HashMap<>();
     private final RoundScoreTracker roundScores;
 
     private RoundState roundState = RoundState.IDLE;
@@ -65,6 +67,9 @@ public final class BorderService {
     private BukkitTask roundEndTask;
 
     private record StartGridOffset(int x, int z) {
+    }
+
+    private record PendingDisconnect(BukkitTask task, String playerName) {
     }
 
     public record StartResult(boolean started, int eligiblePlayers, int requiredPlayers, int countdownSeconds) {
@@ -96,8 +101,39 @@ public final class BorderService {
     }
 
     public void handlePlayerJoin(Player player) {
+        PendingDisconnect pendingDisconnect = pendingDisconnects.remove(player.getUniqueId());
+        if (pendingDisconnect != null) {
+            pendingDisconnect.task().cancel();
+        }
+
         advancementSnapshotService.restoreIfPending(player);
         applyNextTick(player, BorderNotification.JOIN);
+
+        if (pendingDisconnect != null && isActive(player)) {
+            plugin.getServer().broadcastMessage(messages.text(
+                    "service.player-reconnected",
+                    Messages.placeholder("player", player.getName())
+            ));
+            checkEliminationWinner();
+        }
+    }
+
+    public void handlePlayerQuit(Player player) {
+        cancelBreakoutTask(player);
+        if (roundState != RoundState.ACTIVE
+                || settings.endCondition() != RoundEndCondition.ELIMINATION
+                || !isActive(player)) {
+            return;
+        }
+
+        int graceSeconds = settings.eliminationReconnectGraceSeconds();
+        if (settings.eliminationDisconnectPolicy() == EliminationDisconnectPolicy.GRACE_PERIOD
+                && graceSeconds > 0) {
+            scheduleDisconnectElimination(player, graceSeconds);
+            return;
+        }
+
+        eliminateDisconnectedPlayer(player.getUniqueId(), player.getName());
     }
 
     public void applyNextTick(Player player, BorderNotification notification) {
@@ -126,6 +162,10 @@ public final class BorderService {
 
         cancelRoundEndTask();
         cancelAllBreakoutTasks();
+        refreshPendingDisconnects();
+        if (roundState != RoundState.ACTIVE) {
+            return;
+        }
         scheduleRoundEnd();
 
         for (Player player : plugin.getServer().getOnlinePlayers()) {
@@ -453,6 +493,7 @@ public final class BorderService {
         cancelStartCountdown();
         cancelRoundEndTask();
         cancelAllBreakoutTasks();
+        cancelAllPendingDisconnects();
 
         int boundedCountdownSeconds = Math.max(0, Math.min(countdownSeconds, settings.maxStartCountdownSeconds()));
         roundState = RoundState.COUNTDOWN;
@@ -529,6 +570,7 @@ public final class BorderService {
         cancelStartCountdown();
         cancelRoundEndTask();
         cancelAllBreakoutTasks();
+        cancelAllPendingDisconnects();
         starterProvisionService.cleanupPlacedBlocks();
         advancementSnapshotService.restoreOnlinePlayers();
     }
@@ -1261,6 +1303,78 @@ public final class BorderService {
         checkEliminationWinner();
     }
 
+    private void scheduleDisconnectElimination(Player player, int graceSeconds) {
+        UUID playerId = player.getUniqueId();
+        PendingDisconnect previous = pendingDisconnects.remove(playerId);
+        if (previous != null) {
+            previous.task().cancel();
+        }
+
+        String playerName = player.getName();
+        BukkitTask task = plugin.getServer().getScheduler().runTaskLater(
+                plugin,
+                () -> expireDisconnectGracePeriod(playerId),
+                graceSeconds * 20L
+        );
+        pendingDisconnects.put(playerId, new PendingDisconnect(task, playerName));
+        plugin.getServer().broadcastMessage(messages.text(
+                "service.player-disconnected-grace",
+                Messages.placeholder("player", playerName),
+                Messages.placeholder("seconds", graceSeconds)
+        ));
+    }
+
+    private void expireDisconnectGracePeriod(UUID playerId) {
+        PendingDisconnect pendingDisconnect = pendingDisconnects.remove(playerId);
+        if (pendingDisconnect == null) {
+            return;
+        }
+
+        eliminateDisconnectedPlayer(playerId, pendingDisconnect.playerName());
+    }
+
+    private void eliminateDisconnectedPlayer(UUID playerId, String playerName) {
+        if (!roundPlayers.isActive(roundState, playerId)
+                || settings.endCondition() != RoundEndCondition.ELIMINATION) {
+            return;
+        }
+
+        roundPlayers.recordDeath(playerId);
+        roundPlayers.markSpectator(playerId);
+        plugin.getServer().broadcastMessage(messages.text(
+                "service.player-eliminated-disconnect",
+                Messages.placeholder("player", playerName)
+        ));
+        checkRoundEndAfterActivePlayerRemoval("service.end-reason-no-active-players");
+    }
+
+    private void refreshPendingDisconnects() {
+        if (settings.endCondition() != RoundEndCondition.ELIMINATION) {
+            cancelAllPendingDisconnects();
+            return;
+        }
+        if (settings.eliminationDisconnectPolicy() == EliminationDisconnectPolicy.GRACE_PERIOD
+                && settings.eliminationReconnectGraceSeconds() > 0) {
+            return;
+        }
+
+        for (UUID playerId : List.copyOf(pendingDisconnects.keySet())) {
+            PendingDisconnect pendingDisconnect = pendingDisconnects.remove(playerId);
+            if (pendingDisconnect == null) {
+                continue;
+            }
+            pendingDisconnect.task().cancel();
+            eliminateDisconnectedPlayer(playerId, pendingDisconnect.playerName());
+        }
+    }
+
+    private void cancelAllPendingDisconnects() {
+        for (PendingDisconnect pendingDisconnect : pendingDisconnects.values()) {
+            pendingDisconnect.task().cancel();
+        }
+        pendingDisconnects.clear();
+    }
+
     private int countActivePlayers() {
         return roundPlayers.activeCount(roundState);
     }
@@ -1400,6 +1514,7 @@ public final class BorderService {
         cancelStartCountdown();
         cancelRoundEndTask();
         cancelAllBreakoutTasks();
+        cancelAllPendingDisconnects();
         starterProvisionService.cleanupPlacedBlocks();
         roundState = RoundState.IDLE;
         startCandidateIds.clear();
@@ -1418,6 +1533,7 @@ public final class BorderService {
         cancelStartCountdown();
         cancelRoundEndTask();
         cancelAllBreakoutTasks();
+        cancelAllPendingDisconnects();
         starterProvisionService.cleanupPlacedBlocks();
         roundState = RoundState.LOBBY;
         startCandidateIds.clear();
