@@ -75,6 +75,7 @@ public final class ConfigDialog {
         return Dialog.create(builder -> builder.empty()
                 .base(DialogBase.builder(Component.text(messages.text("config-gui.title"), NamedTextColor.GOLD))
                         .canCloseWithEscape(true)
+                        .pause(false)
                         .afterAction(DialogBase.DialogAfterAction.NONE)
                         .body(List.of(DialogBody.plainMessage(
                                 Component.text(messages.text("config-gui.intro"), NamedTextColor.GRAY),
@@ -121,6 +122,7 @@ public final class ConfigDialog {
         return Dialog.create(builder -> builder.empty()
                 .base(DialogBase.builder(Component.text(messages.text(category.labelKey()), NamedTextColor.GOLD))
                         .canCloseWithEscape(true)
+                        .pause(false)
                         .afterAction(DialogBase.DialogAfterAction.NONE)
                         .body(body)
                         .inputs(inputs)
