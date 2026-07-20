@@ -50,6 +50,10 @@ language: de
 # Set to 0 to disable the transition.
 border-transition-seconds: 1
 
+# Shows nearby borders of other active players as particles to active players and viewers.
+# Blue/cyan means separate borders; orange/red means the viewer's border overlaps it.
+show-other-player-borders: true
+
 # /levelborder start uses this countdown when no seconds argument is given.
 # At command execution, only players inside the lobby border are selected as active players.
 # start-placement-mode spread keeps the old behavior: players spread out during the countdown.

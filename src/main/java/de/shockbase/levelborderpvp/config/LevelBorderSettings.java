@@ -37,6 +37,10 @@ public final class LevelBorderSettings {
         return Math.max(0L, config.getLong("border-transition-seconds", 1L));
     }
 
+    public boolean showOtherPlayerBorders() {
+        return config.getBoolean("show-other-player-borders", true);
+    }
+
     public double lobbyRadiusBlocks() {
         return Math.max(0.0D, config.getDouble("lobby-radius-blocks", 8.0D));
     }

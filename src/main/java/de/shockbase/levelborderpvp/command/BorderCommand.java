@@ -53,6 +53,7 @@ public final class BorderCommand implements CommandExecutor, TabCompleter {
         add(options, "dimension-policy", ConfigValueType.STRING, "safe-pve", "legacy");
         add(options, "max-size-blocks", ConfigValueType.DOUBLE);
         add(options, "border-transition-seconds", ConfigValueType.LONG);
+        add(options, "show-other-player-borders", ConfigValueType.BOOLEAN);
         add(options, "start-countdown-seconds", ConfigValueType.INT);
         add(options, "minimum-start-players", ConfigValueType.INT);
         add(options, "max-start-countdown-seconds", ConfigValueType.INT);

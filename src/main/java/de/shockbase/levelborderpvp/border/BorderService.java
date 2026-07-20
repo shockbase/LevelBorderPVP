@@ -52,6 +52,7 @@ public final class BorderService {
     private final PlayerRollbackService rollbackService;
     private final BorderRenderer borderRenderer;
     private final PlayerBorderDataService playerBorderDataService;
+    private final OtherPlayerBorderRenderer otherPlayerBorderRenderer;
     private final BorderSizeCalculator sizeCalculator;
     private final BorderSizeFormatter sizeFormatter = new BorderSizeFormatter();
     private final BorderNotifier notifier;
@@ -98,6 +99,13 @@ public final class BorderService {
         this.notifier = notifier;
         this.borderRenderer = new BorderRenderer(worldBorderApi, playerBorderRepository, settings, sizeCalculator, notifier);
         this.playerBorderDataService = new PlayerBorderDataService(playerBorderRepository, settings, sizeCalculator);
+        this.otherPlayerBorderRenderer = new OtherPlayerBorderRenderer(
+                plugin,
+                settings,
+                playerBorderDataService,
+                sizeCalculator,
+                roundPlayers
+        );
         this.starterProvisionService = new StarterProvisionService(settings);
         this.advancementSnapshotService = new AdvancementSnapshotService(plugin, settings, messages);
         this.roundScores = new RoundScoreTracker(settings, sizeCalculator, playerBorderDataService, roundPlayers);
@@ -174,6 +182,7 @@ public final class BorderService {
     }
 
     public void refreshRuntimeSettings() {
+        otherPlayerBorderRenderer.refresh(roundState == RoundState.ACTIVE);
         reapplyOnlinePlayers();
         if (roundState != RoundState.ACTIVE) {
             return;
@@ -517,6 +526,7 @@ public final class BorderService {
         cancelRoundEndTask();
         cancelAllBreakoutTasks();
         cancelAllPendingDisconnects();
+        otherPlayerBorderRenderer.stop();
 
         int boundedCountdownSeconds = Math.max(0, Math.min(countdownSeconds, settings.maxStartCountdownSeconds()));
         roundState = RoundState.COUNTDOWN;
@@ -592,6 +602,7 @@ public final class BorderService {
     }
 
     public void shutdown() {
+        otherPlayerBorderRenderer.stop();
         cancelStartCountdown();
         cancelRoundEndTask();
         cancelAllBreakoutTasks();
@@ -960,6 +971,7 @@ public final class BorderService {
         startCandidateIds.clear();
 
         if (roundState == RoundState.ACTIVE) {
+            otherPlayerBorderRenderer.start();
             scheduleRoundEnd();
             checkRoundEndAfterActivePlayerRemoval("service.end-reason-no-active-players");
         }
@@ -1554,6 +1566,7 @@ public final class BorderService {
 
     private void enterIdle() {
         markRoundEndedIfActive();
+        otherPlayerBorderRenderer.stop();
         advancementSnapshotService.restoreOnlinePlayers();
         cancelStartCountdown();
         cancelRoundEndTask();
@@ -1574,6 +1587,7 @@ public final class BorderService {
 
     private void enterLobby(boolean teleportPlayers) {
         markRoundEndedIfActive();
+        otherPlayerBorderRenderer.stop();
         advancementSnapshotService.restoreOnlinePlayers();
         cancelStartCountdown();
         cancelRoundEndTask();

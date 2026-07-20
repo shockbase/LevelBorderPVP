@@ -18,6 +18,8 @@ Mit `/levelborder lobby` werden alle Online-Spieler optional zum Worldspawn tele
 
 Danach zaehlt jedes Level. XP erweitert die eigene Border, PvP kann optional Bonus-Level uebertragen, und die Runde kann automatisch ueber Zeitwertung, Ziel-Level, Ziel-Border oder Elimination enden.
 
+Mit `show-other-player-borders: true` sehen aktive Spieler und Zuschauer nahe Borders anderer aktiver Spieler als Partikel. Blau/Cyan markiert getrennte Borders, Orange/Rot eine Ueberschneidung mit der eigenen Border.
+
 Rechts in der HUD-Sidebar zeigt der Start-Timer den Countdown, ohne jede Sekunde den Chat zu fuellen. Im Modus `timed-score` zaehlt der Spiel-Timer danach bis zum Rundenende herunter; in allen anderen Modi zeigt er die verstrichene Rundenzeit. Darunter stehen die aktuelle Bordergroesse und der Body-Count beziehungsweise im Eliminationsmodus die Zahl der noch lebenden Spieler.
 
 ## Rundenablauf
@@ -129,6 +131,7 @@ Beispiele:
 /levelborder config set end-condition elimination
 /levelborder config set round-duration-minutes 45
 /levelborder config set breakout-grace-seconds 10
+/levelborder config set show-other-player-borders false
 /levelborder config set rollback-integration-enabled true
 /levelborder rollback coreprotect
 ```
@@ -221,6 +224,7 @@ lobby-radius-blocks: 8.0
 teleport-players-to-lobby-spawn: true
 max-size-blocks: 0.0
 border-transition-seconds: 1
+show-other-player-borders: true
 start-placement-mode: grid
 start-grid-spacing-blocks: 64.0
 start-grid-skip-center: true
@@ -255,6 +259,8 @@ breakout-grace-seconds: 10
 ```
 
 `max-size-blocks: 0.0` bedeutet: keine Obergrenze.
+
+`show-other-player-borders` steuert die Partikel-Borders anderer aktiver Spieler derselben Welt. Gerendert werden nur Abschnitte im Umkreis von 64 Bloecken; die eigene Border bleibt die echte WorldBorderAPI-Border.
 
 Persoenliche Border-Groessen werden im Spiel auf volle Blockgrenzen aufgerundet. Bei `center-at-block-center: true` werden gerade Durchmesser auf den naechsten ungeraden Wert erhoeht, z. B. `initial-size-blocks: 4.0` wirkt als `5.0`.
 
