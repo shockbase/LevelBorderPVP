@@ -88,9 +88,13 @@ unit:
   blocks: "Bloecke"
 
 timer:
-  title: "SPIELTIMER"
+  title: "SPIEL-TIMER"
+  start-title: "START-TIMER"
   countdown: "Countdown"
   round-time: "Rundenzeit"
+  border: "Border"
+  body-count: "Body-Count"
+  alive: "Am Leben"
 
 log:
   world-border-api-missing: "WorldBorderAPI-Service nicht gefunden. Ist das WorldBorderAPI-Plugin installiert und geladen?"

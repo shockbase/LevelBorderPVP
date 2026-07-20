@@ -89,8 +89,12 @@ unit:
 
 timer:
   title: "GAME TIMER"
+  start-title: "START TIMER"
   countdown: "Countdown"
   round-time: "Round time"
+  border: "Border"
+  body-count: "Body-Count"
+  alive: "Alive"
 
 log:
   world-border-api-missing: "WorldBorderAPI service not found. Is the WorldBorderAPI plugin installed and loaded?"

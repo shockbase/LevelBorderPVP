@@ -53,6 +53,7 @@ public final class BorderService {
     private final BorderRenderer borderRenderer;
     private final PlayerBorderDataService playerBorderDataService;
     private final BorderSizeCalculator sizeCalculator;
+    private final BorderSizeFormatter sizeFormatter = new BorderSizeFormatter();
     private final BorderNotifier notifier;
     private final StarterProvisionService starterProvisionService;
     private final AdvancementSnapshotService advancementSnapshotService;
@@ -99,8 +100,8 @@ public final class BorderService {
         this.playerBorderDataService = new PlayerBorderDataService(playerBorderRepository, settings, sizeCalculator);
         this.starterProvisionService = new StarterProvisionService(settings);
         this.advancementSnapshotService = new AdvancementSnapshotService(plugin, settings, messages);
-        this.gameTimerDisplay = new GameTimerDisplay(plugin, messages);
         this.roundScores = new RoundScoreTracker(settings, sizeCalculator, playerBorderDataService, roundPlayers);
+        this.gameTimerDisplay = new GameTimerDisplay(plugin, messages, this::timerStats);
     }
 
     public void handlePlayerJoin(Player player) {
@@ -539,7 +540,7 @@ public final class BorderService {
             return new StartResult(true, selectedStartPlayers.size(), minimumStartPlayers, 0);
         }
 
-        gameTimerDisplay.startCountdown(boundedCountdownSeconds);
+        gameTimerDisplay.startCountdown(boundedCountdownSeconds, settings.endCondition());
 
         if (settings.startPlacementMode() != StartPlacementMode.GRID) {
             showSpreadOutToStartCandidates(boundedCountdownSeconds);
@@ -883,16 +884,28 @@ public final class BorderService {
 
     private void broadcastCountdown(int remainingSeconds) {
         gameTimerDisplay.updateCountdown(remainingSeconds);
-        String message = messages.text(
-                "service.countdown",
-                Messages.placeholder("seconds", remainingSeconds)
-        );
         for (Player player : plugin.getServer().getOnlinePlayers()) {
-            player.sendMessage(message);
             if (remainingSeconds <= 3) {
                 notifier.showCountdown(player, remainingSeconds);
             }
         }
+    }
+
+    private GameTimerDisplay.PlayerStats timerStats(Player player) {
+        boolean isParticipant = roundState == RoundState.COUNTDOWN
+                ? startCandidateIds.contains(player.getUniqueId())
+                : roundPlayers.isRoundPlayer(player);
+        String borderSize = isParticipant
+                ? sizeFormatter.format(roundScores.score(player).borderSize())
+                : "-";
+        int kills = isParticipant ? roundPlayers.kills(player) : 0;
+        int totalPlayers = roundState == RoundState.COUNTDOWN
+                ? startCandidateIds.size()
+                : roundPlayers.roundPlayerCount();
+        int alivePlayers = roundState == RoundState.COUNTDOWN
+                ? totalPlayers
+                : countActivePlayers();
+        return new GameTimerDisplay.PlayerStats(borderSize, kills, alivePlayers, totalPlayers);
     }
 
     private void showRoundRulesToStartCandidates(int countdownSeconds) {

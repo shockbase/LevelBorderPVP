@@ -88,8 +88,12 @@ unit:
 
 timer:
   title: "ТАЙМЕР ИГРЫ"
+  start-title: "ТАЙМЕР СТАРТА"
   countdown: "Обратный отсчет"
   round-time: "Время раунда"
+  border: "Граница"
+  body-count: "Body-Count"
+  alive: "В живых"
 
 log:
   world-border-api-missing: "Сервис WorldBorderAPI не найден. Установлен и загружен ли плагин WorldBorderAPI?"

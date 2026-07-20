@@ -14,18 +14,23 @@ import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Score;
 import org.bukkit.scoreboard.Scoreboard;
+import org.bukkit.scoreboard.ScoreboardManager;
 
-import java.util.IdentityHashMap;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 final class GameTimerDisplay {
 
     private static final String OBJECTIVE_NAME = "levelborder_timer";
     private static final String TIMER_ENTRY = "levelborder_timer_value";
+    private static final String BORDER_ENTRY = "levelborder_border_value";
+    private static final String COUNTER_ENTRY = "levelborder_counter_value";
 
     private final Plugin plugin;
     private final Messages messages;
-    private final Map<Scoreboard, SidebarDisplay> sidebarDisplays = new IdentityHashMap<>();
+    private final StatsProvider statsProvider;
+    private final Map<UUID, SidebarDisplay> sidebarDisplays = new HashMap<>();
 
     private TimerPhase phase = TimerPhase.HIDDEN;
     private RoundEndCondition endCondition = RoundEndCondition.DISABLED;
@@ -35,14 +40,16 @@ final class GameTimerDisplay {
     private long countdownElapsedSeconds;
     private BukkitTask updateTask;
 
-    GameTimerDisplay(Plugin plugin, Messages messages) {
+    GameTimerDisplay(Plugin plugin, Messages messages, StatsProvider statsProvider) {
         this.plugin = plugin;
         this.messages = messages;
+        this.statsProvider = statsProvider;
     }
 
-    void startCountdown(int seconds) {
+    void startCountdown(int seconds, RoundEndCondition condition) {
         cancelUpdateTask();
         phase = TimerPhase.COUNTDOWN;
+        endCondition = condition;
         shownSeconds = Math.max(0, seconds);
         updateOnlinePlayers();
     }
@@ -91,8 +98,9 @@ final class GameTimerDisplay {
         cancelUpdateTask();
         phase = TimerPhase.HIDDEN;
 
-        for (Map.Entry<Scoreboard, SidebarDisplay> entry : sidebarDisplays.entrySet()) {
-            restoreSidebar(entry.getKey(), entry.getValue());
+        for (Map.Entry<UUID, SidebarDisplay> entry : sidebarDisplays.entrySet()) {
+            Player player = plugin.getServer().getPlayer(entry.getKey());
+            restoreScoreboard(player, entry.getValue());
         }
         sidebarDisplays.clear();
     }
@@ -125,52 +133,75 @@ final class GameTimerDisplay {
     }
 
     private void updatePlayer(Player player) {
-        Scoreboard scoreboard = player.getScoreboard();
-        SidebarDisplay display = sidebarDisplays.get(scoreboard);
+        SidebarDisplay display = sidebarDisplays.get(player.getUniqueId());
         if (display == null || display.objective().getScoreboard() == null) {
-            display = createSidebarDisplay(scoreboard);
-            sidebarDisplays.put(scoreboard, display);
+            Scoreboard previousScoreboard = display == null || player.getScoreboard() != display.scoreboard()
+                    ? player.getScoreboard()
+                    : display.previousScoreboard();
+            display = createSidebarDisplay(player, previousScoreboard);
+            sidebarDisplays.put(player.getUniqueId(), display);
+        } else if (player.getScoreboard() != display.scoreboard()) {
+            display = new SidebarDisplay(display.scoreboard(), player.getScoreboard(), display.objective());
+            sidebarDisplays.put(player.getUniqueId(), display);
+            player.setScoreboard(display.scoreboard());
         }
 
         Objective objective = display.objective();
-        objective.displayName(Component.text(messages.text("timer.title"), NamedTextColor.GOLD, TextDecoration.BOLD));
+        objective.displayName(title());
         objective.setDisplaySlot(DisplaySlot.SIDEBAR);
 
-        Score score = objective.getScore(TIMER_ENTRY);
-        score.setScore(1);
-        score.customName(timerLine());
+        PlayerStats stats = statsProvider.stats(player);
+        setLine(objective, TIMER_ENTRY, 3, timerLine());
+        setLine(objective, BORDER_ENTRY, 2, borderLine(stats));
+        setLine(objective, COUNTER_ENTRY, 1, counterLine(stats));
     }
 
-    private SidebarDisplay createSidebarDisplay(Scoreboard scoreboard) {
-        Objective previousObjective = scoreboard.getObjective(DisplaySlot.SIDEBAR);
-        String objectiveName = availableObjectiveName(scoreboard);
-        Objective objective = scoreboard.registerNewObjective(
-                objectiveName,
-                Criteria.DUMMY,
-                Component.text(messages.text("timer.title"), NamedTextColor.GOLD, TextDecoration.BOLD)
-        );
+    private SidebarDisplay createSidebarDisplay(Player player, Scoreboard previousScoreboard) {
+        ScoreboardManager scoreboardManager = plugin.getServer().getScoreboardManager();
+        Scoreboard scoreboard = scoreboardManager.getNewScoreboard();
+        Objective objective = scoreboard.registerNewObjective(OBJECTIVE_NAME, Criteria.DUMMY, title());
         objective.numberFormat(NumberFormat.blank());
-        return new SidebarDisplay(objective, previousObjective);
+        objective.setDisplaySlot(DisplaySlot.SIDEBAR);
+        player.setScoreboard(scoreboard);
+        return new SidebarDisplay(scoreboard, previousScoreboard, objective);
     }
 
-    private String availableObjectiveName(Scoreboard scoreboard) {
-        if (scoreboard.getObjective(OBJECTIVE_NAME) == null) {
-            return OBJECTIVE_NAME;
-        }
+    private void setLine(Objective objective, String entry, int position, Component text) {
+        Score score = objective.getScore(entry);
+        score.setScore(position);
+        score.customName(text);
+    }
 
-        int suffix = 2;
-        while (scoreboard.getObjective(OBJECTIVE_NAME + suffix) != null) {
-            suffix++;
-        }
-        return OBJECTIVE_NAME + suffix;
+    private Component title() {
+        String key = phase == TimerPhase.COUNTDOWN ? "timer.start-title" : "timer.title";
+        return Component.text(messages.text(key), NamedTextColor.GOLD, TextDecoration.BOLD);
     }
 
     private Component timerLine() {
         String labelKey = phase == TimerPhase.COUNTDOWN || endCondition == RoundEndCondition.TIMED_SCORE
                 ? "timer.countdown"
                 : "timer.round-time";
-        return Component.text(messages.text(labelKey) + ": ", NamedTextColor.GRAY)
-                .append(Component.text(formatTime(shownSeconds), NamedTextColor.YELLOW));
+        return valueLine(messages.text(labelKey), formatTime(shownSeconds), NamedTextColor.YELLOW);
+    }
+
+    private Component borderLine(PlayerStats stats) {
+        return valueLine(messages.text("timer.border"), stats.borderSize(), NamedTextColor.AQUA);
+    }
+
+    private Component counterLine(PlayerStats stats) {
+        if (endCondition == RoundEndCondition.ELIMINATION) {
+            return valueLine(
+                    messages.text("timer.alive"),
+                    stats.alivePlayers() + "/" + stats.totalPlayers(),
+                    NamedTextColor.GREEN
+            );
+        }
+        return valueLine(messages.text("timer.body-count"), Integer.toString(stats.kills()), NamedTextColor.RED);
+    }
+
+    private Component valueLine(String label, String value, NamedTextColor valueColor) {
+        return Component.text(label + ": ", NamedTextColor.GRAY)
+                .append(Component.text(value, valueColor));
     }
 
     private String formatTime(long totalSeconds) {
@@ -183,21 +214,13 @@ final class GameTimerDisplay {
         return String.format("%02d:%02d", minutes, seconds);
     }
 
-    private void restoreSidebar(Scoreboard scoreboard, SidebarDisplay display) {
-        Objective objective = display.objective();
-        if (objective.getScoreboard() == null) {
-            return;
+    private void restoreScoreboard(Player player, SidebarDisplay display) {
+        if (player != null && player.isOnline() && player.getScoreboard() == display.scoreboard()) {
+            player.setScoreboard(display.previousScoreboard());
         }
-
-        if (scoreboard.getObjective(DisplaySlot.SIDEBAR) == objective) {
-            Objective previousObjective = display.previousObjective();
-            if (previousObjective != null && previousObjective.getScoreboard() == scoreboard) {
-                previousObjective.setDisplaySlot(DisplaySlot.SIDEBAR);
-            } else {
-                scoreboard.clearSlot(DisplaySlot.SIDEBAR);
-            }
+        if (display.objective().getScoreboard() != null) {
+            display.objective().unregister();
         }
-        objective.unregister();
     }
 
     private void cancelUpdateTask() {
@@ -207,12 +230,20 @@ final class GameTimerDisplay {
         }
     }
 
+    @FunctionalInterface
+    interface StatsProvider {
+        PlayerStats stats(Player player);
+    }
+
+    record PlayerStats(String borderSize, int kills, int alivePlayers, int totalPlayers) {
+    }
+
     private enum TimerPhase {
         HIDDEN,
         COUNTDOWN,
         ROUND
     }
 
-    private record SidebarDisplay(Objective objective, Objective previousObjective) {
+    private record SidebarDisplay(Scoreboard scoreboard, Scoreboard previousScoreboard, Objective objective) {
     }
 }

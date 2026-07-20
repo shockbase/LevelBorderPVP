@@ -76,6 +76,10 @@ final class RoundPlayerTracker {
         return activePlayers;
     }
 
+    int roundPlayerCount() {
+        return roundPlayers.size();
+    }
+
     void recordKill(Player player) {
         roundKills.merge(player.getUniqueId(), 1, Integer::sum);
     }
