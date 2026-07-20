@@ -86,6 +86,11 @@ subtitle:
 unit:
   blocks: "бл."
 
+timer:
+  title: "ТАЙМЕР ИГРЫ"
+  countdown: "Обратный отсчет"
+  round-time: "Время раунда"
+
 log:
   world-border-api-missing: "Сервис WorldBorderAPI не найден. Установлен и загружен ли плагин WorldBorderAPI?"
   command-missing: "Команда /{command} отсутствует в plugin.yml"

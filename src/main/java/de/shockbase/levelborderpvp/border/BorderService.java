@@ -56,6 +56,7 @@ public final class BorderService {
     private final BorderNotifier notifier;
     private final StarterProvisionService starterProvisionService;
     private final AdvancementSnapshotService advancementSnapshotService;
+    private final GameTimerDisplay gameTimerDisplay;
     private final RoundPlayerTracker roundPlayers = new RoundPlayerTracker();
     private final Set<UUID> startCandidateIds = new HashSet<>();
     private final Map<UUID, BukkitTask> breakoutTasks = new HashMap<>();
@@ -98,6 +99,7 @@ public final class BorderService {
         this.playerBorderDataService = new PlayerBorderDataService(playerBorderRepository, settings, sizeCalculator);
         this.starterProvisionService = new StarterProvisionService(settings);
         this.advancementSnapshotService = new AdvancementSnapshotService(plugin, settings, messages);
+        this.gameTimerDisplay = new GameTimerDisplay(plugin, messages);
         this.roundScores = new RoundScoreTracker(settings, sizeCalculator, playerBorderDataService, roundPlayers);
     }
 
@@ -109,6 +111,7 @@ public final class BorderService {
 
         advancementSnapshotService.restoreIfPending(player);
         applyNextTick(player, BorderNotification.JOIN);
+        gameTimerDisplay.showCurrent(player);
 
         if (pendingDisconnect != null && isActive(player)) {
             plugin.getServer().broadcastMessage(messages.text(
@@ -182,6 +185,10 @@ public final class BorderService {
             return;
         }
         scheduleRoundEnd();
+        gameTimerDisplay.refreshRound(
+                settings.endCondition(),
+                settings.roundDurationMinutes() * 60L
+        );
 
         for (Player player : plugin.getServer().getOnlinePlayers()) {
             if (!isActive(player)) {
@@ -532,6 +539,8 @@ public final class BorderService {
             return new StartResult(true, selectedStartPlayers.size(), minimumStartPlayers, 0);
         }
 
+        gameTimerDisplay.startCountdown(boundedCountdownSeconds);
+
         if (settings.startPlacementMode() != StartPlacementMode.GRID) {
             showSpreadOutToStartCandidates(boundedCountdownSeconds);
         } else {
@@ -589,6 +598,7 @@ public final class BorderService {
         pendingExperienceDisplaySyncs.clear();
         starterProvisionService.cleanupPlacedBlocks();
         advancementSnapshotService.restoreOnlinePlayers();
+        gameTimerDisplay.hide();
     }
 
     private void applyCurrentState(Player player, BorderNotification notification) {
@@ -872,6 +882,7 @@ public final class BorderService {
     }
 
     private void broadcastCountdown(int remainingSeconds) {
+        gameTimerDisplay.updateCountdown(remainingSeconds);
         String message = messages.text(
                 "service.countdown",
                 Messages.placeholder("seconds", remainingSeconds)
@@ -905,6 +916,10 @@ public final class BorderService {
     private void activateRound() {
         roundState = RoundState.ACTIVE;
         roundPlayers.clearPlayerStates();
+        gameTimerDisplay.startRound(
+                settings.endCondition(),
+                settings.roundDurationMinutes() * 60L
+        );
 
         List<Player> activeStartPlayers = new ArrayList<>();
         for (Player player : plugin.getServer().getOnlinePlayers()) {
@@ -1532,6 +1547,7 @@ public final class BorderService {
         cancelAllBreakoutTasks();
         cancelAllPendingDisconnects();
         starterProvisionService.cleanupPlacedBlocks();
+        gameTimerDisplay.hide();
         roundState = RoundState.IDLE;
         startCandidateIds.clear();
 
@@ -1551,6 +1567,7 @@ public final class BorderService {
         cancelAllBreakoutTasks();
         cancelAllPendingDisconnects();
         starterProvisionService.cleanupPlacedBlocks();
+        gameTimerDisplay.hide();
         roundState = RoundState.LOBBY;
         startCandidateIds.clear();
 

@@ -87,6 +87,11 @@ subtitle:
 unit:
   blocks: "Bloecke"
 
+timer:
+  title: "SPIELTIMER"
+  countdown: "Countdown"
+  round-time: "Rundenzeit"
+
 log:
   world-border-api-missing: "WorldBorderAPI-Service nicht gefunden. Ist das WorldBorderAPI-Plugin installiert und geladen?"
   command-missing: "Command /{command} fehlt in plugin.yml"

@@ -18,6 +18,8 @@ Mit `/levelborder lobby` werden alle Online-Spieler optional zum Worldspawn tele
 
 Danach zaehlt jedes Level. XP erweitert die eigene Border, PvP kann optional Bonus-Level uebertragen, und die Runde kann automatisch ueber Zeitwertung, Ziel-Level, Ziel-Border oder Elimination enden.
 
+Rechts in der HUD-Sidebar zeigt der Spieltimer waehrend des Starts den Countdown. Im Modus `timed-score` zaehlt er danach bis zum Rundenende herunter; in allen anderen Modi zeigt er die verstrichene Rundenzeit.
+
 ## Rundenablauf
 
 1. Admin fuehrt `/levelborder lobby` aus.
