@@ -26,6 +26,255 @@ command:
   config-invalid: "Ungueltiger Wert: {reason}"
   no-permission: "Keine Berechtigung. Benoetigt: {permission}"
 
+config-gui:
+  title: "LevelBorderPvP konfigurieren"
+  intro: "Waehle eine Kategorie. Alle Werte werden aus config.yml vorbefuellt."
+  input-hint: "Beschreibungen stehen im Hovertext. Listen: ein Eintrag pro Zeile oder kommasepariert. Komplexe Werte koennen weiter mit /levelborder config set bearbeitet werden."
+  save: "Speichern"
+  save-description: "Validiert und speichert alle Werte dieser Kategorie."
+  back: "Zurueck"
+  back-description: "Zur Kategorieauswahl zurueckkehren, ohne zu speichern."
+  cancel: "Abbrechen"
+  cancel-description: "Dialog schliessen, ohne zu speichern."
+  saved: "{count} Einstellungen in {category} wurden gespeichert."
+  invalid: "Ungueltiger Wert fuer {option}: {reason}"
+  validation:
+    empty: "Wert darf nicht leer sein."
+    missing: "Eingabewert fehlt."
+    boolean: "Erwartet wird true oder false."
+    integer: "Erwartet wird eine ganze Zahl."
+    decimal: "Erwartet wird eine Zahl."
+    min: "Der Wert muss mindestens {min} sein."
+    max: "Der Wert darf hoechstens {max} sein."
+    allowed: "Erlaubt sind: {allowed}."
+    list: "Mindestens ein Listeneintrag ist erforderlich."
+  category:
+    border:
+      label: "Border"
+      description: "Groesse, Wachstum, Levelwertung und Darstellung der persoenlichen Border."
+    round:
+      label: "Runde"
+      description: "Rundenende, Ziele, Wertung und Verbindungsabbruch."
+    start-lobby:
+      label: "Start / Lobby"
+      description: "Lobby, Countdown, Startaufstellung und Start-Resets."
+    starter:
+      label: "Starter"
+      description: "Startkiste, Baum und deren Inhalte und Positionen."
+    spectators-dimensions:
+      label: "Zuschauer / Dimensionen"
+      description: "Dimensionsregeln, Border-Wiederherstellung und Breakout-Frist."
+    luckperms:
+      label: "LuckPerms"
+      description: "Admin-Permission, Gruppen und optionale LuckPerms-Befehle."
+    rollback:
+      label: "Rollback"
+      description: "CoreProtect-/Prism-Anbindung und automatische Rollbacks."
+  value:
+    highest: "Hoechstes Level"
+    current: "Aktuelles Level"
+    timed-score: "Zeitwertung"
+    target-level: "Ziel-Level"
+    target-border: "Ziel-Border"
+    elimination: "Elimination"
+    disabled: "Deaktiviert"
+    eliminate: "Sofort eliminieren"
+    grace-period: "Rueckkehrfrist"
+    spread: "Verteilen"
+    grid: "Raster"
+    none: "Keine"
+    chest: "Kiste"
+    tree: "Baum"
+    both: "Beides"
+    auto: "Automatisch"
+    oak: "Eiche"
+    spruce: "Fichte"
+    birch: "Birke"
+    jungle: "Tropenbaum"
+    acacia: "Akazie"
+    dark-oak: "Schwarzeiche"
+    mangrove: "Mangrove"
+    cherry: "Kirsche"
+    safe-pve: "Sicheres PvE"
+    legacy: "Legacy"
+    coreprotect: "CoreProtect"
+    prism: "Prism"
+  option:
+    initial-size-blocks:
+      label: "Anfangsgroesse (Bloecke)"
+      description: "Durchmesser der persoenlichen Border auf Level 0."
+    growth-per-level-blocks:
+      label: "Wachstum pro Level"
+      description: "Zusaetzlicher Border-Durchmesser je gewertetem Level."
+    level-mode:
+      label: "Level-Modus"
+      description: "Nutzt das hoechste erreichte oder das aktuelle XP-Level."
+    highest-kill-bonus-enabled:
+      label: "Kill-Bonus aktiv"
+      description: "Addiert im Highest-Modus das hoechste Level des Opfers als Bonus."
+    highest-kill-bonus-inherits-victim-bonus:
+      label: "Opferbonus uebernehmen"
+      description: "Uebernimmt beim Kill auch den gespeicherten Kill-Bonus des Opfers."
+    advancement-bonus-enabled:
+      label: "Advancement-Bonus aktiv"
+      description: "Wertet neue Advancements waehrend der Runde als Bonus-Level."
+    advancement-bonus-levels:
+      label: "Level pro Advancement"
+      description: "Bonus-Level, die ein neues Advancement vergibt."
+    advancement-excluded-prefixes:
+      label: "Ausgeschlossene Advancements"
+      description: "Komma- oder zeilengetrennte Namespaced-Praefixe, die nicht gewertet werden."
+    center-at-block-center:
+      label: "Auf Blockmitte zentrieren"
+      description: "Zentriert persoenliche Borders auf der Mitte des Startblocks."
+    max-size-blocks:
+      label: "Maximale Bordergroesse"
+      description: "Obergrenze des Durchmessers; 0 oder kleiner deaktiviert die Grenze."
+    border-transition-seconds:
+      label: "Border-Uebergang (Sekunden)"
+      description: "Dauer der Animation bei Groessenaenderungen; 0 ist sofort."
+    show-other-player-borders:
+      label: "Andere Borders anzeigen"
+      description: "Zeigt nahe Borders anderer aktiver Spieler als Partikel."
+    end-condition:
+      label: "Endbedingung"
+      description: "Legt fest, wodurch die Runde automatisch beendet wird."
+    round-duration-minutes:
+      label: "Rundendauer (Minuten)"
+      description: "Zeitlimit fuer den Modus Zeitwertung."
+    score-tiebreakers:
+      label: "Tie-Breaker"
+      description: "Komma- oder zeilengetrennte Reihenfolge der Wertungs-Tie-Breaker."
+    win-target-level:
+      label: "Sieg-Ziellevel"
+      description: "Erstes erreichtes Level im Modus Ziel-Level."
+    win-target-border-size-blocks:
+      label: "Sieg-Zielborder"
+      description: "Erster erreichter Border-Durchmesser im Modus Ziel-Border."
+    elimination-disconnect-policy:
+      label: "Disconnect-Regel"
+      description: "Eliminiert sofort oder gewaehrt bei Disconnect eine Rueckkehrfrist."
+    elimination-reconnect-grace-seconds:
+      label: "Reconnect-Frist (Sekunden)"
+      description: "Zeit fuer die Rueckkehr in einer Eliminationsrunde."
+    lobby-radius-blocks:
+      label: "Lobby-Radius"
+      description: "Radius der Lobby-Border um den Worldspawn."
+    teleport-players-to-lobby-spawn:
+      label: "Zur Lobby teleportieren"
+      description: "Teleportiert Online-Spieler bei /levelborder lobby zum Worldspawn."
+    start-countdown-seconds:
+      label: "Standard-Countdown"
+      description: "Countdown fuer /levelborder start ohne Sekundenargument."
+    minimum-start-players:
+      label: "Mindestspielerzahl"
+      description: "Erforderliche Spieler innerhalb der Lobby-Border."
+    max-start-countdown-seconds:
+      label: "Maximaler Countdown"
+      description: "Obergrenze fuer das Sekundenargument von /levelborder start."
+    start-placement-mode:
+      label: "Startaufstellung"
+      description: "Verteilt Spieler frei oder setzt sie auf sichere Rasterpunkte."
+    start-grid-spacing-blocks:
+      label: "Rasterabstand"
+      description: "Abstand zwischen benachbarten Startpunkten im Rastermodus."
+    start-grid-skip-center:
+      label: "Rastermitte freilassen"
+      description: "Vergibt den mittleren Rasterpunkt nicht an einen Spieler."
+    reset-xp-on-start:
+      label: "XP beim Start loeschen"
+      description: "Setzt das XP-Level aktiver Startspieler auf 0."
+    clear-inventory-on-start:
+      label: "Inventar beim Start leeren"
+      description: "Leert Inventar und Ausruestung aktiver Startspieler."
+    language:
+      label: "Sprache"
+      description: "Sprachdatei aus lang/<code>.yml; wirksam nach einem Server-Neustart."
+    starter-mode:
+      label: "Starter-Modus"
+      description: "Vergibt keine Ressourcen, eine Kiste, einen Baum oder beides."
+    starter-chest-offset-x:
+      label: "Kistenversatz X"
+      description: "X-Versatz der Starterkiste relativ zum Startblock."
+    starter-chest-offset-z:
+      label: "Kistenversatz Z"
+      description: "Z-Versatz der Starterkiste relativ zum Startblock."
+    starter-chest-items:
+      label: "Kisteninhalt"
+      description: "Material:Anzahl-Eintraege, je Zeile oder kommasepariert."
+    starter-tree-type:
+      label: "Baumtyp"
+      description: "Baumtyp am Start; automatisch richtet sich nach dem Biom."
+    starter-tree-fallback-type:
+      label: "Ersatz-Baumtyp"
+      description: "Baumtyp, wenn automatisch keinen passenden Typ bestimmen kann."
+    starter-tree-offset-x:
+      label: "Baumversatz X"
+      description: "X-Versatz des Starterbaums relativ zum Startblock."
+    starter-tree-offset-z:
+      label: "Baumversatz Z"
+      description: "Z-Versatz des Starterbaums relativ zum Startblock."
+    starter-tree-logs:
+      label: "Anzahl Staemme"
+      description: "Hoehe des einfachen Starterbaum-Stamms."
+    starter-tree-leaves:
+      label: "Blaetter erzeugen"
+      description: "Erzeugt Blaetter um den Starterbaum."
+    dimension-policy:
+      label: "Dimensionsregel"
+      description: "Safe-PvE nutzt persoenliche Borders nur in der Overworld; Legacy in allen Welten."
+    reapply-on-world-change:
+      label: "Border bei Weltwechsel senden"
+      description: "Wendet den passenden Borderstatus nach einem Weltwechsel erneut an."
+    reapply-on-respawn:
+      label: "Border bei Respawn senden"
+      description: "Wendet den passenden Borderstatus nach einem Respawn erneut an."
+    breakout-grace-seconds:
+      label: "Breakout-Frist (Sekunden)"
+      description: "Zeit zur Rueckkehr in die eigene Border; 0 disqualifiziert sofort."
+    command-permission:
+      label: "Admin-Permission"
+      description: "Bukkit-/LuckPerms-Permission fuer alle /levelborder-Befehle."
+    luckperms-integration-enabled:
+      label: "LuckPerms-Integration aktiv"
+      description: "Fuehrt die konfigurierten Gruppenbefehle fuer Rollenwechsel aus."
+    luckperms-active-group:
+      label: "Aktiv-Gruppe"
+      description: "LuckPerms-Gruppe fuer aktive Rundenspieler."
+    luckperms-spectator-group:
+      label: "Zuschauer-Gruppe"
+      description: "LuckPerms-Gruppe fuer Zuschauer."
+    luckperms-clear-groups-on-round-end:
+      label: "Gruppen am Rundenende entfernen"
+      description: "Entfernt Plugin-Rollengruppen, wenn die Runde endet."
+    luckperms-command-add-active:
+      label: "Befehl: Aktiv hinzufuegen"
+      description: "Console-Befehl zum Hinzufuegen der Aktiv-Gruppe."
+    luckperms-command-remove-active:
+      label: "Befehl: Aktiv entfernen"
+      description: "Console-Befehl zum Entfernen der Aktiv-Gruppe."
+    luckperms-command-add-spectator:
+      label: "Befehl: Zuschauer hinzufuegen"
+      description: "Console-Befehl zum Hinzufuegen der Zuschauer-Gruppe."
+    luckperms-command-remove-spectator:
+      label: "Befehl: Zuschauer entfernen"
+      description: "Console-Befehl zum Entfernen der Zuschauer-Gruppe."
+    rollback-integration-enabled:
+      label: "Rollback-Integration aktiv"
+      description: "Erlaubt Rollbacks ueber CoreProtect oder Prism."
+    rollback-provider:
+      label: "Rollback-Provider"
+      description: "Waehlt den Provider automatisch oder fest aus."
+    rollback-on-round-end:
+      label: "Rollback am Rundenende"
+      description: "Startet nach dem Ende einer aktiven Runde automatisch einen Rollback."
+    coreprotect-rollback-command:
+      label: "CoreProtect-Befehl"
+      description: "Console-Befehlsvorlage pro aktivem Rundenspieler."
+    prism-rollback-command:
+      label: "Prism-Befehl"
+      description: "Console-Befehlsvorlage pro aktivem Rundenspieler."
+
 service:
   countdown: "Border startet in {seconds} Sekunden."
   round-ended-winner: "Spiel beendet: {winner} gewinnt. Grund: {reason}"

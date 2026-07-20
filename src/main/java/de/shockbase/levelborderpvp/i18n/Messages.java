@@ -18,6 +18,7 @@ public final class Messages {
     private final String language;
 
     private FileConfiguration configuredMessages;
+    private FileConfiguration bundledConfiguredMessages;
     private FileConfiguration defaultMessages;
 
     public Messages(JavaPlugin plugin, String language) {
@@ -31,6 +32,7 @@ public final class Messages {
         saveBundledLanguage("ru");
 
         defaultMessages = loadBundledLanguage(DEFAULT_LANGUAGE);
+        bundledConfiguredMessages = loadBundledLanguage(language);
 
         File configuredFile = languageFile(language);
         if (!configuredFile.isFile()) {
@@ -48,6 +50,9 @@ public final class Messages {
 
     public String text(String key, Placeholder... placeholders) {
         String message = configuredMessages == null ? null : configuredMessages.getString(key);
+        if (message == null) {
+            message = bundledConfiguredMessages == null ? null : bundledConfiguredMessages.getString(key);
+        }
         if (message == null) {
             message = defaultMessages == null ? null : defaultMessages.getString(key);
         }

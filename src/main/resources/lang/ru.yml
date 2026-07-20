@@ -26,6 +26,255 @@ command:
   config-invalid: "Недопустимое значение: {reason}"
   no-permission: "Нет прав. Требуется: {permission}"
 
+config-gui:
+  title: "Настройка LevelBorderPvP"
+  intro: "Выберите категорию. Текущие значения загружены из config.yml."
+  input-hint: "Наведите курсор на название для описания. Элементы списков разделяются строками или запятыми. Сложные значения также можно изменить через /levelborder config set."
+  save: "Сохранить"
+  save-description: "Проверить и сохранить все значения этой категории."
+  back: "Назад"
+  back-description: "Вернуться к категориям без сохранения."
+  cancel: "Отмена"
+  cancel-description: "Закрыть окно без сохранения."
+  saved: "Сохранено настроек: {count}. Категория: {category}."
+  invalid: "Недопустимое значение для {option}: {reason}"
+  validation:
+    empty: "Значение не может быть пустым."
+    missing: "Значение поля отсутствует."
+    boolean: "Ожидается true или false."
+    integer: "Ожидается целое число."
+    decimal: "Ожидается число."
+    min: "Значение должно быть не меньше {min}."
+    max: "Значение должно быть не больше {max}."
+    allowed: "Допустимые значения: {allowed}."
+    list: "Нужен хотя бы один элемент списка."
+  category:
+    border:
+      label: "Граница"
+      description: "Размер, рост, уровни и отображение личной границы."
+    round:
+      label: "Раунд"
+      description: "Завершение раунда, цели, счет и отключения."
+    start-lobby:
+      label: "Старт / Лобби"
+      description: "Лобби, отсчет, размещение и сброс при старте."
+    starter:
+      label: "Стартовые ресурсы"
+      description: "Стартовый сундук, дерево, содержимое и позиции."
+    spectators-dimensions:
+      label: "Зрители / Измерения"
+      description: "Правила измерений, повтор границы и время возврата."
+    luckperms:
+      label: "LuckPerms"
+      description: "Право администратора, группы ролей и команды LuckPerms."
+    rollback:
+      label: "Откат"
+      description: "Интеграция CoreProtect/Prism и автоматический откат."
+  value:
+    highest: "Максимальный уровень"
+    current: "Текущий уровень"
+    timed-score: "Счет по времени"
+    target-level: "Целевой уровень"
+    target-border: "Целевая граница"
+    elimination: "Выбывание"
+    disabled: "Отключено"
+    eliminate: "Сразу исключить"
+    grace-period: "Время на возврат"
+    spread: "Распределение"
+    grid: "Сетка"
+    none: "Нет"
+    chest: "Сундук"
+    tree: "Дерево"
+    both: "Оба"
+    auto: "Автоматически"
+    oak: "Дуб"
+    spruce: "Ель"
+    birch: "Береза"
+    jungle: "Тропическое дерево"
+    acacia: "Акация"
+    dark-oak: "Темный дуб"
+    mangrove: "Мангр"
+    cherry: "Вишня"
+    safe-pve: "Безопасный PvE"
+    legacy: "Старый режим"
+    coreprotect: "CoreProtect"
+    prism: "Prism"
+  option:
+    initial-size-blocks:
+      label: "Начальный размер (блоки)"
+      description: "Диаметр личной границы на нулевом уровне."
+    growth-per-level-blocks:
+      label: "Рост за уровень"
+      description: "Дополнительный диаметр границы за каждый уровень."
+    level-mode:
+      label: "Режим уровня"
+      description: "Использовать максимальный достигнутый или текущий XP-уровень."
+    highest-kill-bonus-enabled:
+      label: "Бонус за убийство"
+      description: "Добавлять максимальный уровень жертвы как бонус."
+    highest-kill-bonus-inherits-victim-bonus:
+      label: "Наследовать бонус жертвы"
+      description: "Также переносить накопленный бонус жертвы."
+    advancement-bonus-enabled:
+      label: "Бонус за достижения"
+      description: "Начислять бонусные уровни за новые достижения в раунде."
+    advancement-bonus-levels:
+      label: "Уровни за достижение"
+      description: "Число бонусных уровней за новое достижение."
+    advancement-excluded-prefixes:
+      label: "Исключенные достижения"
+      description: "Префиксы через запятую или по одному в строке."
+    center-at-block-center:
+      label: "Центрировать по блоку"
+      description: "Помещать центр личной границы в центр стартового блока."
+    max-size-blocks:
+      label: "Максимальный размер"
+      description: "Лимит диаметра; 0 или меньше отключает лимит."
+    border-transition-seconds:
+      label: "Переход границы (сек.)"
+      description: "Длительность изменения размера; 0 применяет сразу."
+    show-other-player-borders:
+      label: "Показывать другие границы"
+      description: "Показывать частицы границ соседних активных игроков."
+    end-condition:
+      label: "Условие завершения"
+      description: "Определяет автоматическое завершение раунда."
+    round-duration-minutes:
+      label: "Длительность раунда (мин.)"
+      description: "Лимит времени для режима счета по времени."
+    score-tiebreakers:
+      label: "Критерии ничьей"
+      description: "Порядок критериев через запятую или по строкам."
+    win-target-level:
+      label: "Целевой уровень победы"
+      description: "Первый достигнутый уровень в режиме целевого уровня."
+    win-target-border-size-blocks:
+      label: "Целевой размер границы"
+      description: "Первый достигнутый диаметр в режиме целевой границы."
+    elimination-disconnect-policy:
+      label: "Правило отключения"
+      description: "Исключать сразу или разрешить повторное подключение."
+    elimination-reconnect-grace-seconds:
+      label: "Время на вход (сек.)"
+      description: "Время повторного подключения в раунде на выбывание."
+    lobby-radius-blocks:
+      label: "Радиус лобби"
+      description: "Радиус границы лобби вокруг точки мира."
+    teleport-players-to-lobby-spawn:
+      label: "Телепортировать в лобби"
+      description: "Телепортировать игроков к точке мира командой lobby."
+    start-countdown-seconds:
+      label: "Стандартный отсчет"
+      description: "Отсчет команды start без аргумента секунд."
+    minimum-start-players:
+      label: "Минимум игроков"
+      description: "Необходимое число игроков внутри границы лобби."
+    max-start-countdown-seconds:
+      label: "Максимальный отсчет"
+      description: "Максимальный аргумент секунд команды start."
+    start-placement-mode:
+      label: "Размещение на старте"
+      description: "Свободно распределить игроков или поставить на сетку."
+    start-grid-spacing-blocks:
+      label: "Шаг сетки"
+      description: "Расстояние между соседними стартовыми точками."
+    start-grid-skip-center:
+      label: "Пропустить центр сетки"
+      description: "Не назначать игроку центральную точку."
+    reset-xp-on-start:
+      label: "Сбросить XP при старте"
+      description: "Сбросить активных стартующих игроков до уровня 0."
+    clear-inventory-on-start:
+      label: "Очистить инвентарь"
+      description: "Очистить инвентарь и экипировку при старте."
+    language:
+      label: "Язык"
+      description: "Файл lang/<код>.yml; применяется после перезапуска сервера."
+    starter-mode:
+      label: "Режим стартовых ресурсов"
+      description: "Не выдавать ресурсы, дать сундук, дерево или оба."
+    starter-chest-offset-x:
+      label: "Смещение сундука X"
+      description: "Смещение сундука по X от стартового блока."
+    starter-chest-offset-z:
+      label: "Смещение сундука Z"
+      description: "Смещение сундука по Z от стартового блока."
+    starter-chest-items:
+      label: "Содержимое сундука"
+      description: "Записи МАТЕРИАЛ:количество по строкам или через запятую."
+    starter-tree-type:
+      label: "Тип дерева"
+      description: "Тип стартового дерева; auto выбирает по биому."
+    starter-tree-fallback-type:
+      label: "Запасной тип дерева"
+      description: "Тип дерева, если автоматический выбор невозможен."
+    starter-tree-offset-x:
+      label: "Смещение дерева X"
+      description: "Смещение дерева по X от стартового блока."
+    starter-tree-offset-z:
+      label: "Смещение дерева Z"
+      description: "Смещение дерева по Z от стартового блока."
+    starter-tree-logs:
+      label: "Число бревен"
+      description: "Высота ствола простого стартового дерева."
+    starter-tree-leaves:
+      label: "Создавать листву"
+      description: "Создавать листву вокруг стартового дерева."
+    dimension-policy:
+      label: "Правило измерений"
+      description: "Safe PvE использует границы только в обычном мире; legacy — везде."
+    reapply-on-world-change:
+      label: "Граница после смены мира"
+      description: "Повторно применять границу после смены мира."
+    reapply-on-respawn:
+      label: "Граница после возрождения"
+      description: "Повторно применять границу после возрождения."
+    breakout-grace-seconds:
+      label: "Время возврата (сек.)"
+      description: "Время вернуться внутрь границы; 0 исключает сразу."
+    command-permission:
+      label: "Право администратора"
+      description: "Право Bukkit/LuckPerms для всех команд /levelborder."
+    luckperms-integration-enabled:
+      label: "Интеграция LuckPerms"
+      description: "Выполнять команды групп при смене роли игрока."
+    luckperms-active-group:
+      label: "Группа активных"
+      description: "Группа LuckPerms для активных игроков раунда."
+    luckperms-spectator-group:
+      label: "Группа зрителей"
+      description: "Группа LuckPerms для зрителей."
+    luckperms-clear-groups-on-round-end:
+      label: "Удалять группы после раунда"
+      description: "Удалять группы ролей после завершения раунда."
+    luckperms-command-add-active:
+      label: "Команда: добавить активного"
+      description: "Консольная команда добавления активной группы."
+    luckperms-command-remove-active:
+      label: "Команда: удалить активного"
+      description: "Консольная команда удаления активной группы."
+    luckperms-command-add-spectator:
+      label: "Команда: добавить зрителя"
+      description: "Консольная команда добавления группы зрителей."
+    luckperms-command-remove-spectator:
+      label: "Команда: удалить зрителя"
+      description: "Консольная команда удаления группы зрителей."
+    rollback-integration-enabled:
+      label: "Интеграция отката"
+      description: "Разрешить откат через CoreProtect или Prism."
+    rollback-provider:
+      label: "Провайдер отката"
+      description: "Выбрать провайдер автоматически или явно."
+    rollback-on-round-end:
+      label: "Откат после раунда"
+      description: "Автоматически запускать откат после активного раунда."
+    coreprotect-rollback-command:
+      label: "Команда CoreProtect"
+      description: "Шаблон консольной команды для каждого активного игрока."
+    prism-rollback-command:
+      label: "Команда Prism"
+      description: "Шаблон консольной команды для каждого активного игрока."
+
 service:
   countdown: "Граница запустится через {seconds} сек."
   round-ended-winner: "Игра окончена: победил {winner}. Причина: {reason}"

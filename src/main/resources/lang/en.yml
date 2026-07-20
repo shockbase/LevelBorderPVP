@@ -26,6 +26,255 @@ command:
   config-invalid: "Invalid value: {reason}"
   no-permission: "No permission. Required: {permission}"
 
+config-gui:
+  title: "Configure LevelBorderPvP"
+  intro: "Choose a category. All values are prefilled from config.yml."
+  input-hint: "Hover labels for details. Lists accept one entry per line or comma-separated values. Complex values can still be edited with /levelborder config set."
+  save: "Save"
+  save-description: "Validate and save all values in this category."
+  back: "Back"
+  back-description: "Return to the categories without saving."
+  cancel: "Cancel"
+  cancel-description: "Close the dialog without saving."
+  saved: "Saved {count} settings in {category}."
+  invalid: "Invalid value for {option}: {reason}"
+  validation:
+    empty: "The value must not be empty."
+    missing: "The input value is missing."
+    boolean: "Expected true or false."
+    integer: "Expected a whole number."
+    decimal: "Expected a number."
+    min: "The value must be at least {min}."
+    max: "The value must not exceed {max}."
+    allowed: "Allowed values: {allowed}."
+    list: "At least one list entry is required."
+  category:
+    border:
+      label: "Border"
+      description: "Personal border size, growth, level scoring, and display."
+    round:
+      label: "Round"
+      description: "Round ending, targets, scoring, and disconnect handling."
+    start-lobby:
+      label: "Start / Lobby"
+      description: "Lobby, countdown, start placement, and start resets."
+    starter:
+      label: "Starter"
+      description: "Starter chest, tree, contents, and positions."
+    spectators-dimensions:
+      label: "Spectators / Dimensions"
+      description: "Dimension rules, border reapplication, and breakout grace."
+    luckperms:
+      label: "LuckPerms"
+      description: "Admin permission, role groups, and optional LuckPerms commands."
+    rollback:
+      label: "Rollback"
+      description: "CoreProtect/Prism integration and automatic rollbacks."
+  value:
+    highest: "Highest level"
+    current: "Current level"
+    timed-score: "Timed score"
+    target-level: "Target level"
+    target-border: "Target border"
+    elimination: "Elimination"
+    disabled: "Disabled"
+    eliminate: "Eliminate immediately"
+    grace-period: "Reconnect grace"
+    spread: "Spread"
+    grid: "Grid"
+    none: "None"
+    chest: "Chest"
+    tree: "Tree"
+    both: "Both"
+    auto: "Automatic"
+    oak: "Oak"
+    spruce: "Spruce"
+    birch: "Birch"
+    jungle: "Jungle"
+    acacia: "Acacia"
+    dark-oak: "Dark oak"
+    mangrove: "Mangrove"
+    cherry: "Cherry"
+    safe-pve: "Safe PvE"
+    legacy: "Legacy"
+    coreprotect: "CoreProtect"
+    prism: "Prism"
+  option:
+    initial-size-blocks:
+      label: "Initial size (blocks)"
+      description: "Personal border diameter at level 0."
+    growth-per-level-blocks:
+      label: "Growth per level"
+      description: "Additional border diameter for each scored level."
+    level-mode:
+      label: "Level mode"
+      description: "Use the highest reached or current XP level."
+    highest-kill-bonus-enabled:
+      label: "Enable kill bonus"
+      description: "In highest mode, add the victim's highest level as a bonus."
+    highest-kill-bonus-inherits-victim-bonus:
+      label: "Inherit victim bonus"
+      description: "Also inherit the victim's stored kill bonus."
+    advancement-bonus-enabled:
+      label: "Enable advancement bonus"
+      description: "Score new advancements during the round as bonus levels."
+    advancement-bonus-levels:
+      label: "Levels per advancement"
+      description: "Bonus levels awarded by each new advancement."
+    advancement-excluded-prefixes:
+      label: "Excluded advancements"
+      description: "Comma- or line-separated namespaced prefixes that do not score."
+    center-at-block-center:
+      label: "Center on block"
+      description: "Center personal borders on the middle of the start block."
+    max-size-blocks:
+      label: "Maximum border size"
+      description: "Diameter limit; 0 or less disables the limit."
+    border-transition-seconds:
+      label: "Border transition (seconds)"
+      description: "Animation duration for size changes; 0 applies immediately."
+    show-other-player-borders:
+      label: "Show other borders"
+      description: "Display nearby active-player borders with particles."
+    end-condition:
+      label: "End condition"
+      description: "Select what automatically ends the round."
+    round-duration-minutes:
+      label: "Round duration (minutes)"
+      description: "Time limit for timed-score mode."
+    score-tiebreakers:
+      label: "Tiebreakers"
+      description: "Comma- or line-separated scoring tiebreaker order."
+    win-target-level:
+      label: "Winning target level"
+      description: "First level reached in target-level mode."
+    win-target-border-size-blocks:
+      label: "Winning target border"
+      description: "First border diameter reached in target-border mode."
+    elimination-disconnect-policy:
+      label: "Disconnect policy"
+      description: "Eliminate immediately or allow a reconnect grace period."
+    elimination-reconnect-grace-seconds:
+      label: "Reconnect grace (seconds)"
+      description: "Time allowed to reconnect during an elimination round."
+    lobby-radius-blocks:
+      label: "Lobby radius"
+      description: "Lobby border radius around the world spawn."
+    teleport-players-to-lobby-spawn:
+      label: "Teleport to lobby"
+      description: "Teleport online players to world spawn on /levelborder lobby."
+    start-countdown-seconds:
+      label: "Default countdown"
+      description: "Countdown used by /levelborder start without a seconds argument."
+    minimum-start-players:
+      label: "Minimum players"
+      description: "Players required inside the lobby border."
+    max-start-countdown-seconds:
+      label: "Maximum countdown"
+      description: "Upper limit for the /levelborder start seconds argument."
+    start-placement-mode:
+      label: "Start placement"
+      description: "Spread players freely or place them on safe grid points."
+    start-grid-spacing-blocks:
+      label: "Grid spacing"
+      description: "Distance between neighboring grid start points."
+    start-grid-skip-center:
+      label: "Skip grid center"
+      description: "Do not assign the center grid point to a player."
+    reset-xp-on-start:
+      label: "Reset XP on start"
+      description: "Reset active starting players to XP level 0."
+    clear-inventory-on-start:
+      label: "Clear inventory on start"
+      description: "Clear active starting players' inventory and equipment."
+    language:
+      label: "Language"
+      description: "Language file at lang/<code>.yml; applies after a server restart."
+    starter-mode:
+      label: "Starter mode"
+      description: "Give no resources, a chest, a tree, or both."
+    starter-chest-offset-x:
+      label: "Chest X offset"
+      description: "Starter chest X offset from the start block."
+    starter-chest-offset-z:
+      label: "Chest Z offset"
+      description: "Starter chest Z offset from the start block."
+    starter-chest-items:
+      label: "Chest contents"
+      description: "MATERIAL:amount entries, one per line or comma-separated."
+    starter-tree-type:
+      label: "Tree type"
+      description: "Tree at the start; automatic follows the biome."
+    starter-tree-fallback-type:
+      label: "Fallback tree type"
+      description: "Tree type used when automatic cannot select one."
+    starter-tree-offset-x:
+      label: "Tree X offset"
+      description: "Starter tree X offset from the start block."
+    starter-tree-offset-z:
+      label: "Tree Z offset"
+      description: "Starter tree Z offset from the start block."
+    starter-tree-logs:
+      label: "Log count"
+      description: "Height of the simple starter tree trunk."
+    starter-tree-leaves:
+      label: "Generate leaves"
+      description: "Generate leaves around the starter tree."
+    dimension-policy:
+      label: "Dimension policy"
+      description: "Safe PvE uses personal borders only in the Overworld; legacy uses every world."
+    reapply-on-world-change:
+      label: "Reapply after world change"
+      description: "Reapply the correct border state after changing worlds."
+    reapply-on-respawn:
+      label: "Reapply after respawn"
+      description: "Reapply the correct border state after respawning."
+    breakout-grace-seconds:
+      label: "Breakout grace (seconds)"
+      description: "Time to return inside the border; 0 disqualifies immediately."
+    command-permission:
+      label: "Admin permission"
+      description: "Bukkit/LuckPerms permission for all /levelborder commands."
+    luckperms-integration-enabled:
+      label: "Enable LuckPerms integration"
+      description: "Run configured group commands when player roles change."
+    luckperms-active-group:
+      label: "Active group"
+      description: "LuckPerms group for active round players."
+    luckperms-spectator-group:
+      label: "Spectator group"
+      description: "LuckPerms group for spectators."
+    luckperms-clear-groups-on-round-end:
+      label: "Clear groups after round"
+      description: "Remove plugin role groups when the round ends."
+    luckperms-command-add-active:
+      label: "Command: add active"
+      description: "Console command that adds the active group."
+    luckperms-command-remove-active:
+      label: "Command: remove active"
+      description: "Console command that removes the active group."
+    luckperms-command-add-spectator:
+      label: "Command: add spectator"
+      description: "Console command that adds the spectator group."
+    luckperms-command-remove-spectator:
+      label: "Command: remove spectator"
+      description: "Console command that removes the spectator group."
+    rollback-integration-enabled:
+      label: "Enable rollback integration"
+      description: "Allow rollbacks through CoreProtect or Prism."
+    rollback-provider:
+      label: "Rollback provider"
+      description: "Select the provider automatically or explicitly."
+    rollback-on-round-end:
+      label: "Rollback after round"
+      description: "Automatically start a rollback after an active round ends."
+    coreprotect-rollback-command:
+      label: "CoreProtect command"
+      description: "Console command template for each active round player."
+    prism-rollback-command:
+      label: "Prism command"
+      description: "Console command template for each active round player."
+
 service:
   countdown: "Border starts in {seconds} seconds."
   round-ended-winner: "Game ended: {winner} wins. Reason: {reason}"

@@ -113,6 +113,7 @@ Moegliche Werte fuer `end-condition`:
 /levelborder start [seconds]
 /levelborder stop
 /levelborder rollback [auto|coreprotect|prism]
+/levelborder config
 /levelborder config list
 /levelborder config get <key>
 /levelborder config set <key> <value>
@@ -122,8 +123,12 @@ Moegliche Werte fuer `end-condition`:
 - `start` startet die Runde; im Grid-Modus ohne Verteil-Countdown.
 - `stop` beendet die laufende Runde global und entfernt alle Plugin-Borders.
 - `rollback` setzt Aenderungen der aktiven Rundenspieler ueber CoreProtect oder Prism zurueck.
-- `config` kann auch aus der Server-Konsole genutzt werden und speichert Werte direkt in `config.yml`.
+- `config` oeffnet fuer Spieler ein natives Minecraft-Dialogmenue. Die Server-Konsole nutzt weiterhin `config list|get|set`.
 - Alle `/levelborder`-Befehle sind geschuetzt. Mit LuckPerms braucht der Nutzer `levelborderpvp.admin`; ohne LuckPerms duerfen nur OP-Spieler und die Server-Konsole steuern.
+
+Das Config-Menue ist in Border, Runde, Start/Lobby, Starter, Zuschauer/Dimensionen, LuckPerms und Rollback gegliedert. Boolean-Werte erscheinen als Checkbox, feste Werte als Auswahl, Zahlen als Slider oder validiertes Zahlenfeld und Strings beziehungsweise Listen als Textfeld. Listen akzeptieren Kommas oder einen Eintrag pro Zeile. Nach dem Speichern werden die Laufzeiteinstellungen direkt aktualisiert.
+
+Komplexe Listen und Befehlsvorlagen koennen im Textfeld bearbeitet werden. Falls ein Minecraft-Client die Eingabe unpraktisch darstellt, bleibt `/levelborder config set <key> <value>` als vollwertige Alternative erhalten. Die Einstellung `language` wird gespeichert, ein Sprachwechsel ist jedoch erst nach einem Server-Neustart vollstaendig wirksam.
 
 Beispiele:
 

@@ -1,7 +1,9 @@
 package de.shockbase.levelborderpvp.command;
 
 import de.shockbase.levelborderpvp.border.BorderService;
+import de.shockbase.levelborderpvp.config.ConfigSchema;
 import de.shockbase.levelborderpvp.config.LevelBorderSettings;
+import de.shockbase.levelborderpvp.gui.ConfigDialog;
 import de.shockbase.levelborderpvp.i18n.Messages;
 import de.shockbase.levelborderpvp.integration.PlayerRollbackService;
 import org.bukkit.command.Command;
@@ -15,92 +17,23 @@ import org.bukkit.plugin.Plugin;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
-import java.util.StringJoiner;
 
 public final class BorderCommand implements CommandExecutor, TabCompleter {
-
-    private static final Map<String, ConfigOption> CONFIG_OPTIONS = createConfigOptions();
 
     private final LevelBorderSettings settings;
     private final BorderService borderService;
     private final Messages messages;
     private final Plugin plugin;
+    private final ConfigDialog configDialog;
 
     public BorderCommand(Plugin plugin, LevelBorderSettings settings, BorderService borderService, Messages messages) {
         this.plugin = plugin;
         this.settings = settings;
         this.borderService = borderService;
         this.messages = messages;
-    }
-
-    private static Map<String, ConfigOption> createConfigOptions() {
-        Map<String, ConfigOption> options = new LinkedHashMap<>();
-        add(options, "initial-size-blocks", ConfigValueType.DOUBLE);
-        add(options, "growth-per-level-blocks", ConfigValueType.DOUBLE);
-        add(options, "level-mode", ConfigValueType.STRING, "highest", "current");
-        add(options, "highest-kill-bonus-enabled", ConfigValueType.BOOLEAN);
-        add(options, "highest-kill-bonus-inherits-victim-bonus", ConfigValueType.BOOLEAN);
-        add(options, "advancement-bonus-enabled", ConfigValueType.BOOLEAN);
-        add(options, "advancement-bonus-levels", ConfigValueType.INT);
-        add(options, "advancement-excluded-prefixes", ConfigValueType.STRING_LIST, "minecraft:recipes/");
-        add(options, "lobby-radius-blocks", ConfigValueType.DOUBLE);
-        add(options, "teleport-players-to-lobby-spawn", ConfigValueType.BOOLEAN);
-        add(options, "center-at-block-center", ConfigValueType.BOOLEAN);
-        add(options, "dimension-policy", ConfigValueType.STRING, "safe-pve", "legacy");
-        add(options, "max-size-blocks", ConfigValueType.DOUBLE);
-        add(options, "border-transition-seconds", ConfigValueType.LONG);
-        add(options, "show-other-player-borders", ConfigValueType.BOOLEAN);
-        add(options, "start-countdown-seconds", ConfigValueType.INT);
-        add(options, "minimum-start-players", ConfigValueType.INT);
-        add(options, "max-start-countdown-seconds", ConfigValueType.INT);
-        add(options, "start-placement-mode", ConfigValueType.STRING, "spread", "grid");
-        add(options, "start-grid-spacing-blocks", ConfigValueType.DOUBLE);
-        add(options, "start-grid-skip-center", ConfigValueType.BOOLEAN);
-        add(options, "reset-xp-on-start", ConfigValueType.BOOLEAN);
-        add(options, "clear-inventory-on-start", ConfigValueType.BOOLEAN);
-        add(options, "starter.mode", ConfigValueType.STRING, "none", "chest", "tree", "both");
-        add(options, "starter.chest.offset-x", ConfigValueType.INT);
-        add(options, "starter.chest.offset-z", ConfigValueType.INT);
-        add(options, "starter.chest.items", ConfigValueType.STRING_LIST, "STONE_AXE:1,STONE_PICKAXE:1,STONE_SHOVEL:1,STONE_HOE:1,STONE_SWORD:1");
-        add(options, "starter.tree.type", ConfigValueType.STRING, "auto", "oak", "spruce", "birch", "jungle", "acacia", "dark_oak", "mangrove", "cherry");
-        add(options, "starter.tree.fallback-type", ConfigValueType.STRING, "oak", "spruce", "birch", "jungle", "acacia", "dark_oak", "mangrove", "cherry");
-        add(options, "starter.tree.offset-x", ConfigValueType.INT);
-        add(options, "starter.tree.offset-z", ConfigValueType.INT);
-        add(options, "starter.tree.logs", ConfigValueType.INT);
-        add(options, "starter.tree.leaves", ConfigValueType.BOOLEAN);
-        add(options, "reapply-on-world-change", ConfigValueType.BOOLEAN);
-        add(options, "reapply-on-respawn", ConfigValueType.BOOLEAN);
-        add(options, "command-permission", ConfigValueType.STRING);
-        add(options, "end-condition", ConfigValueType.STRING, "timed-score", "target-level", "target-border", "elimination", "disabled");
-        add(options, "round-duration-minutes", ConfigValueType.INT);
-        add(options, "score-tiebreakers", ConfigValueType.STRING_LIST, "kills,highest-level,deaths-ascending");
-        add(options, "win-target-level", ConfigValueType.INT);
-        add(options, "win-target-border-size-blocks", ConfigValueType.DOUBLE);
-        add(options, "elimination-disconnect-policy", ConfigValueType.STRING, "eliminate", "grace-period");
-        add(options, "elimination-reconnect-grace-seconds", ConfigValueType.INT);
-        add(options, "breakout-grace-seconds", ConfigValueType.INT);
-        add(options, "luckperms-integration-enabled", ConfigValueType.BOOLEAN);
-        add(options, "luckperms-active-group", ConfigValueType.STRING);
-        add(options, "luckperms-spectator-group", ConfigValueType.STRING);
-        add(options, "luckperms-clear-groups-on-round-end", ConfigValueType.BOOLEAN);
-        add(options, "luckperms-command-add-active", ConfigValueType.STRING);
-        add(options, "luckperms-command-remove-active", ConfigValueType.STRING);
-        add(options, "luckperms-command-add-spectator", ConfigValueType.STRING);
-        add(options, "luckperms-command-remove-spectator", ConfigValueType.STRING);
-        add(options, "rollback-integration-enabled", ConfigValueType.BOOLEAN);
-        add(options, "rollback-provider", ConfigValueType.STRING, "auto", "coreprotect", "prism");
-        add(options, "rollback-on-round-end", ConfigValueType.BOOLEAN);
-        add(options, "coreprotect-rollback-command", ConfigValueType.STRING);
-        add(options, "prism-rollback-command", ConfigValueType.STRING);
-        return Collections.unmodifiableMap(options);
-    }
-
-    private static void add(Map<String, ConfigOption> options, String path, ConfigValueType type, String... suggestions) {
-        options.put(path, new ConfigOption(path, type, List.of(suggestions)));
+        this.configDialog = new ConfigDialog(settings, borderService, messages, this::canControlGame);
     }
 
     @Override
@@ -155,14 +88,14 @@ public final class BorderCommand implements CommandExecutor, TabCompleter {
             return matching(List.of("list", "get", "set"), args[1]);
         }
         if (args.length == 3 && ("get".equalsIgnoreCase(args[1]) || "set".equalsIgnoreCase(args[1]))) {
-            return matching(new ArrayList<>(CONFIG_OPTIONS.keySet()), args[2]);
+            return matching(ConfigSchema.options().stream().map(ConfigSchema.Option::path).toList(), args[2]);
         }
         if (args.length == 4 && "set".equalsIgnoreCase(args[1])) {
-            ConfigOption option = CONFIG_OPTIONS.get(args[2].toLowerCase(Locale.ROOT));
+            ConfigSchema.Option option = ConfigSchema.find(args[2]);
             if (option == null) {
                 return Collections.emptyList();
             }
-            return matching(option.valueSuggestions(), args[3]);
+            return matching(option.allowedValues(), args[3]);
         }
         return Collections.emptyList();
     }
@@ -321,20 +254,25 @@ public final class BorderCommand implements CommandExecutor, TabCompleter {
     }
 
     private boolean handleConfig(CommandSender sender, String label, String[] args) {
+        if (args.length == 0 && sender instanceof Player player) {
+            configDialog.open(player);
+            return true;
+        }
+
         if (args.length == 0 || (args.length == 1 && "list".equalsIgnoreCase(args[0]))) {
             sender.sendMessage(messages.text("command.config-list-header"));
-            for (ConfigOption option : CONFIG_OPTIONS.values()) {
+            for (ConfigSchema.Option option : ConfigSchema.options()) {
                 sender.sendMessage(messages.text(
                         "command.config-entry",
                         Messages.placeholder("key", option.path()),
-                        Messages.placeholder("value", formatConfigValue(settings.configValue(option.path())))
+                        Messages.placeholder("value", ConfigSchema.format(settings.configValue(option.path())))
                 ));
             }
             return true;
         }
 
         if (args.length == 2 && "get".equalsIgnoreCase(args[0])) {
-            ConfigOption option = findConfigOption(args[1]);
+            ConfigSchema.Option option = ConfigSchema.find(args[1]);
             if (option == null) {
                 sender.sendMessage(messages.text("command.config-unknown", Messages.placeholder("key", args[1])));
                 return true;
@@ -343,13 +281,13 @@ public final class BorderCommand implements CommandExecutor, TabCompleter {
             sender.sendMessage(messages.text(
                     "command.config-entry",
                     Messages.placeholder("key", option.path()),
-                    Messages.placeholder("value", formatConfigValue(settings.configValue(option.path())))
+                    Messages.placeholder("value", ConfigSchema.format(settings.configValue(option.path())))
             ));
             return true;
         }
 
         if (args.length >= 3 && "set".equalsIgnoreCase(args[0])) {
-            ConfigOption option = findConfigOption(args[1]);
+            ConfigSchema.Option option = ConfigSchema.find(args[1]);
             if (option == null) {
                 sender.sendMessage(messages.text("command.config-unknown", Messages.placeholder("key", args[1])));
                 return true;
@@ -358,9 +296,12 @@ public final class BorderCommand implements CommandExecutor, TabCompleter {
             String rawValue = String.join(" ", Arrays.copyOfRange(args, 2, args.length));
             Object parsedValue;
             try {
-                parsedValue = parseConfigValue(option, rawValue);
-            } catch (IllegalArgumentException exception) {
-                sender.sendMessage(messages.text("command.config-invalid", Messages.placeholder("reason", exception.getMessage())));
+                parsedValue = ConfigSchema.parse(option, rawValue);
+            } catch (ConfigSchema.ValidationException exception) {
+                sender.sendMessage(messages.text(
+                        "command.config-invalid",
+                        Messages.placeholder("reason", validationMessage(exception))
+                ));
                 return true;
             }
 
@@ -369,7 +310,7 @@ public final class BorderCommand implements CommandExecutor, TabCompleter {
             sender.sendMessage(messages.text(
                     "command.config-set",
                     Messages.placeholder("key", option.path()),
-                    Messages.placeholder("value", formatConfigValue(parsedValue))
+                    Messages.placeholder("value", ConfigSchema.format(parsedValue))
             ));
             return true;
         }
@@ -378,109 +319,12 @@ public final class BorderCommand implements CommandExecutor, TabCompleter {
         return true;
     }
 
-    private ConfigOption findConfigOption(String key) {
-        if (key == null) {
-            return null;
-        }
-        return CONFIG_OPTIONS.get(key.toLowerCase(Locale.ROOT));
-    }
-
-    private Object parseConfigValue(ConfigOption option, String rawValue) {
-        String value = rawValue == null ? "" : rawValue.trim();
-        if (value.isEmpty()) {
-            throw new IllegalArgumentException("value is empty");
-        }
-
-        return switch (option.type()) {
-            case BOOLEAN -> parseBoolean(value);
-            case INT -> parseInteger(value);
-            case LONG -> parseLong(value);
-            case DOUBLE -> parseDouble(value);
-            case STRING -> parseString(option, value);
-            case STRING_LIST -> parseStringList(value);
-        };
-    }
-
-    private boolean parseBoolean(String value) {
-        return switch (value.toLowerCase(Locale.ROOT)) {
-            case "true", "yes", "on", "1" -> true;
-            case "false", "no", "off", "0" -> false;
-            default -> throw new IllegalArgumentException("expected true/false");
-        };
-    }
-
-    private int parseInteger(String value) {
-        try {
-            return Integer.parseInt(value);
-        } catch (NumberFormatException exception) {
-            throw new IllegalArgumentException("expected whole number");
-        }
-    }
-
-    private long parseLong(String value) {
-        try {
-            return Long.parseLong(value);
-        } catch (NumberFormatException exception) {
-            throw new IllegalArgumentException("expected whole number");
-        }
-    }
-
-    private double parseDouble(String value) {
-        try {
-            return Double.parseDouble(value);
-        } catch (NumberFormatException exception) {
-            throw new IllegalArgumentException("expected decimal number");
-        }
-    }
-
-    private String parseString(ConfigOption option, String value) {
-        if (option.valueSuggestions().isEmpty()) {
-            return value;
-        }
-
-        for (String allowed : option.valueSuggestions()) {
-            if (allowed.equalsIgnoreCase(value)) {
-                return allowed;
-            }
-        }
-
-        throw new IllegalArgumentException("allowed: " + String.join(", ", option.valueSuggestions()));
-    }
-
-    private List<String> parseStringList(String value) {
-        List<String> entries = new ArrayList<>();
-        for (String entry : value.split(",")) {
-            String trimmed = entry.trim();
-            if (!trimmed.isEmpty()) {
-                entries.add(trimmed);
-            }
-        }
-        if (entries.isEmpty()) {
-            throw new IllegalArgumentException("expected comma-separated values");
-        }
-        return entries;
-    }
-
-    private String formatConfigValue(Object value) {
-        if (value instanceof List<?> list) {
-            StringJoiner joiner = new StringJoiner(",");
-            for (Object entry : list) {
-                joiner.add(String.valueOf(entry));
-            }
-            return joiner.toString();
-        }
-        return String.valueOf(value);
-    }
-
-    private enum ConfigValueType {
-        BOOLEAN,
-        INT,
-        LONG,
-        DOUBLE,
-        STRING,
-        STRING_LIST
-    }
-
-    private record ConfigOption(String path, ConfigValueType type, List<String> valueSuggestions) {
+    private String validationMessage(ConfigSchema.ValidationException exception) {
+        return messages.text(
+                "config-gui.validation." + exception.reason(),
+                Messages.placeholder("min", exception.placeholders().getOrDefault("min", "")),
+                Messages.placeholder("max", exception.placeholders().getOrDefault("max", "")),
+                Messages.placeholder("allowed", exception.placeholders().getOrDefault("allowed", ""))
+        );
     }
 }

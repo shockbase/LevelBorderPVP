@@ -4,6 +4,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.List;
+import java.util.Map;
 
 public final class LevelBorderSettings {
 
@@ -270,6 +271,13 @@ public final class LevelBorderSettings {
 
     public void setConfigValue(String path, Object value) {
         config.set(path, value);
+        plugin.saveConfig();
+    }
+
+    public void setConfigValues(Map<String, Object> values) {
+        for (Map.Entry<String, Object> entry : values.entrySet()) {
+            config.set(entry.getKey(), entry.getValue());
+        }
         plugin.saveConfig();
     }
 }
