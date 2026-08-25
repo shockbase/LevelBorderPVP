@@ -27,14 +27,30 @@ val javaTargetVersion = javaTargetVersionByWorldBorderMajor[targetMinecraftApiVe
 repositories {
     mavenCentral()
 
-    maven {
-        name = "papermc"
-        url = uri("https://repo.papermc.io/repository/maven-public/")
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = "papermc"
+                url = uri("https://repo.papermc.io/repository/maven-public/")
+            }
+        }
+        filter {
+            includeGroup("io.papermc.paper")
+            includeGroup("com.mojang")
+            includeGroup("net.md-5")
+        }
     }
 
-    maven {
-        name = "eldonexus"
-        url = uri("https://eldonexus.de/repository/maven-releases/")
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = "eldonexus"
+                url = uri("https://eldonexus.de/repository/maven-releases/")
+            }
+        }
+        filter {
+            includeGroup("com.github.yannicklamprecht")
+        }
     }
 }
 
