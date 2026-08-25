@@ -7,6 +7,9 @@ on:
   pull_request:
     branches:
       - main
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -34,7 +37,7 @@ jobs:
       - name: Build
         run: |
           chmod +x gradlew
-          ./gradlew build
+          ./gradlew build --refresh-dependencies
 
       - name: Upload plugin jar
         uses: actions/upload-artifact@v7
@@ -43,32 +46,35 @@ jobs:
           path: build/libs/*.jar
 
       - name: Prepare release jar
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         run: |
           mkdir -p release
           cp build/libs/*.jar release/LevelBorderPVP.jar
 
-      - name: Read WorldBorderAPI version
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        id: worldborderapi
+      - name: Read dependency versions
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        id: versions
         shell: bash
         run: |
-          version=$(sed -n 's/^val worldBorderApiVersion = "\([^"]*\)"$/\1/p' build.gradle.kts)
-          if [ -z "$version" ]; then
+          worldborderapi=$(sed -n 's/^val worldBorderApiVersion = "\([^"]*\)"$/\1/p' build.gradle.kts)
+          paper=$(./gradlew -q printPaperApiVersion)
+          if [ -z "$worldborderapi" ] || [ -z "$paper" ]; then
             echo "WorldBorderAPI version not found in build.gradle.kts" >&2
             exit 1
           fi
-          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "worldborderapi=$worldborderapi" >> "$GITHUB_OUTPUT"
+          echo "paper=$paper" >> "$GITHUB_OUTPUT"
 
       - name: Create WorldBorderAPI version release
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ steps.worldborderapi.outputs.version }}
+          RELEASE_TAG: ${{ steps.versions.outputs.worldborderapi }}
+          PAPER_VERSION: ${{ steps.versions.outputs.paper }}
         run: |
           if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
             gh release upload "$RELEASE_TAG" release/LevelBorderPVP.jar --clobber
-            gh release edit "$RELEASE_TAG" --title "$RELEASE_TAG" --notes "Compatible with WorldBorderAPI $RELEASE_TAG. Automatic build from ${{ github.sha }}" --latest
+            gh release edit "$RELEASE_TAG" --title "$RELEASE_TAG" --notes "Compatible with WorldBorderAPI $RELEASE_TAG and Paper $PAPER_VERSION. Automatic build from ${{ github.sha }}" --latest
           else
-            gh release create "$RELEASE_TAG" release/LevelBorderPVP.jar --target "${{ github.sha }}" --title "$RELEASE_TAG" --notes "Compatible with WorldBorderAPI $RELEASE_TAG. Automatic build from ${{ github.sha }}" --latest
+            gh release create "$RELEASE_TAG" release/LevelBorderPVP.jar --target "${{ github.sha }}" --title "$RELEASE_TAG" --notes "Compatible with WorldBorderAPI $RELEASE_TAG and Paper $PAPER_VERSION. Automatic build from ${{ github.sha }}" --latest
           fi

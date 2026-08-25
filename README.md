@@ -5,7 +5,7 @@
 - Plugin version: `26.2.0.0`
 - WorldBorderAPI: `26.2.0.0:dev`
 - Minecraft/Paper API version: `26.2`
-- Paper API: `26.2.build.+` (derived from WorldBorderAPI)
+- Paper API: `26.2.build.+` (latest stable build derived from WorldBorderAPI)
 - Java toolchain: `25` (derived from WorldBorderAPI)
 
 WorldBorderAPI must also be installed as a server plugin. This plugin only compiles against the API and declares `depend: [WorldBorderAPI]`.

@@ -9,7 +9,14 @@ version = worldBorderApiVersion
 
 description = "Per-player WorldBorderAPI borders that scale with player XP levels."
 
-val targetMinecraftApiVersion = worldBorderApiVersion.split(".").take(2).joinToString(".")
+val worldBorderApiVersionParts = worldBorderApiVersion.split(".")
+require(worldBorderApiVersionParts.size >= 3) {
+    "WorldBorderAPI version $worldBorderApiVersion does not contain a Minecraft/Paper target."
+}
+val targetMinecraftApiVersion = worldBorderApiVersionParts
+    .take(3)
+    .dropLastWhile { it == "0" }
+    .joinToString(".")
 val paperApiVersion = "$targetMinecraftApiVersion.build.+"
 val javaTargetVersionByWorldBorderMajor = mapOf(
     "26" to 25,
@@ -36,6 +43,28 @@ dependencies {
     compileOnly("com.github.yannicklamprecht:worldborderapi:$worldBorderApiVersion:$worldBorderApiClassifier")
 }
 
+configurations.configureEach {
+    resolutionStrategy.componentSelection {
+        all {
+            if (
+                candidate.group == "io.papermc.paper" &&
+                candidate.module == "paper-api" &&
+                !candidate.version.endsWith("-stable")
+            ) {
+                reject("Only stable Paper API builds are allowed.")
+            }
+        }
+    }
+}
+
+val resolvedPaperApiVersion = providers.provider {
+    configurations.named("compileClasspath").get()
+        .incoming.resolutionResult.allComponents
+        .mapNotNull { it.moduleVersion }
+        .single { it.group == "io.papermc.paper" && it.name == "paper-api" }
+        .version
+}
+
 java {
     toolchain.languageVersion.set(JavaLanguageVersion.of(javaTargetVersion))
 }
@@ -56,12 +85,28 @@ tasks.processResources {
 
 tasks.register("validateWorldBorderApiTarget") {
     group = "verification"
-    description = "Ensures Paper API target is derived from the WorldBorderAPI target."
+    description = "Ensures the stable Paper API target is derived from the WorldBorderAPI target."
 
     doLast {
         check(paperApiVersion == "$targetMinecraftApiVersion.build.+") {
             "Paper API version must be derived from WorldBorderAPI version $worldBorderApiVersion."
         }
+        check(
+            resolvedPaperApiVersion.get().startsWith("$targetMinecraftApiVersion.build.") &&
+                resolvedPaperApiVersion.get().endsWith("-stable")
+        ) {
+            "Resolved Paper API ${resolvedPaperApiVersion.get()} does not match " +
+                "WorldBorderAPI $worldBorderApiVersion or is not stable."
+        }
+    }
+}
+
+tasks.register("printPaperApiVersion") {
+    group = "help"
+    description = "Prints the resolved stable Paper API version."
+
+    doLast {
+        println(resolvedPaperApiVersion.get())
     }
 }
 
@@ -83,7 +128,7 @@ tasks.register("syncReadmeVersionTarget") {
             |- Plugin version: `${project.version}`
             |- WorldBorderAPI: `$worldBorderApiVersion:$worldBorderApiClassifier`
             |- Minecraft/Paper API version: `$targetMinecraftApiVersion`
-            |- Paper API: `$paperApiVersion` (derived from WorldBorderAPI)
+            |- Paper API: `$paperApiVersion` (latest stable build derived from WorldBorderAPI)
             |- Java toolchain: `$javaTargetVersion` (derived from WorldBorderAPI)
             |
             |WorldBorderAPI must also be installed as a server plugin. This plugin only compiles against the API and declares `depend: [WorldBorderAPI]`.
