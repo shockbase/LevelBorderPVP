@@ -72,8 +72,6 @@ jobs:
           RELEASE_TAG: ${{ steps.versions.outputs.worldborderapi }}
           PAPER_VERSION: ${{ steps.versions.outputs.paper }}
         run: |
-          git tag -f "$RELEASE_TAG" "${{ github.sha }}"
-          git push origin "refs/tags/$RELEASE_TAG" --force
           if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
             gh release upload "$RELEASE_TAG" release/LevelBorderPVP.jar --clobber
             gh release edit "$RELEASE_TAG" --title "$RELEASE_TAG" --notes "Compatible with WorldBorderAPI $RELEASE_TAG and Paper $PAPER_VERSION. Automatic build from ${{ github.sha }}" --latest
