@@ -2,7 +2,7 @@
 
 ## Version target
 
-- Plugin version: `1.0.0`
+- Plugin version: `26.2.0.0`
 - WorldBorderAPI: `26.2.0.0:dev`
 - Minecraft/Paper API version: `26.2`
 - Paper API: `26.2.build.+` (derived from WorldBorderAPI)

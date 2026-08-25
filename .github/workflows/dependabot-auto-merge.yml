@@ -26,6 +26,7 @@ jobs:
         uses: actions/checkout@v7
         with:
           ref: ${{ github.head_ref }}
+          fetch-depth: 0
 
       - name: Set up Java
         uses: actions/setup-java@v5.7.0
@@ -43,13 +44,13 @@ jobs:
           chmod +x gradlew
           ./gradlew syncReadmeVersionTarget
 
-      - name: Commit README version target
+      - name: Commit synchronized version targets
         run: |
-          if ! git diff --quiet -- README.md; then
+          if ! git diff --quiet -- README.md .java-version; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add README.md
-            git commit -m "Update README version targets"
+            git add README.md .java-version
+            git commit -m "Synchronize WorldBorderAPI version targets"
             git push
           fi
 

@@ -3,12 +3,12 @@ plugins {
 }
 
 group = "de.shockbase"
-version = "1.0.0"
+val worldBorderApiVersion = "26.2.0.0"
+val worldBorderApiClassifier = "dev"
+version = worldBorderApiVersion
 
 description = "Per-player WorldBorderAPI borders that scale with player XP levels."
 
-val worldBorderApiVersion = "26.2.0.0"
-val worldBorderApiClassifier = "dev"
 val targetMinecraftApiVersion = worldBorderApiVersion.split(".").take(2).joinToString(".")
 val paperApiVersion = "$targetMinecraftApiVersion.build.+"
 val javaTargetVersionByWorldBorderMajor = mapOf(
