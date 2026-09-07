@@ -96,11 +96,25 @@ final class OtherPlayerBorderRenderer {
             return;
         }
 
+        List<BorderSpatialIndex.Entry<BorderSnapshot>> edges = new ArrayList<>();
+        java.util.Map<UUID, BorderSnapshot> byPlayer = new java.util.HashMap<>();
+        for (BorderSnapshot border : activeBorders) {
+            byPlayer.put(border.playerId(), border);
+            double half = border.size() / 2.0D;
+            double x0 = border.centerX() - half, x1 = border.centerX() + half;
+            double z0 = border.centerZ() - half, z1 = border.centerZ() + half;
+            edges.add(new BorderSpatialIndex.Entry<>(x0, z0, x0, z1, border));
+            edges.add(new BorderSpatialIndex.Entry<>(x1, z0, x1, z1, border));
+            edges.add(new BorderSpatialIndex.Entry<>(x0, z0, x1, z0, border));
+            edges.add(new BorderSpatialIndex.Entry<>(x0, z1, x1, z1, border));
+        }
+        BorderSpatialIndex<BorderSnapshot> index = new BorderSpatialIndex<>(edges);
         for (Player viewer : plugin.getServer().getOnlinePlayers()) {
             if (!isViewer(viewer)) {
                 continue;
             }
-            renderFor(viewer, activeBorders);
+            Location location = viewer.getLocation();
+            renderFor(viewer, index.query(location.getX(), location.getZ(), VIEW_DISTANCE_BLOCKS), byPlayer.get(viewer.getUniqueId()));
         }
     }
 
@@ -141,56 +155,25 @@ final class OtherPlayerBorderRenderer {
         return roundPlayers.isActive(RoundState.ACTIVE, player) || roundPlayers.isSpectator(player);
     }
 
-    private void renderFor(Player viewer, List<BorderSnapshot> activeBorders) {
+    private void renderFor(Player viewer, List<BorderSnapshot> activeBorders, BorderSnapshot ownBorder) {
         Location viewerLocation = viewer.getLocation();
         World viewerWorld = viewerLocation.getWorld();
         if (viewerWorld == null) {
             return;
         }
 
-        BorderSnapshot ownBorder = ownBorder(viewer, activeBorders);
-        List<VisibleBorder> visibleBorders = new ArrayList<>();
-        for (BorderSnapshot border : activeBorders) {
-            if (border.playerId().equals(viewer.getUniqueId()) || !border.world().equals(viewerWorld)) {
-                continue;
-            }
-
-            List<BorderPoint> points = visiblePoints(border, viewerLocation.getX(), viewerLocation.getZ());
-            if (!points.isEmpty()) {
-                visibleBorders.add(new VisibleBorder(border, points));
-            }
-        }
-
+        List<BorderSnapshot> visibleBorders = activeBorders.stream()
+                .filter(border -> !border.playerId().equals(viewer.getUniqueId()) && border.world().equals(viewerWorld))
+                .toList();
         int remainingParticles = MAX_PARTICLES_PER_VIEWER;
         for (int index = 0; index < visibleBorders.size() && remainingParticles >= HEIGHT_OFFSETS.length; index++) {
-            VisibleBorder visibleBorder = visibleBorders.get(index);
-            int remainingBorders = visibleBorders.size() - index;
-            int budget = Math.max(
-                    HEIGHT_OFFSETS.length,
-                    remainingParticles / remainingBorders
-            );
-            int spawned = spawnBorder(
-                    viewer,
-                    viewerLocation,
-                    visibleBorder,
-                    overlaps(ownBorder, visibleBorder.border()) ? OVERLAP_TRANSITION : NORMAL_TRANSITION,
-                    budget
-            );
+            BorderSnapshot border = visibleBorders.get(index);
+            int budget = Math.max(HEIGHT_OFFSETS.length, remainingParticles / (visibleBorders.size() - index));
+            List<BorderPoint> points = visiblePoints(border, viewerLocation.getX(), viewerLocation.getZ(), budget / HEIGHT_OFFSETS.length);
+            int spawned = spawnBorder(viewer, viewerLocation, new VisibleBorder(border, points),
+                    overlaps(ownBorder, border) ? OVERLAP_TRANSITION : NORMAL_TRANSITION, budget);
             remainingParticles -= spawned;
         }
-    }
-
-    private BorderSnapshot ownBorder(Player viewer, List<BorderSnapshot> activeBorders) {
-        if (!roundPlayers.isActive(RoundState.ACTIVE, viewer)) {
-            return null;
-        }
-        UUID viewerId = viewer.getUniqueId();
-        for (BorderSnapshot border : activeBorders) {
-            if (border.playerId().equals(viewerId)) {
-                return border;
-            }
-        }
-        return null;
     }
 
     private int spawnBorder(
@@ -228,7 +211,7 @@ final class OtherPlayerBorderRenderer {
         return pointBudget * HEIGHT_OFFSETS.length;
     }
 
-    private List<BorderPoint> visiblePoints(BorderSnapshot border, double viewerX, double viewerZ) {
+    private List<BorderPoint> visiblePoints(BorderSnapshot border, double viewerX, double viewerZ, int pointBudget) {
         double halfSize = border.size() / 2.0D;
         double minX = border.centerX() - halfSize;
         double maxX = border.centerX() + halfSize;
@@ -236,10 +219,10 @@ final class OtherPlayerBorderRenderer {
         double maxZ = border.centerZ() + halfSize;
 
         List<BorderPoint> points = new ArrayList<>();
-        addVerticalEdge(points, minX, minZ, maxZ, viewerX, viewerZ);
-        addVerticalEdge(points, maxX, minZ, maxZ, viewerX, viewerZ);
-        addHorizontalEdge(points, minZ, minX, maxX, viewerX, viewerZ);
-        addHorizontalEdge(points, maxZ, minX, maxX, viewerX, viewerZ);
+        addVerticalEdge(points, minX, minZ, maxZ, viewerX, viewerZ, Math.max(1, (pointBudget + 3) / 4));
+        addVerticalEdge(points, maxX, minZ, maxZ, viewerX, viewerZ, Math.max(1, (pointBudget + 3) / 4));
+        addHorizontalEdge(points, minZ, minX, maxX, viewerX, viewerZ, Math.max(1, (pointBudget + 3) / 4));
+        addHorizontalEdge(points, maxZ, minX, maxX, viewerX, viewerZ, Math.max(1, (pointBudget + 3) / 4));
         return points;
     }
 
@@ -249,7 +232,8 @@ final class OtherPlayerBorderRenderer {
             double edgeMinZ,
             double edgeMaxZ,
             double viewerX,
-            double viewerZ
+            double viewerZ,
+            int sampleLimit
     ) {
         double xDistance = x - viewerX;
         double remainingDistanceSquared = VIEW_DISTANCE_SQUARED - (xDistance * xDistance);
@@ -260,7 +244,7 @@ final class OtherPlayerBorderRenderer {
         double visibleRadius = Math.sqrt(Math.max(0.0D, remainingDistanceSquared));
         double visibleMin = Math.max(edgeMinZ, viewerZ - visibleRadius);
         double visibleMax = Math.min(edgeMaxZ, viewerZ + visibleRadius);
-        addSamples(points, visibleMin, visibleMax, edgeMinZ, value -> new BorderPoint(x, value));
+        addSamples(points, visibleMin, visibleMax, edgeMinZ, sampleLimit, value -> new BorderPoint(x, value));
     }
 
     private void addHorizontalEdge(
@@ -269,7 +253,8 @@ final class OtherPlayerBorderRenderer {
             double edgeMinX,
             double edgeMaxX,
             double viewerX,
-            double viewerZ
+            double viewerZ,
+            int sampleLimit
     ) {
         double zDistance = z - viewerZ;
         double remainingDistanceSquared = VIEW_DISTANCE_SQUARED - (zDistance * zDistance);
@@ -280,7 +265,7 @@ final class OtherPlayerBorderRenderer {
         double visibleRadius = Math.sqrt(Math.max(0.0D, remainingDistanceSquared));
         double visibleMin = Math.max(edgeMinX, viewerX - visibleRadius);
         double visibleMax = Math.min(edgeMaxX, viewerX + visibleRadius);
-        addSamples(points, visibleMin, visibleMax, edgeMinX, value -> new BorderPoint(value, z));
+        addSamples(points, visibleMin, visibleMax, edgeMinX, sampleLimit, value -> new BorderPoint(value, z));
     }
 
     private void addSamples(
@@ -288,6 +273,7 @@ final class OtherPlayerBorderRenderer {
             double visibleMin,
             double visibleMax,
             double edgeStart,
+            int sampleLimit,
             PointFactory pointFactory
     ) {
         if (visibleMin > visibleMax + GEOMETRY_EPSILON) {
@@ -302,8 +288,11 @@ final class OtherPlayerBorderRenderer {
             return;
         }
 
-        for (double value = firstSample; value <= visibleMax + GEOMETRY_EPSILON; value += PARTICLE_SPACING_BLOCKS) {
-            addPointIfMissing(points, pointFactory.create(value));
+        int count = Math.max(1, (int) Math.floor((visibleMax - firstSample + GEOMETRY_EPSILON) / PARTICLE_SPACING_BLOCKS) + 1);
+        int samples = Math.min(count, sampleLimit);
+        for (int index = 0; index < samples; index++) {
+            int offset = Math.min(count - 1, (int) Math.floor((index + 0.5D) * count / samples));
+            addPointIfMissing(points, pointFactory.create(firstSample + offset * PARTICLE_SPACING_BLOCKS));
         }
     }
 

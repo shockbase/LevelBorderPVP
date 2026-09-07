@@ -19,6 +19,7 @@ import org.bukkit.scoreboard.ScoreboardManager;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.LongSupplier;
 
 final class GameTimerDisplay {
 
@@ -36,14 +37,14 @@ final class GameTimerDisplay {
     private RoundEndCondition endCondition = RoundEndCondition.DISABLED;
     private long shownSeconds;
     private long roundDurationSeconds;
-    private long roundElapsedSeconds;
-    private long countdownElapsedSeconds;
+    private final LongSupplier elapsedSeconds;
     private BukkitTask updateTask;
 
-    GameTimerDisplay(Plugin plugin, Messages messages, StatsProvider statsProvider) {
+    GameTimerDisplay(Plugin plugin, Messages messages, StatsProvider statsProvider, LongSupplier elapsedSeconds) {
         this.plugin = plugin;
         this.messages = messages;
         this.statsProvider = statsProvider;
+        this.elapsedSeconds = elapsedSeconds;
     }
 
     void startCountdown(int seconds, RoundEndCondition condition) {
@@ -66,8 +67,6 @@ final class GameTimerDisplay {
         phase = TimerPhase.ROUND;
         endCondition = condition;
         roundDurationSeconds = Math.max(0L, durationSeconds);
-        roundElapsedSeconds = 0L;
-        countdownElapsedSeconds = 0L;
         shownSeconds = condition == RoundEndCondition.TIMED_SCORE ? roundDurationSeconds : 0L;
         restartUpdateTask();
     }
@@ -79,10 +78,9 @@ final class GameTimerDisplay {
         endCondition = condition;
         roundDurationSeconds = Math.max(0L, durationSeconds);
         if (condition == RoundEndCondition.TIMED_SCORE) {
-            countdownElapsedSeconds = 0L;
-            shownSeconds = roundDurationSeconds;
+            shownSeconds = Math.max(0L, roundDurationSeconds - elapsedSeconds.getAsLong());
         } else {
-            shownSeconds = roundElapsedSeconds;
+            shownSeconds = elapsedSeconds.getAsLong();
         }
         updateOnlinePlayers();
     }
@@ -117,13 +115,11 @@ final class GameTimerDisplay {
         }
 
         if (endCondition == RoundEndCondition.TIMED_SCORE) {
-            shownSeconds = Math.max(0L, roundDurationSeconds - countdownElapsedSeconds);
+            shownSeconds = Math.max(0L, roundDurationSeconds - elapsedSeconds.getAsLong());
         } else {
-            shownSeconds = roundElapsedSeconds;
+            shownSeconds = elapsedSeconds.getAsLong();
         }
         updateOnlinePlayers();
-        roundElapsedSeconds++;
-        countdownElapsedSeconds++;
     }
 
     private void updateOnlinePlayers() {

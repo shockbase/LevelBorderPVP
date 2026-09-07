@@ -2,11 +2,17 @@ package de.shockbase.levelborderpvp.data;
 
 import de.shockbase.levelborderpvp.i18n.Messages;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.UUID;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.IntToDoubleFunction;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -18,6 +24,14 @@ public final class PlayerBorderRepository {
     private final Messages messages;
 
     private YamlConfiguration playerData;
+    private final Map<UUID, PlayerBorderData> cache = new HashMap<>();
+    private final ExecutorService writer = Executors.newSingleThreadExecutor(runnable -> {
+        Thread thread = new Thread(runnable, "LevelBorderPvP-player-save");
+        thread.setDaemon(true);
+        return thread;
+    });
+    private CompletableFuture<Void> pendingWrite;
+    private boolean dirty;
 
     public PlayerBorderRepository(File dataFolder, Logger logger, Messages messages) {
         this.dataFile = new File(dataFolder, "players.yml");
@@ -37,6 +51,8 @@ public final class PlayerBorderRepository {
             boolean usesCurrentLevelMode,
             IntToDoubleFunction fallbackSizeCalculator
     ) {
+        PlayerBorderData cached = cache.get(player.getUniqueId());
+        if (cached != null) return cached;
         String basePath = basePath(player.getUniqueId());
         if (!playerData.contains(basePath + ".center.x")) {
             return null;
@@ -49,7 +65,7 @@ public final class PlayerBorderRepository {
                 : addLevels(maxReachedLevel, killBonusLevels);
         double fallbackLastAppliedBorderSize = fallbackSizeCalculator.applyAsDouble(borderLevel);
 
-        return new PlayerBorderData(
+        PlayerBorderData loaded = new PlayerBorderData(
                 player.getUniqueId(),
                 parseUuid(playerData.getString(basePath + ".center.world-id"), player.getWorld().getUID()),
                 playerData.getString(basePath + ".center.world-name", player.getWorld().getName()),
@@ -61,9 +77,12 @@ public final class PlayerBorderRepository {
                 Math.max(0.0D, playerData.getDouble(basePath + ".last-applied-size", fallbackLastAppliedBorderSize)),
                 parsePortal(basePath + ".overworld-portal")
         );
+        cache.put(player.getUniqueId(), loaded);
+        return loaded;
     }
 
     public void save(PlayerBorderData data) {
+        if (data.equals(cache.put(data.playerId(), data))) return;
         String basePath = basePath(data.playerId());
         playerData.set(basePath + ".center.world-id", data.worldId().toString());
         playerData.set(basePath + ".center.world-name", data.worldName());
@@ -74,19 +93,48 @@ public final class PlayerBorderRepository {
         playerData.set(basePath + ".kill-bonus-levels", data.killBonusLevels());
         playerData.set(basePath + ".last-applied-size", data.lastAppliedBorderSize());
         savePortal(basePath + ".overworld-portal", data.overworldPortal());
-        save();
+        dirty = true;
     }
 
     public void save() {
-        if (playerData == null) {
-            return;
-        }
+        if (pendingWrite != null && !pendingWrite.isDone()) return;
+        collectWrite();
+        if (playerData == null || !dirty) return;
+        // Copy only scalar leaves on the server thread. The worker owns its YAML instance.
+        Map<String, Object> snapshot = new HashMap<>();
+        playerData.getValues(true).forEach((key, value) -> {
+            if (!(value instanceof ConfigurationSection)) snapshot.put(key, value);
+        });
+        Map<String, Object> immutableSnapshot = Map.copyOf(snapshot);
+        dirty = false;
+        pendingWrite = CompletableFuture.runAsync(() -> {
+            YamlConfiguration output = new YamlConfiguration();
+            immutableSnapshot.forEach(output::set);
+            try {
+                AtomicFileStore.write(dataFile.toPath(), output.saveToString());
+            } catch (IOException exception) {
+                throw new java.io.UncheckedIOException(exception);
+            }
+        }, writer);
+    }
 
+    private void collectWrite() {
+        if (pendingWrite == null) return;
         try {
-            playerData.save(dataFile);
-        } catch (IOException exception) {
-            logger.log(Level.SEVERE, messages.text("log.players-save-failed"), exception);
+            pendingWrite.join();
+        } catch (java.util.concurrent.CompletionException exception) {
+            dirty = true;
+            logger.log(Level.SEVERE, messages.text("log.players-save-failed"), exception.getCause());
         }
+        pendingWrite = null;
+    }
+
+    /** Flush the latest state after the previous write; no old write may overwrite it. */
+    public void close() {
+        collectWrite();
+        save();
+        collectWrite();
+        writer.shutdown();
     }
 
     private String basePath(UUID playerId) {

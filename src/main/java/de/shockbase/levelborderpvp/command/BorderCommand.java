@@ -191,7 +191,7 @@ public final class BorderCommand implements CommandExecutor, TabCompleter {
         BorderService.StartResult startResult = borderService.start(countdownSeconds);
         if (!startResult.started()) {
             sender.sendMessage(messages.text(
-                    "command.not-enough-players",
+                    startResult.failureKey(),
                     Messages.placeholder("players", startResult.eligiblePlayers()),
                     Messages.placeholder("required", startResult.requiredPlayers())
             ));

@@ -2,6 +2,7 @@ package de.shockbase.levelborderpvp.integration;
 
 import de.shockbase.levelborderpvp.config.LevelBorderSettings;
 import de.shockbase.levelborderpvp.i18n.Messages;
+import de.shockbase.levelborderpvp.data.AtomicFileStore;
 import org.bukkit.NamespacedKey;
 import org.bukkit.advancement.Advancement;
 import org.bukkit.advancement.AdvancementProgress;
@@ -31,6 +32,7 @@ public final class AdvancementSnapshotService {
     private final Messages messages;
     private final File snapshotFile;
     private final Set<UUID> restoringPlayers = new HashSet<>();
+    private final Set<UUID> currentRoundPlayers = new HashSet<>();
 
     private YamlConfiguration snapshotData;
 
@@ -42,9 +44,14 @@ public final class AdvancementSnapshotService {
         load();
     }
 
-    public void beginRound(Collection<Player> players) {
+    public boolean beginRound(Collection<Player> players) {
         if (!settings.advancementBonusEnabled()) {
-            return;
+            return true;
+        }
+
+        // Never overwrite an original snapshot that could not be restored.
+        for (Player player : players) {
+            if (snapshotData.contains(playerPath(player.getUniqueId()))) return false;
         }
 
         List<Advancement> managedAdvancements = managedAdvancements();
@@ -52,19 +59,30 @@ public final class AdvancementSnapshotService {
         snapshotData.set("managed-advancements", managedAdvancementKeys);
 
         for (Player player : players) {
-            snapshotAndReset(player, managedAdvancements, managedAdvancementKeys);
+            snapshot(player, managedAdvancements, managedAdvancementKeys);
         }
 
-        save();
+        if (!save()) {
+            // No advancement has been revoked yet. Discard the unsaved candidates.
+            for (Player player : players) snapshotData.set(playerPath(player.getUniqueId()), null);
+            return false;
+        }
+        for (Player player : players) {
+            currentRoundPlayers.add(player.getUniqueId());
+            revokeManagedAdvancements(player, managedAdvancementKeys);
+        }
+        return true;
     }
 
     public void restoreOnlinePlayers() {
+        currentRoundPlayers.clear();
         for (Player player : plugin.getServer().getOnlinePlayers()) {
             restoreIfPending(player);
         }
     }
 
     public void restoreIfPending(Player player) {
+        if (currentRoundPlayers.contains(player.getUniqueId())) return;
         String playerPath = playerPath(player.getUniqueId());
         if (!snapshotData.contains(playerPath)) {
             return;
@@ -78,11 +96,16 @@ public final class AdvancementSnapshotService {
             restoringPlayers.remove(player.getUniqueId());
         }
 
+        Object originalSnapshot = snapshotData.get(playerPath);
+        List<String> originalManagedKeys = snapshotData.getStringList("managed-advancements");
         snapshotData.set(playerPath, null);
         if (!hasPlayerSnapshots()) {
             snapshotData.set("managed-advancements", null);
         }
-        save();
+        if (!save()) {
+            snapshotData.set(playerPath, originalSnapshot);
+            snapshotData.set("managed-advancements", originalManagedKeys);
+        }
     }
 
     public boolean isRestoring(Player player) {
@@ -110,7 +133,7 @@ public final class AdvancementSnapshotService {
         snapshotData = YamlConfiguration.loadConfiguration(snapshotFile);
     }
 
-    private void snapshotAndReset(Player player, List<Advancement> managedAdvancements, List<String> managedAdvancementKeys) {
+    private void snapshot(Player player, List<Advancement> managedAdvancements, List<String> managedAdvancementKeys) {
         String playerPath = playerPath(player.getUniqueId());
         snapshotData.set(playerPath, null);
         snapshotData.set(playerPath + ".name", player.getName());
@@ -125,7 +148,6 @@ public final class AdvancementSnapshotService {
                 snapshotData.set(advancementPath + ".key", advancement.getKey().toString());
                 snapshotData.set(advancementPath + ".criteria", awardedCriteria);
             }
-            revokeAwardedCriteria(progress);
         }
     }
 
@@ -235,11 +257,13 @@ public final class AdvancementSnapshotService {
         return players != null && !players.getKeys(false).isEmpty();
     }
 
-    private void save() {
+    private boolean save() {
         try {
-            snapshotData.save(snapshotFile);
+            AtomicFileStore.write(snapshotFile.toPath(), snapshotData.saveToString());
+            return true;
         } catch (IOException exception) {
             plugin.getLogger().log(Level.SEVERE, messages.text("log.advancement-snapshots-save-failed"), exception);
+            return false;
         }
     }
 }

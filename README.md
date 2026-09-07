@@ -281,6 +281,12 @@ Persoenliche Border-Groessen werden im Spiel auf volle Blockgrenzen aufgerundet.
 
 ## Technische Notizen
 
+- `RoundSession` verwaltet Rundenstatus, Startzeit und den Abbruch verzögerter Aktionen.
+- `SafeLocationService` und `StartPlacementService` kapseln Standortsuche und Grid-Platzierung.
+- `BorderService` ist eine reine Fassade; die vollständige Zuordnung der Spielregeln und Abläufe steht in [Verantwortlichkeiten](docs/border-service-responsibilities.md).
+- Spieleränderungen werden im Speicher gesammelt und einmal pro Sekunde über einen einzelnen Hintergrundschreiber atomar gespeichert; beim regulären Stop wird der letzte Stand geschrieben.
+- Advancement-Sicherungen werden vor dem Zurücksetzen atomar gespeichert. Bei einem Sicherungs- oder Platzierungsfehler wird der Rundenstart abgebrochen.
+- Regressionstests: `./gradlew test`; ergänzende Serverprüfungen stehen in `docs/manual-test-round-regressions.md`.
 - Die echte Server-World-Border wird nicht veraendert.
 - Spieler-Daten werden in `plugins/LevelBorderPvP/players.yml` gespeichert.
 - Advancement-Snapshots werden bei aktivierter Advancement-Wertung in `plugins/LevelBorderPvP/advancements.yml` gespeichert.

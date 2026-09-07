@@ -276,6 +276,7 @@ config-gui:
       description: "Шаблон консольной команды для каждого активного игрока."
 
 service:
+  start-aborted: 'Запуск раунда отменён: недостаточно игроков, безопасных позиций или не удалось сохранить достижения.'
   countdown: "Граница запустится через {seconds} сек."
   round-ended-winner: "Игра окончена: победил {winner}. Причина: {reason}"
   round-ended-shared-winners: "Игра окончена: ничья между {winners}. Причина: {reason}"

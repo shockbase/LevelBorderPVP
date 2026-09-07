@@ -46,6 +46,7 @@ public final class LevelBorderPvPPlugin extends JavaPlugin {
 
         playerBorderRepository = new PlayerBorderRepository(getDataFolder(), getLogger(), messages);
         playerBorderRepository.load();
+        getServer().getScheduler().runTaskTimer(this, () -> playerBorderRepository.save(), 20L, 20L);
 
         borderService = new BorderService(
                 this,
@@ -78,7 +79,7 @@ public final class LevelBorderPvPPlugin extends JavaPlugin {
             borderService.shutdown();
         }
         if (playerBorderRepository != null) {
-            playerBorderRepository.save();
+            playerBorderRepository.close();
         }
     }
 

@@ -276,6 +276,7 @@ config-gui:
       description: "Console-Befehlsvorlage pro aktivem Rundenspieler."
 
 service:
+  start-aborted: 'Rundenstart abgebrochen: Zu wenige Spieler, keine vollständige sichere Platzierung oder Advancement-Sicherung fehlgeschlagen.'
   countdown: "Border startet in {seconds} Sekunden."
   round-ended-winner: "Spiel beendet: {winner} gewinnt. Grund: {reason}"
   round-ended-shared-winners: "Spiel beendet: Gleichstand zwischen {winners}. Grund: {reason}"

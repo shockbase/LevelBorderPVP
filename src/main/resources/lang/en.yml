@@ -276,6 +276,7 @@ config-gui:
       description: "Console command template for each active round player."
 
 service:
+  start-aborted: 'Round start aborted: Not enough players, safe placement incomplete, or advancement backup failed.'
   countdown: "Border starts in {seconds} seconds."
   round-ended-winner: "Game ended: {winner} wins. Reason: {reason}"
   round-ended-shared-winners: "Game ended: shared win between {winners}. Reason: {reason}"
