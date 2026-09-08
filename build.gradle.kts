@@ -58,7 +58,7 @@ dependencies {
     compileOnly("io.papermc.paper:paper-api:$paperApiVersion")
     compileOnly("com.github.yannicklamprecht:worldborderapi:$worldBorderApiVersion:$worldBorderApiClassifier")
     testImplementation("org.junit.jupiter:junit-jupiter:5.11.4")
-    testImplementation("org.mockito:mockito-core:5.21.0")
+    testImplementation("org.mockito:mockito-core:5.23.0")
     testImplementation("io.papermc.paper:paper-api:$paperApiVersion")
     testImplementation("com.github.yannicklamprecht:worldborderapi:$worldBorderApiVersion:$worldBorderApiClassifier")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
