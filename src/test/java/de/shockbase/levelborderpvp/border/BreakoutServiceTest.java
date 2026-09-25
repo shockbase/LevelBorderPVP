@@ -22,7 +22,9 @@ class BreakoutServiceTest {
         when(player.getUniqueId()).thenReturn(UUID.randomUUID());
         when(player.getName()).thenReturn("test");
         when(player.getHealth()).thenReturn(20D);
-        Location location = new Location(mock(World.class), 10, 64, 10);
+        // Location only keeps a weak reference; retain the world until the delayed action completes.
+        World world = mock(World.class);
+        Location location = new Location(world, 10, 64, 10);
         when(player.getLocation()).thenReturn(location);
         when(server.getPlayer(player.getUniqueId())).thenReturn(player);
         RoundSession session = mock(RoundSession.class);
@@ -42,6 +44,7 @@ class BreakoutServiceTest {
         ArgumentCaptor<Runnable> action = ArgumentCaptor.forClass(Runnable.class);
         verify(session).later(action.capture(), eq(100L));
         action.getValue().run();
+        verify(world).strikeLightningEffect(location);
         verify(player).setHealth(0D);
         verify(rules).checkRoundEndAfterActivePlayerRemoval("service.end-reason-all-disqualified");
     }
